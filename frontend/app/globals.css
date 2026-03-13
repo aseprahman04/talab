@@ -330,6 +330,27 @@ code {
   gap: 10px;
 }
 
+.route-nav {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.route-link {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.52);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.route-link.active {
+  background: linear-gradient(135deg, rgba(18, 110, 98, 0.16), rgba(239, 127, 69, 0.14));
+  color: var(--ink);
+  border-color: rgba(18, 110, 98, 0.2);
+}
+
 .workspace-item,
 .card-row {
   width: 100%;

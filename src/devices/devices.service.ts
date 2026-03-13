@@ -3,12 +3,13 @@ import { AuditLogsService } from 'src/audit-logs/audit-logs.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { JOB_NAMES } from 'src/queue/jobs/job-names';
 import { QueueService } from 'src/queue/queue.service';
+import { RealtimeGateway } from 'src/realtime/realtime.gateway';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { generatePlainToken, hashToken } from 'src/common/utils/token';
 
 @Injectable()
 export class DevicesService {
-  constructor(private prisma: PrismaService, private queue: QueueService, private audit: AuditLogsService) {}
+  constructor(private prisma: PrismaService, private queue: QueueService, private audit: AuditLogsService, private realtime: RealtimeGateway) {}
 
   async create(userId: string, dto: CreateDeviceDto) {
     await this.assertWorkspaceMembership(userId, dto.workspaceId);
@@ -28,13 +29,15 @@ export class DevicesService {
     const device = await this.getOwnedDeviceForUser(userId, deviceId);
     await this.prisma.device.update({ where: { id: deviceId }, data: { status: 'PAIRING' } });
     await this.queue.devices.add(JOB_NAMES.DEVICE_PAIR_START, { deviceId });
+    this.realtime.emitToWorkspace(device.workspaceId, 'device.status.updated', { deviceId, status: 'PAIRING' });
     return { success: true, status: 'PAIRING', qrCode: 'stubbed-qr-from-worker', workspaceId: device.workspaceId };
   }
 
   async reconnect(userId: string, deviceId: string) {
-    await this.getOwnedDeviceForUser(userId, deviceId);
+    const device = await this.getOwnedDeviceForUser(userId, deviceId);
     await this.prisma.device.update({ where: { id: deviceId }, data: { status: 'RECONNECTING' } });
     await this.queue.devices.add(JOB_NAMES.DEVICE_RECONNECT, { deviceId });
+    this.realtime.emitToWorkspace(device.workspaceId, 'device.status.updated', { deviceId, status: 'RECONNECTING' });
     return { success: true };
   }
 
