@@ -26,7 +26,7 @@ const sessionStorageKey = 'watether.console.session';
 const workspaceStorageKey = 'watether.console.workspace';
 
 const navItems: Array<{ key: ActiveSection; label: string; href: string }> = [
-  { key: 'overview', label: 'Overview', href: '/' },
+  { key: 'overview', label: 'Overview', href: '/console' },
   { key: 'devices', label: 'Devices', href: '/devices' },
   { key: 'messages', label: 'Messages', href: '/messages' },
   { key: 'webhooks', label: 'Webhooks', href: '/webhooks' },

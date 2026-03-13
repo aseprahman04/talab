@@ -65,6 +65,208 @@ code {
   padding: 40px;
 }
 
+.marketing-shell {
+  display: grid;
+  gap: 26px;
+  padding: 24px;
+}
+
+.marketing-hero,
+.story-strip,
+.pricing-stage {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+}
+
+.marketing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-lockup strong,
+.closing-band h2,
+.pricing-card h2 {
+  font-family: var(--font-display), sans-serif;
+}
+
+.brand-lockup small,
+.marketing-copy p,
+.pricing-card p,
+.story-card p,
+.signal-card li,
+.closing-band p {
+  color: var(--muted);
+}
+
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 16px 28px rgba(18, 110, 98, 0.24);
+}
+
+.marketing-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.95fr;
+  gap: 24px;
+  padding: 28px;
+  border-radius: 34px;
+}
+
+.marketing-copy h1 {
+  margin: 18px 0 14px;
+  max-width: 10ch;
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(3rem, 6vw, 5.8rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 26px 0;
+}
+
+.marketing-proof {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.marketing-proof div,
+.signal-card,
+.story-card,
+.pricing-card,
+.closing-band {
+  border-radius: 26px;
+}
+
+.marketing-proof div {
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.54);
+  border: 1px solid var(--line);
+}
+
+.marketing-proof strong,
+.story-card strong,
+.signal-card strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.marketing-card-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.signal-card {
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.signal-card.contrast {
+  color: #fff9ef;
+  background: linear-gradient(160deg, #173845, #215d55 58%, #e57b45 140%);
+}
+
+.signal-card.contrast .eyebrow {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff3d7;
+}
+
+.signal-card ul,
+.pricing-card ul {
+  margin: 16px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.eyebrow.alt {
+  color: var(--accent-2);
+  background: rgba(239, 127, 69, 0.12);
+}
+
+.story-strip {
+  display: grid;
+  gap: 18px;
+}
+
+.story-grid,
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.story-card {
+  padding: 22px;
+}
+
+.pricing-head {
+  max-width: 760px;
+}
+
+.pricing-card {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.pricing-card h2 {
+  margin: 14px 0 10px;
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.pricing-card h2 small {
+  margin-left: 6px;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.pricing-card.featured {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 248, 238, 0.98), rgba(248, 233, 214, 0.94));
+  border-color: rgba(239, 127, 69, 0.32);
+}
+
+.quota-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: rgba(24, 34, 47, 0.06);
+}
+
+.closing-band {
+  width: min(1240px, 100%);
+  margin: 0 auto 24px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+
 .hero-card {
   width: min(1200px, 100%);
   display: grid;
@@ -476,10 +678,23 @@ th {
 }
 
 @media (max-width: 1120px) {
+  .marketing-grid,
   .console-shell,
   .hero-card,
   .panel-grid {
     grid-template-columns: 1fr;
+  }
+
+  .story-grid,
+  .pricing-grid,
+  .marketing-proof {
+    grid-template-columns: 1fr;
+  }
+
+  .marketing-nav,
+  .closing-band {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .workspace-rail {
@@ -498,11 +713,13 @@ th {
 }
 
 @media (max-width: 720px) {
+  .marketing-shell,
   .landing-shell,
   .console-shell {
     padding: 14px;
   }
 
+  .marketing-grid,
   .hero-card,
   .workspace-rail,
   .console-header,
@@ -512,6 +729,7 @@ th {
     border-radius: 22px;
   }
 
+  .marketing-copy h1,
   .hero-copy h1,
   .console-header h1 {
     font-size: 2.4rem;
