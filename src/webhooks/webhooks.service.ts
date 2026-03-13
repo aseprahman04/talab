@@ -19,6 +19,18 @@ export class WebhooksService {
     return this.prisma.webhook.findMany({ where: { workspaceId } });
   }
 
+  async logs(userId: string, webhookId: string, limit = 20) {
+    const webhook = await this.prisma.webhook.findUnique({ where: { id: webhookId } });
+    if (!webhook) throw new NotFoundException('Webhook not found');
+    await this.assertWorkspaceMembership(userId, webhook.workspaceId);
+
+    return this.prisma.webhookDelivery.findMany({
+      where: { webhookId },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(Math.max(limit, 1), 100),
+    });
+  }
+
   async testDelivery(userId: string, webhookId: string) {
     const webhook = await this.prisma.webhook.findUnique({ where: { id: webhookId } });
     if (!webhook) throw new NotFoundException('Webhook not found');

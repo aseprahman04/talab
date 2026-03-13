@@ -47,6 +47,19 @@ export type Webhook = {
   createdAt: string;
 };
 
+export type WebhookDelivery = {
+  id: string;
+  webhookId: string;
+  eventType: string;
+  status: string;
+  attemptCount: number;
+  responseCode?: number | null;
+  responseBody?: string | null;
+  lastAttemptAt?: string | null;
+  nextRetryAt?: string | null;
+  createdAt: string;
+};
+
 export type Broadcast = {
   id: string;
   workspaceId: string;

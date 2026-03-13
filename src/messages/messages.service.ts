@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditLogsService } from 'src/audit-logs/audit-logs.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { JOB_NAMES } from 'src/queue/jobs/job-names';
@@ -40,6 +40,41 @@ export class MessagesService {
   async list(userId: string, workspaceId: string) {
     await this.assertWorkspaceMembership(userId, workspaceId);
     return this.prisma.message.findMany({ where: { workspaceId }, orderBy: { createdAt: 'desc' }, take: 100 });
+  }
+
+  async retry(userId: string, messageId: string) {
+    const message = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!message) throw new NotFoundException('Message not found');
+
+    await this.assertWorkspaceMembership(userId, message.workspaceId);
+
+    const retriedMessage = await this.prisma.message.update({
+      where: { id: messageId },
+      data: {
+        status: 'QUEUED',
+        queuedAt: new Date(),
+        failedAt: null,
+        errorMessage: null,
+      },
+    });
+
+    await this.queue.messages.add(JOB_NAMES.MESSAGE_SEND, { messageId: retriedMessage.id }, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5000 },
+      removeOnComplete: 100,
+      removeOnFail: 100,
+    });
+
+    await this.audit.log({
+      workspaceId: retriedMessage.workspaceId,
+      userId,
+      action: 'message.retry',
+      entityType: 'Message',
+      entityId: retriedMessage.id,
+      payload: { previousStatus: message.status },
+    });
+
+    return { success: true, messageId: retriedMessage.id, status: 'QUEUED' };
   }
 
   private async assertWorkspaceMembership(userId: string, workspaceId: string) {

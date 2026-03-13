@@ -30,12 +30,50 @@ export class DevicesProcessor extends WorkerHost {
     const device = await this.prisma.device.findUnique({ where: { id: deviceId } });
     if (!device) return;
 
+    const now = new Date();
+
     await this.prisma.device.update({
       where: { id: deviceId },
       data: {
         status: 'PAIRING',
-        lastSeenAt: new Date(),
+        connectedAt: null,
+        lastSeenAt: now,
       },
+    });
+
+    const webhooks = await this.prisma.webhook.findMany({
+      where: { workspaceId: device.workspaceId, isActive: true },
+      select: { id: true },
+    });
+
+    await Promise.all(webhooks.map(async (webhook: { id: string }) => {
+      const delivery = await this.prisma.webhookDelivery.create({
+        data: {
+          webhookId: webhook.id,
+          eventType: 'device.pairing',
+          payload: {
+            event: 'device.pairing',
+            workspaceId: device.workspaceId,
+            deviceId: device.id,
+            status: 'PAIRING',
+            qrCode: 'stubbed-qr-from-worker',
+            timestamp: now.toISOString(),
+          },
+        },
+      });
+
+      await this.queue.webhooks.add(JOB_NAMES.WEBHOOK_DELIVERY, { deliveryId: delivery.id }, {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 10000 },
+        removeOnComplete: 100,
+        removeOnFail: 100,
+      });
+    }));
+
+    await this.queue.devices.add(JOB_NAMES.DEVICE_RECONNECT, { deviceId }, {
+      delay: 8000,
+      removeOnComplete: 100,
+      removeOnFail: 100,
     });
 
     this.realtime.emitToWorkspace(device.workspaceId, 'device.status.updated', {

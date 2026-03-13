@@ -15,6 +15,11 @@ export class WebhooksController {
   @Get()
   list(@CurrentUser() user: { sub: string }, @Query('workspaceId') workspaceId: string) { return this.service.list(user.sub, workspaceId); }
 
+  @Get(':id/logs')
+  logs(@CurrentUser() user: { sub: string }, @Param('id') id: string, @Query('limit') limit?: string) {
+    return this.service.logs(user.sub, id, limit ? Number(limit) : undefined);
+  }
+
   @Post(':id/test')
   test(@CurrentUser() user: { sub: string }, @Param('id') id: string) { return this.service.testDelivery(user.sub, id); }
 }

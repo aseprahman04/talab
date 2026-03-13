@@ -14,6 +14,7 @@ import {
   formatDateTime,
   Message,
   Webhook,
+  WebhookDelivery,
   WorkspaceMembership,
 } from '../lib/api';
 
@@ -49,6 +50,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   const [devices, setDevices] = useState<Device[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [webhookLogs, setWebhookLogs] = useState<Record<string, WebhookDelivery[]>>({});
   const [autoReplies, setAutoReplies] = useState<AutoReplyRule[]>([]);
   const [recentBroadcasts, setRecentBroadcasts] = useState<Broadcast[]>([]);
   const [generatedToken, setGeneratedToken] = useState<{ deviceName: string; token: string } | null>(null);
@@ -158,6 +160,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
           setDevices([]);
           setMessages([]);
           setWebhooks([]);
+          setWebhookLogs({});
           setAutoReplies([]);
           return;
         }
@@ -187,6 +190,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         setDevices(deviceData);
         setMessages(messageData);
         setWebhooks(webhookData);
+        setWebhookLogs({});
         setAutoReplies(autoReplyData);
         if (!messageForm.deviceId && deviceData[0]) setMessageForm((current) => ({ ...current, deviceId: deviceData[0].id }));
         if (!broadcastForm.deviceId && deviceData[0]) setBroadcastForm((current) => ({ ...current, deviceId: deviceData[0].id }));
@@ -309,6 +313,30 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     try {
       await apiRequest(`/webhooks/${webhookId}/test`, { method: 'POST' }, session.accessToken);
       pushFeedback('success', 'Webhook test berhasil dimasukkan ke queue.');
+      await handleWebhookLogsLoad(webhookId);
+    } catch (error) {
+      pushFeedback('error', getErrorMessage(error));
+    }
+  }
+
+  async function handleWebhookLogsLoad(webhookId: string) {
+    if (!session?.accessToken) return;
+    try {
+      const logs = await apiRequest<WebhookDelivery[]>(`/webhooks/${webhookId}/logs?limit=10`, undefined, session.accessToken);
+      startTransition(() => {
+        setWebhookLogs((current) => ({ ...current, [webhookId]: logs }));
+      });
+    } catch (error) {
+      pushFeedback('error', getErrorMessage(error));
+    }
+  }
+
+  async function handleMessageRetry(messageId: string) {
+    if (!session?.accessToken || !selectedWorkspaceId) return;
+    try {
+      await apiRequest(`/messages/${messageId}/retry`, { method: 'POST' }, session.accessToken);
+      pushFeedback('success', 'Message gagal dikembalikan ke queue retry.');
+      await refreshWorkspaceData(selectedWorkspaceId, session.accessToken);
     } catch (error) {
       pushFeedback('error', getErrorMessage(error));
     }
@@ -365,6 +393,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     setDevices([]);
     setMessages([]);
     setWebhooks([]);
+    setWebhookLogs({});
     setAutoReplies([]);
     setRecentBroadcasts([]);
     setGeneratedToken(null);
@@ -442,8 +471,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
 
         {activeSection === 'overview' ? <OverviewGrid devices={devices} messages={filteredMessages} webhooks={webhooks} autoReplies={autoReplies} /> : null}
         {activeSection === 'devices' ? <DevicesPanel deviceForm={deviceForm} setDeviceForm={setDeviceForm} selectedWorkspaceId={selectedWorkspaceId} devices={devices} onCreate={handleDeviceCreate} onAction={handleDeviceAction} onCreateToken={handleTokenCreate} /> : null}
-        {activeSection === 'messages' ? <MessagesPanel devices={devices} messageForm={messageForm} setMessageForm={setMessageForm} selectedWorkspaceId={selectedWorkspaceId} messageSearch={messageSearch} setMessageSearch={setMessageSearch} messages={filteredMessages} onSubmit={handleMessageSend} /> : null}
-        {activeSection === 'webhooks' ? <WebhooksPanel selectedWorkspaceId={selectedWorkspaceId} webhookForm={webhookForm} setWebhookForm={setWebhookForm} webhooks={webhooks} onSubmit={handleWebhookCreate} onTest={handleWebhookTest} /> : null}
+        {activeSection === 'messages' ? <MessagesPanel devices={devices} messageForm={messageForm} setMessageForm={setMessageForm} selectedWorkspaceId={selectedWorkspaceId} messageSearch={messageSearch} setMessageSearch={setMessageSearch} messages={filteredMessages} onSubmit={handleMessageSend} onRetry={handleMessageRetry} /> : null}
+        {activeSection === 'webhooks' ? <WebhooksPanel selectedWorkspaceId={selectedWorkspaceId} webhookForm={webhookForm} setWebhookForm={setWebhookForm} webhooks={webhooks} webhookLogs={webhookLogs} onSubmit={handleWebhookCreate} onTest={handleWebhookTest} onLoadLogs={handleWebhookLogsLoad} /> : null}
         {activeSection === 'broadcasts' ? <BroadcastsPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} broadcastForm={broadcastForm} setBroadcastForm={setBroadcastForm} recentBroadcasts={recentBroadcasts} onSubmit={handleBroadcastCreate} onStart={handleBroadcastStart} /> : null}
         {activeSection === 'auto-replies' ? <AutoRepliesPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} autoReplyForm={autoReplyForm} setAutoReplyForm={setAutoReplyForm} autoReplies={autoReplies} isRefreshing={isRefreshing} onSubmit={handleAutoReplyCreate} /> : null}
       </section>
@@ -487,12 +516,12 @@ function DevicesPanel({ deviceForm, setDeviceForm, selectedWorkspaceId, devices,
   return <section className="panel glass-panel"><SectionHeading title="Devices" subtitle="Buat device, start pairing stub, reconnect, dan generate token API." /><form className="stack-form compact" onSubmit={onCreate}><label className="field-block"><span>Nama device</span><input value={deviceForm.name} onChange={(event) => setDeviceForm({ name: event.target.value })} placeholder="CS Jakarta 01" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Tambah Device</button></form><div className="list-stack">{devices.length ? devices.map((device) => <article className="card-row" key={device.id}><div><strong>{device.name}</strong><p>{device.phoneNumber || 'Nomor belum terhubung'}</p><small>{device.status} · Health {device.healthScore}</small></div><div className="action-row"><button className="mini-button" onClick={() => onAction(device.id, 'pair')} type="button">Pair</button><button className="mini-button" onClick={() => onAction(device.id, 'reconnect')} type="button">Reconnect</button><button className="mini-button accent" onClick={() => onCreateToken(device)} type="button">Token</button></div></article>) : <p className="empty-copy">Belum ada device untuk workspace ini.</p>}</div></section>;
 }
 
-function MessagesPanel({ devices, messageForm, setMessageForm, selectedWorkspaceId, messageSearch, setMessageSearch, messages, onSubmit }: { devices: Device[]; messageForm: { deviceId: string; target: string; type: string; message: string; mediaUrl: string }; setMessageForm: Dispatch<SetStateAction<{ deviceId: string; target: string; type: string; message: string; mediaUrl: string }>>; selectedWorkspaceId: string; messageSearch: string; setMessageSearch: Dispatch<SetStateAction<string>>; messages: Message[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; }) {
-  return <section className="panel glass-panel"><SectionHeading title="Send Message" subtitle="Mengirim request ke queue `message.send` dan membaca log message workspace." /><form className="form-grid" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={messageForm.deviceId} onChange={(event) => setMessageForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Pilih device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Target</span><input value={messageForm.target} onChange={(event) => setMessageForm((current) => ({ ...current, target: event.target.value }))} placeholder="6281234567890" required /></label><label className="field-block"><span>Tipe</span><select value={messageForm.type} onChange={(event) => setMessageForm((current) => ({ ...current, type: event.target.value }))}><option value="TEXT">TEXT</option><option value="IMAGE">IMAGE</option><option value="DOCUMENT">DOCUMENT</option><option value="AUDIO">AUDIO</option><option value="VIDEO">VIDEO</option></select></label><label className="field-block span-2"><span>Pesan</span><textarea rows={4} value={messageForm.message} onChange={(event) => setMessageForm((current) => ({ ...current, message: event.target.value }))} placeholder="Halo, pesanmu sudah diproses." required /></label><label className="field-block span-2"><span>Media URL opsional</span><input value={messageForm.mediaUrl} onChange={(event) => setMessageForm((current) => ({ ...current, mediaUrl: event.target.value }))} placeholder="https://cdn.example.com/file.pdf" /></label><div className="span-2 button-row"><button className="button-primary" disabled={!selectedWorkspaceId} type="submit">Queue Message</button><input className="search-input" value={messageSearch} onChange={(event) => setMessageSearch(event.target.value)} placeholder="Cari log message..." /></div></form><div className="table-wrap"><table><thead><tr><th>Waktu</th><th>Arah</th><th>Target / From</th><th>Tipe</th><th>Status</th><th>Konten</th></tr></thead><tbody>{messages.length ? messages.map((entry) => <tr key={entry.id}><td>{formatDateTime(entry.createdAt)}</td><td>{entry.direction}</td><td>{entry.recipient || entry.sender || '-'}</td><td>{entry.type}</td><td><span className={`status-chip ${statusTone(entry.status)}`}>{entry.status}</span></td><td>{entry.content || entry.errorMessage || '-'}</td></tr>) : <tr><td colSpan={6} className="empty-table">Belum ada message log untuk filter ini.</td></tr>}</tbody></table></div></section>;
+function MessagesPanel({ devices, messageForm, setMessageForm, selectedWorkspaceId, messageSearch, setMessageSearch, messages, onSubmit, onRetry }: { devices: Device[]; messageForm: { deviceId: string; target: string; type: string; message: string; mediaUrl: string }; setMessageForm: Dispatch<SetStateAction<{ deviceId: string; target: string; type: string; message: string; mediaUrl: string }>>; selectedWorkspaceId: string; messageSearch: string; setMessageSearch: Dispatch<SetStateAction<string>>; messages: Message[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onRetry: (messageId: string) => Promise<void>; }) {
+  return <section className="panel glass-panel"><SectionHeading title="Send Message" subtitle="Mengirim request ke queue `message.send`, memantau kegagalan, dan retry langsung dari console." /><form className="form-grid" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={messageForm.deviceId} onChange={(event) => setMessageForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Pilih device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Target</span><input value={messageForm.target} onChange={(event) => setMessageForm((current) => ({ ...current, target: event.target.value }))} placeholder="6281234567890" required /></label><label className="field-block"><span>Tipe</span><select value={messageForm.type} onChange={(event) => setMessageForm((current) => ({ ...current, type: event.target.value }))}><option value="TEXT">TEXT</option><option value="IMAGE">IMAGE</option><option value="DOCUMENT">DOCUMENT</option><option value="AUDIO">AUDIO</option><option value="VIDEO">VIDEO</option></select></label><label className="field-block span-2"><span>Pesan</span><textarea rows={4} value={messageForm.message} onChange={(event) => setMessageForm((current) => ({ ...current, message: event.target.value }))} placeholder="Halo, pesanmu sudah diproses." required /></label><label className="field-block span-2"><span>Media URL opsional</span><input value={messageForm.mediaUrl} onChange={(event) => setMessageForm((current) => ({ ...current, mediaUrl: event.target.value }))} placeholder="https://cdn.example.com/file.pdf" /></label><div className="span-2 button-row"><button className="button-primary" disabled={!selectedWorkspaceId} type="submit">Queue Message</button><input className="search-input" value={messageSearch} onChange={(event) => setMessageSearch(event.target.value)} placeholder="Cari log message..." /></div></form><div className="table-wrap"><table><thead><tr><th>Waktu</th><th>Arah</th><th>Target / From</th><th>Tipe</th><th>Status</th><th>Konten</th><th>Aksi</th></tr></thead><tbody>{messages.length ? messages.map((entry) => <tr key={entry.id}><td>{formatDateTime(entry.createdAt)}</td><td>{entry.direction}</td><td>{entry.recipient || entry.sender || '-'}</td><td>{entry.type}</td><td><span className={`status-chip ${statusTone(entry.status)}`}>{entry.status}</span></td><td>{entry.content || entry.errorMessage || '-'}</td><td>{entry.status.toUpperCase() === 'FAILED' ? <button className="mini-button accent" onClick={() => onRetry(entry.id)} type="button">Retry</button> : <span className="helper-copy">-</span>}</td></tr>) : <tr><td colSpan={7} className="empty-table">Belum ada message log untuk filter ini.</td></tr>}</tbody></table></div></section>;
 }
 
-function WebhooksPanel({ selectedWorkspaceId, webhookForm, setWebhookForm, webhooks, onSubmit, onTest }: { selectedWorkspaceId: string; webhookForm: { name: string; url: string; secret: string }; setWebhookForm: Dispatch<SetStateAction<{ name: string; url: string; secret: string }>>; webhooks: Webhook[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onTest: (webhookId: string) => Promise<void>; }) {
-  return <section className="panel glass-panel"><SectionHeading title="Webhooks" subtitle="Buat endpoint callback tenant, lalu kirim test event manual dari dashboard." /><form className="stack-form compact" onSubmit={onSubmit}><label className="field-block"><span>Nama</span><input value={webhookForm.name} onChange={(event) => setWebhookForm((current) => ({ ...current, name: event.target.value }))} placeholder="Main webhook" required /></label><label className="field-block"><span>URL</span><input value={webhookForm.url} onChange={(event) => setWebhookForm((current) => ({ ...current, url: event.target.value }))} placeholder="https://example.com/webhook" required /></label><label className="field-block"><span>Secret</span><input value={webhookForm.secret} onChange={(event) => setWebhookForm((current) => ({ ...current, secret: event.target.value }))} placeholder="supersecretkey" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Tambah Webhook</button></form><div className="list-stack compact-list">{webhooks.length ? webhooks.map((hook) => <article className="card-row slim" key={hook.id}><div><strong>{hook.name}</strong><p>{hook.url}</p><small>{hook.isActive ? 'Aktif' : 'Nonaktif'} · {formatDateTime(hook.createdAt)}</small></div><div className="action-row"><button className="mini-button accent" onClick={() => onTest(hook.id)} type="button">Test</button></div></article>) : <p className="empty-copy">Belum ada webhook aktif.</p>}</div></section>;
+function WebhooksPanel({ selectedWorkspaceId, webhookForm, setWebhookForm, webhooks, webhookLogs, onSubmit, onTest, onLoadLogs }: { selectedWorkspaceId: string; webhookForm: { name: string; url: string; secret: string }; setWebhookForm: Dispatch<SetStateAction<{ name: string; url: string; secret: string }>>; webhooks: Webhook[]; webhookLogs: Record<string, WebhookDelivery[]>; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onTest: (webhookId: string) => Promise<void>; onLoadLogs: (webhookId: string) => Promise<void>; }) {
+  return <section className="panel glass-panel"><SectionHeading title="Webhooks" subtitle="Buat endpoint callback tenant, kirim test event manual, lalu audit histori delivery terakhir." /><form className="stack-form compact" onSubmit={onSubmit}><label className="field-block"><span>Nama</span><input value={webhookForm.name} onChange={(event) => setWebhookForm((current) => ({ ...current, name: event.target.value }))} placeholder="Main webhook" required /></label><label className="field-block"><span>URL</span><input value={webhookForm.url} onChange={(event) => setWebhookForm((current) => ({ ...current, url: event.target.value }))} placeholder="https://example.com/webhook" required /></label><label className="field-block"><span>Secret</span><input value={webhookForm.secret} onChange={(event) => setWebhookForm((current) => ({ ...current, secret: event.target.value }))} placeholder="supersecretkey" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Tambah Webhook</button></form><div className="list-stack compact-list">{webhooks.length ? webhooks.map((hook) => <article className="card-row slim" key={hook.id}><div><strong>{hook.name}</strong><p>{hook.url}</p><small>{hook.isActive ? 'Aktif' : 'Nonaktif'} · {formatDateTime(hook.createdAt)}</small>{webhookLogs[hook.id]?.length ? <div className="table-wrap compact-table"><table><thead><tr><th>Event</th><th>Status</th><th>Attempt</th><th>HTTP</th><th>Last Attempt</th></tr></thead><tbody>{webhookLogs[hook.id].map((log) => <tr key={log.id}><td>{log.eventType}</td><td><span className={`status-chip ${statusTone(log.status)}`}>{log.status}</span></td><td>{log.attemptCount}</td><td>{log.responseCode ?? '-'}</td><td>{formatDateTime(log.lastAttemptAt || log.createdAt)}</td></tr>)}</tbody></table></div> : null}</div><div className="action-row"><button className="mini-button" onClick={() => onLoadLogs(hook.id)} type="button">Logs</button><button className="mini-button accent" onClick={() => onTest(hook.id)} type="button">Test</button></div></article>) : <p className="empty-copy">Belum ada webhook aktif.</p>}</div></section>;
 }
 
 function BroadcastsPanel({ devices, selectedWorkspaceId, broadcastForm, setBroadcastForm, recentBroadcasts, onSubmit, onStart }: { devices: Device[]; selectedWorkspaceId: string; broadcastForm: { deviceId: string; name: string; messageTemplate: string; recipientsText: string }; setBroadcastForm: Dispatch<SetStateAction<{ deviceId: string; name: string; messageTemplate: string; recipientsText: string }>>; recentBroadcasts: Broadcast[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onStart: (broadcastId: string) => Promise<void>; }) {
