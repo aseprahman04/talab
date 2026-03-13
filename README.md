@@ -1,12 +1,15 @@
-# WATether Backend Boilerplate
+# WATether
 
-Ini fondasi backend yang jauh lebih lengkap untuk platform WhatsApp gateway multi-tenant.
+Ini fondasi produk WhatsApp gateway multi-tenant dengan dua muka yang sekarang sudah dipisah jelas:
+- landing publik di root frontend untuk positioning, paket coba, dan CTA
+- console operasional di route `/console` untuk auth, workspace, devices, messages, webhooks, broadcast, dan auto-reply
 
 ## Sudah ada
 - Auth register/login/refresh skeleton
 - JWT access + refresh flow dasar
 - RBAC workspace member
-- Frontend Next.js dashboard untuk auth, workspace, devices, messages, webhooks, broadcast, auto-reply
+- Frontend Next.js dengan landing publik berbahasa Indonesia
+- Console Next.js untuk auth, workspace, devices, messages, webhooks, broadcast, auto-reply
 - Devices module
 - Messages module dengan enqueue ke BullMQ
 - Broadcast module dasar
@@ -15,7 +18,9 @@ Ini fondasi backend yang jauh lebih lengkap untuk platform WhatsApp gateway mult
 - Audit log service
 - Prisma schema cukup lengkap
 - Dockerfile + docker-compose.dev
-- Worker BullMQ untuk message, webhook, broadcast, auto-reply
+- Worker BullMQ untuk message, webhook, broadcast, auto-reply, dan device lifecycle stub
+- Retry message gagal dari dashboard
+- Webhook delivery log + test delivery dari dashboard
 
 ## Belum final
 - Integrasi engine WhatsApp session asli
@@ -36,6 +41,13 @@ Ini fondasi backend yang jauh lebih lengkap untuk platform WhatsApp gateway mult
 8. Terminal ketiga: `cd frontend && npm run dev`
 
 Frontend default jalan di `http://localhost:3001` dan API di `http://localhost:3000`.
+
+## Route frontend
+- Landing publik: `http://localhost:3001/`
+- Console overview: `http://localhost:3001/console`
+- Module route lain: `/devices`, `/messages`, `/webhooks`, `/broadcasts`, `/auto-replies`
+
+CTA di landing sekarang langsung bisa mengarahkan ke mode login atau register di console via query string seperti `?mode=register`.
 
 ## Docker dev
 - `docker compose -f docker-compose.dev.yml up --build`

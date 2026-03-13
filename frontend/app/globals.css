@@ -143,6 +143,31 @@ code {
   margin: 26px 0;
 }
 
+.helper-strip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 22px;
+}
+
+.helper-strip span,
+.auth-intro {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--line);
+}
+
+.auth-intro {
+  margin-bottom: 14px;
+}
+
+.auth-intro strong,
+.faq-item strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
 .marketing-proof {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -209,6 +234,14 @@ code {
   gap: 18px;
 }
 
+.trust-stage,
+.faq-stage {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+
 .story-grid,
 .pricing-grid {
   display: grid;
@@ -218,6 +251,13 @@ code {
 
 .story-card {
   padding: 22px;
+}
+
+.quote-card p,
+.faq-item p,
+.auth-intro p {
+  margin: 0;
+  color: var(--muted);
 }
 
 .pricing-head {
@@ -255,6 +295,17 @@ code {
   border-radius: 999px;
   font-weight: 700;
   background: rgba(24, 34, 47, 0.06);
+}
+
+.faq-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.faq-item {
+  padding: 22px;
+  border-radius: 24px;
 }
 
 .closing-band {
@@ -687,6 +738,7 @@ th {
 
   .story-grid,
   .pricing-grid,
+  .faq-list,
   .marketing-proof {
     grid-template-columns: 1fr;
   }

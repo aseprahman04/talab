@@ -64,6 +64,11 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   useEffect(() => {
     const rawSession = window.localStorage.getItem(sessionStorageKey);
     const rawWorkspace = window.localStorage.getItem(workspaceStorageKey);
+    const requestedMode = new URLSearchParams(window.location.search).get('mode');
+
+    if (requestedMode === 'register' || requestedMode === 'login') {
+      setAuthMode(requestedMode);
+    }
 
     if (rawSession) {
       try {
@@ -491,6 +496,10 @@ function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, f
           <div className="hero-metrics"><Metric label="Stack" value="Next.js + NestJS" /><Metric label="API Base" value={apiBaseUrl.replace(/^https?:\/\//, '')} /><Metric label="Mode" value="Realtime workspace" /></div>
         </div>
         <div className="auth-panel">
+          <div className="auth-intro">
+            <strong>{authMode === 'register' ? 'Mode trial aktif' : 'Masuk ke workspace'}</strong>
+            <p>{authMode === 'register' ? 'Buat akun dulu, lalu lanjut buat workspace pertama untuk eksplor alur device dan message.' : 'Login untuk kembali ke workspace dan melanjutkan operasional.'}</p>
+          </div>
           <div className="auth-switch">
             <button className={authMode === 'login' ? 'pill active' : 'pill'} onClick={() => setAuthMode('login')} type="button">Login</button>
             <button className={authMode === 'register' ? 'pill active' : 'pill'} onClick={() => setAuthMode('register')} type="button">Register</button>

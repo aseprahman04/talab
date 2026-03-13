@@ -1,6 +1,36 @@
 import Link from 'next/link';
 
 export default function HomePage() {
+  const testimonials = [
+    {
+      name: 'Toko retail omni-channel',
+      quote: 'Trial paling penting buat kami bukan harga murah, tapi apakah tim CS bisa langsung pakai. Layout WATether sudah menjawab itu.',
+    },
+    {
+      name: 'Tim collection regional',
+      quote: 'Yang kami cari adalah reminder terjadwal, log webhook, dan pemisahan workspace. Itu sudah terasa dari demo awal.',
+    },
+    {
+      name: 'Agen distribusi properti',
+      quote: 'Kami butuh follow-up lead dari iklan ke WhatsApp tanpa spreadsheet acak. Landing dan paketnya sudah terasa relevan untuk pasar lokal.',
+    },
+  ];
+
+  const faqs = [
+    {
+      question: 'Apakah paket Coba Dulu benar-benar gratis?',
+      answer: 'Ya, positioning-nya untuk validasi alur tim kecil. Batasannya sengaja ketat supaya cocok untuk trial, bukan volume produksi besar.',
+    },
+    {
+      question: 'Apakah route console langsung bisa dipakai registrasi?',
+      answer: 'Bisa. CTA dari landing sekarang langsung mengarahkan ke mode register atau login di console tanpa perlu halaman auth terpisah.',
+    },
+    {
+      question: 'Apakah ini sudah official WhatsApp API?',
+      answer: 'Belum. Fondasi produk, queue, webhook, dan dashboard sudah ada, tapi engine session WhatsApp asli tetap perlu dipilih dan diintegrasikan sesuai strategi Anda.',
+    },
+  ];
+
   const plans = [
     {
       name: 'Coba Dulu',
@@ -45,7 +75,7 @@ export default function HomePage() {
           </Link>
           <div className="button-row">
             <Link className="button-ghost" href="/#paket">Lihat Paket</Link>
-            <Link className="button-primary" href="/console">Masuk Console</Link>
+            <Link className="button-primary" href="/console?mode=login">Masuk Console</Link>
           </div>
         </div>
 
@@ -58,8 +88,14 @@ export default function HomePage() {
               tapi copy, use case, dan struktur penawarannya dibikin relevan untuk pasar Indonesia terlebih dahulu.
             </p>
             <div className="hero-actions">
-              <Link className="button-primary" href="/console">Coba dashboard</Link>
+              <Link className="button-primary" href="/console?mode=register">Coba gratis 14 hari</Link>
+              <a className="button-ghost" href="mailto:demo@watether.local?subject=Request%20Demo%20WATether">Request demo tim</a>
               <a className="button-secondary" href="#fitur">Lihat fitur inti</a>
+            </div>
+            <div className="helper-strip">
+              <span>Trial cepat untuk tim Indo</span>
+              <span>Tanpa perlu sales call dulu</span>
+              <span>Masuk console lalu register</span>
             </div>
             <div className="marketing-proof">
               <div><strong>Multi-tenant</strong><span>Workspace, role, dan audit log</span></div>
@@ -125,7 +161,37 @@ export default function HomePage() {
               <ul>
                 {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
               </ul>
-              <Link className={plan.featured ? 'button-primary' : 'button-secondary'} href="/console">Mulai dari sini</Link>
+              <Link className={plan.featured ? 'button-primary' : 'button-secondary'} href={`/console?mode=register&plan=${encodeURIComponent(plan.name)}`}>Mulai dari sini</Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="trust-stage">
+        <div className="section-heading pricing-head">
+          <h3>Use Case Yang Terasa Lokal</h3>
+          <p>Bagian ini menggantikan testimonial generik. Fokusnya adalah bukti relevansi untuk operasional di Indonesia.</p>
+        </div>
+        <div className="story-grid">
+          {testimonials.map((item) => (
+            <article key={item.name} className="story-card glass-panel quote-card">
+              <span className="eyebrow alt">{item.name}</span>
+              <p>{item.quote}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="faq-stage">
+        <div className="section-heading pricing-head">
+          <h3>FAQ Ringkas</h3>
+          <p>Yang paling sering ditanyakan saat produk masih tahap fondasi tapi sudah ingin dipresentasikan ke calon pengguna.</p>
+        </div>
+        <div className="faq-list">
+          {faqs.map((item) => (
+            <article key={item.question} className="faq-item glass-panel">
+              <strong>{item.question}</strong>
+              <p>{item.answer}</p>
             </article>
           ))}
         </div>
@@ -138,7 +204,7 @@ export default function HomePage() {
           <p>Ini membuat WATether lebih masuk akal sebagai SaaS: user melihat positioning dulu, lalu masuk ke dashboard untuk eksekusi.</p>
         </div>
         <div className="button-row">
-          <Link className="button-primary" href="/console">Buka Console</Link>
+          <Link className="button-primary" href="/console?mode=register">Mulai trial</Link>
           <a className="button-ghost" href="#paket">Bandingkan paket</a>
         </div>
       </section>
