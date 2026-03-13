@@ -7,16 +7,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserStatus { ACTIVE DISABLED PENDING }
-enum WorkspaceStatus { ACTIVE SUSPENDED TRIAL EXPIRED }
-enum MemberRole { OWNER ADMIN STAFF }
-enum DeviceStatus { CREATED PAIRING CONNECTED RECONNECTING DISCONNECTED SESSION_EXPIRED RATE_LIMITED UNSTABLE BANNED_RISK DISABLED }
-enum MessageDirection { INBOUND OUTBOUND }
-enum MessageType { TEXT IMAGE DOCUMENT AUDIO VIDEO }
-enum MessageStatus { QUEUED PROCESSING SENT DELIVERED READ FAILED }
-enum BroadcastStatus { DRAFT QUEUED RUNNING PAUSED COMPLETED FAILED CANCELED }
-enum WebhookDeliveryStatus { PENDING SUCCESS FAILED RETRYING }
-enum SubscriptionStatus { TRIAL ACTIVE PAST_DUE CANCELED EXPIRED }
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  PENDING
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  EXPIRED
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+enum DeviceStatus {
+  CREATED
+  PAIRING
+  CONNECTED
+  RECONNECTING
+  DISCONNECTED
+  SESSION_EXPIRED
+  RATE_LIMITED
+  UNSTABLE
+  BANNED_RISK
+  DISABLED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+}
+
+enum MessageStatus {
+  QUEUED
+  PROCESSING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum BroadcastStatus {
+  DRAFT
+  QUEUED
+  RUNNING
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum DemoRequestStatus {
+  NEW
+  REVIEWED
+  CONTACTED
+  CLOSED
+}
 
 model User {
   id             String            @id @default(uuid())
@@ -268,4 +343,21 @@ model AuditLog {
   createdAt   DateTime  @default(now())
   workspace   Workspace? @relation(fields: [workspaceId], references: [id])
   user        User?      @relation(fields: [userId], references: [id])
+}
+
+model DemoRequest {
+  id           String            @id @default(uuid())
+  name         String
+  email        String
+  phoneNumber  String?
+  companyName  String?
+  useCase      String?
+  desiredPlan  String?
+  status       DemoRequestStatus @default(NEW)
+  source       String            @default("landing-page")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([email, createdAt])
+  @@index([status, createdAt])
 }

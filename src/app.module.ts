@@ -7,6 +7,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { AutoRepliesModule } from './auto-replies/auto-replies.module';
 import { BroadcastsModule } from './broadcasts/broadcasts.module';
 import { PrismaModule } from './database/prisma/prisma.module';
+import { DemoRequestsModule } from './demo-requests/demo-requests.module';
 import { DevicesModule } from './devices/devices.module';
 import { HealthModule } from './health/health.module';
 import { MessagesModule } from './messages/messages.module';
@@ -29,6 +30,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     }),
     JwtModule.register({}),
     PrismaModule,
+    DemoRequestsModule,
     QueueModule,
     RealtimeModule,
     HealthModule,

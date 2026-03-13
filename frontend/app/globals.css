@@ -235,11 +235,23 @@ code {
 }
 
 .trust-stage,
-.faq-stage {
+.faq-stage,
+.demo-stage {
   width: min(1240px, 100%);
   margin: 0 auto;
   display: grid;
   gap: 18px;
+}
+
+.demo-form-wrap {
+  padding: 22px;
+  border-radius: 26px;
+}
+
+.demo-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .story-grid,
@@ -306,6 +318,25 @@ code {
 .faq-item {
   padding: 22px;
   border-radius: 24px;
+}
+
+.form-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+}
+
+.form-note.success {
+  color: #11473f;
+  background: rgba(18, 110, 98, 0.12);
+  border-color: rgba(18, 110, 98, 0.2);
+}
+
+.form-note.error {
+  color: #7f241a;
+  background: rgba(181, 58, 45, 0.1);
+  border-color: rgba(181, 58, 45, 0.2);
 }
 
 .closing-band {
@@ -738,6 +769,7 @@ th {
 
   .story-grid,
   .pricing-grid,
+  .demo-form,
   .faq-list,
   .marketing-proof {
     grid-template-columns: 1fr;

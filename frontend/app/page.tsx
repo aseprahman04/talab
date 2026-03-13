@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DemoRequestForm } from '../components/demo-request-form';
 
 export default function HomePage() {
   const testimonials = [
@@ -89,7 +90,7 @@ export default function HomePage() {
             </p>
             <div className="hero-actions">
               <Link className="button-primary" href="/console?mode=register">Coba gratis 14 hari</Link>
-              <a className="button-ghost" href="mailto:demo@watether.local?subject=Request%20Demo%20WATether">Request demo tim</a>
+              <a className="button-ghost" href="#demo-form">Request demo tim</a>
               <a className="button-secondary" href="#fitur">Lihat fitur inti</a>
             </div>
             <div className="helper-strip">
@@ -179,6 +180,16 @@ export default function HomePage() {
               <p>{item.quote}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="demo-stage" id="demo-form">
+        <div className="section-heading pricing-head">
+          <h3>Request Demo Terjadwal</h3>
+          <p>Isi form singkat, dan tim Anda bisa langsung dibawa ke walkthrough sesuai use case lokal yang sedang diprioritaskan.</p>
+        </div>
+        <div className="glass-panel demo-form-wrap">
+          <DemoRequestForm />
         </div>
       </section>
 

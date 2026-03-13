@@ -1,4 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Prisma } from '@prisma/client';
 import { Job } from 'bullmq';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { JOB_NAMES } from 'src/queue/jobs/job-names';
@@ -81,7 +82,7 @@ export class MessagesProcessor extends WorkerHost {
         data: {
           webhookId: webhook.id,
           eventType,
-          payload,
+          payload: payload as Prisma.InputJsonValue,
         },
       });
 

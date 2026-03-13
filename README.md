@@ -49,6 +49,13 @@ Frontend default jalan di `http://localhost:3001` dan API di `http://localhost:3
 
 CTA di landing sekarang langsung bisa mengarahkan ke mode login atau register di console via query string seperti `?mode=register`.
 
+## Request demo flow
+- Landing page sudah punya form `Request Demo` yang submit ke endpoint publik `POST /demo-requests`
+- Data lead tersimpan di tabel `DemoRequest` dan dicatat ke audit log
+- Setelah ubah schema terbaru, jalankan:
+	- `npm run prisma:generate`
+	- `npx prisma migrate dev --name demo_request`
+
 ## Docker dev
 - `docker compose -f docker-compose.dev.yml up --build`
 - Service yang jalan: `api`, `worker`, `frontend`, `postgres`, `redis`
