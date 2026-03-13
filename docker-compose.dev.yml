@@ -1,0 +1,63 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: watether
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    env_file:
+      - .env.example
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/watether
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npm run start:dev"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: .
+    env_file:
+      - .env.example
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/watether
+    command: sh -c "npx prisma generate && npm run worker"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app/frontend
+    command: sh -c "npm install && npm run dev"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3000
+    volumes:
+      - ./:/app
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

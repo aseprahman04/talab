@@ -1,0 +1,271 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus { ACTIVE DISABLED PENDING }
+enum WorkspaceStatus { ACTIVE SUSPENDED TRIAL EXPIRED }
+enum MemberRole { OWNER ADMIN STAFF }
+enum DeviceStatus { CREATED PAIRING CONNECTED RECONNECTING DISCONNECTED SESSION_EXPIRED RATE_LIMITED UNSTABLE BANNED_RISK DISABLED }
+enum MessageDirection { INBOUND OUTBOUND }
+enum MessageType { TEXT IMAGE DOCUMENT AUDIO VIDEO }
+enum MessageStatus { QUEUED PROCESSING SENT DELIVERED READ FAILED }
+enum BroadcastStatus { DRAFT QUEUED RUNNING PAUSED COMPLETED FAILED CANCELED }
+enum WebhookDeliveryStatus { PENDING SUCCESS FAILED RETRYING }
+enum SubscriptionStatus { TRIAL ACTIVE PAST_DUE CANCELED EXPIRED }
+
+model User {
+  id             String            @id @default(uuid())
+  email          String            @unique
+  name           String
+  passwordHash   String
+  status         UserStatus        @default(ACTIVE)
+  refreshVersion Int               @default(1)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  ownedWorkspaces Workspace[]      @relation("WorkspaceOwner")
+  memberships     WorkspaceMember[]
+  auditLogs       AuditLog[]
+}
+
+model Workspace {
+  id            String            @id @default(uuid())
+  ownerId       String
+  name          String
+  slug          String            @unique
+  status        WorkspaceStatus   @default(TRIAL)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  owner         User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members       WorkspaceMember[]
+  devices       Device[]
+  contacts      Contact[]
+  webhooks      Webhook[]
+  broadcasts    Broadcast[]
+  autoReplies   AutoReplyRule[]
+  messages      Message[]
+  subscription  Subscription?
+  auditLogs     AuditLog[]
+}
+
+model WorkspaceMember {
+  id          String      @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        MemberRole
+  createdAt   DateTime    @default(now())
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  @@unique([workspaceId, userId])
+}
+
+model Device {
+  id             String         @id @default(uuid())
+  workspaceId    String
+  name           String
+  phoneNumber    String?
+  deviceLabel    String?
+  status         DeviceStatus   @default(CREATED)
+  healthScore    Int            @default(100)
+  lastSeenAt     DateTime?
+  connectedAt    DateTime?
+  disconnectedAt DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  workspace      Workspace      @relation(fields: [workspaceId], references: [id])
+  tokens         DeviceToken[]
+  sessions       DeviceSession[]
+  messages       Message[]
+  broadcasts     Broadcast[]
+  autoReplies    AutoReplyRule[]
+}
+
+model DeviceToken {
+  id          String     @id @default(uuid())
+  deviceId    String
+  name        String
+  tokenHash   String
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime   @default(now())
+  device      Device     @relation(fields: [deviceId], references: [id])
+}
+
+model DeviceSession {
+  id                   String    @id @default(uuid())
+  deviceId             String
+  sessionBlobEncrypted String
+  sessionVersion       Int       @default(1)
+  expiresAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  device               Device    @relation(fields: [deviceId], references: [id])
+}
+
+model Contact {
+  id            String    @id @default(uuid())
+  workspaceId   String
+  name          String?
+  phoneNumber   String
+  email         String?
+  tags          Json?
+  notes         String?
+  isBlacklisted Boolean   @default(false)
+  isOptOut      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+  messages      Message[]
+  @@index([workspaceId, phoneNumber])
+}
+
+model Message {
+  id                String           @id @default(uuid())
+  workspaceId       String
+  deviceId          String
+  contactId         String?
+  direction         MessageDirection
+  type              MessageType
+  sender            String?
+  recipient         String?
+  content           String?
+  mediaUrl          String?
+  status            MessageStatus    @default(QUEUED)
+  providerMessageId String?
+  errorMessage      String?
+  queuedAt          DateTime?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  failedAt          DateTime?
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  workspace         Workspace        @relation(fields: [workspaceId], references: [id])
+  device            Device           @relation(fields: [deviceId], references: [id])
+  contact           Contact?         @relation(fields: [contactId], references: [id])
+  @@index([workspaceId, createdAt])
+  @@index([deviceId, status])
+}
+
+model Webhook {
+  id          String    @id @default(uuid())
+  workspaceId String
+  name        String
+  url         String
+  secret      String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  deliveries  WebhookDelivery[]
+}
+
+model WebhookDelivery {
+  id           String                 @id @default(uuid())
+  webhookId    String
+  eventType    String
+  payload      Json
+  status       WebhookDeliveryStatus  @default(PENDING)
+  responseCode Int?
+  responseBody String?
+  retryCount   Int                    @default(0)
+  nextRetryAt  DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  webhook      Webhook                @relation(fields: [webhookId], references: [id])
+}
+
+model Broadcast {
+  id              String          @id @default(uuid())
+  workspaceId     String
+  deviceId        String
+  name            String
+  messageTemplate String
+  status          BroadcastStatus @default(DRAFT)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  totalTargets    Int             @default(0)
+  successCount    Int             @default(0)
+  failedCount     Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id])
+  device          Device          @relation(fields: [deviceId], references: [id])
+  recipients      BroadcastRecipient[]
+}
+
+model BroadcastRecipient {
+  id            String        @id @default(uuid())
+  broadcastId   String
+  contactId     String?
+  phoneNumber   String
+  status        MessageStatus @default(QUEUED)
+  errorMessage  String?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  broadcast     Broadcast     @relation(fields: [broadcastId], references: [id])
+}
+
+model AutoReplyRule {
+  id          String    @id @default(uuid())
+  workspaceId String
+  deviceId    String
+  name        String
+  matchType   String
+  keyword     String
+  response    String
+  priority    Int       @default(0)
+  isEnabled   Boolean   @default(true)
+  activeHours Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  device      Device    @relation(fields: [deviceId], references: [id])
+}
+
+model Plan {
+  id                  String    @id @default(uuid())
+  code                String    @unique
+  name                String
+  maxDevices          Int
+  monthlyMessageQuota Int
+  maxMembers          Int
+  storageLimitMb      Int
+  price               Decimal   @db.Decimal(12, 2)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  subscriptions       Subscription[]
+}
+
+model Subscription {
+  id          String             @id @default(uuid())
+  workspaceId String             @unique
+  planId      String
+  status      SubscriptionStatus @default(TRIAL)
+  startedAt   DateTime
+  endedAt     DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id])
+  plan        Plan               @relation(fields: [planId], references: [id])
+}
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  workspaceId String?
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  payload     Json?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  user        User?      @relation(fields: [userId], references: [id])
+}
