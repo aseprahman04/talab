@@ -23,7 +23,12 @@ export class WebhooksService {
     const delivery = await this.prisma.webhookDelivery.create({
       data: { webhookId, eventType, payload: payload as never },
     });
-    await this.queue.webhooks.add(JOB_NAMES.WEBHOOK_DELIVERY, { deliveryId: delivery.id });
+    await this.queue.webhooks.add(JOB_NAMES.WEBHOOK_DELIVERY, { deliveryId: delivery.id }, {
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 10000 },
+      removeOnComplete: 100,
+      removeOnFail: 100,
+    });
     return delivery;
   }
 
