@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { signHmac } from 'src/common/utils/hmac';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { JOB_NAMES } from 'src/queue/jobs/job-names';
@@ -17,6 +17,23 @@ export class WebhooksService {
   async list(userId: string, workspaceId: string) {
     await this.assertWorkspaceMembership(userId, workspaceId);
     return this.prisma.webhook.findMany({ where: { workspaceId } });
+  }
+
+  async testDelivery(userId: string, webhookId: string) {
+    const webhook = await this.prisma.webhook.findUnique({ where: { id: webhookId } });
+    if (!webhook) throw new NotFoundException('Webhook not found');
+    await this.assertWorkspaceMembership(userId, webhook.workspaceId);
+
+    const payload = {
+      event: 'webhook.test',
+      workspaceId: webhook.workspaceId,
+      webhookId: webhook.id,
+      timestamp: new Date().toISOString(),
+      source: 'dashboard.manual-test',
+    };
+
+    const delivery = await this.enqueueDelivery(webhook.id, 'webhook.test', payload);
+    return { success: true, deliveryId: delivery.id, status: 'QUEUED' };
   }
 
   async enqueueDelivery(webhookId: string, eventType: string, payload: unknown) {

@@ -15,19 +15,64 @@ export class MessagesProcessor extends WorkerHost {
     if (!message) return;
     if (['SENT', 'DELIVERED', 'READ'].includes(message.status)) return;
 
+    const device = await this.prisma.device.findUnique({ where: { id: message.deviceId } });
+    if (!device || device.status !== 'CONNECTED') {
+      const failedAt = new Date();
+      await this.prisma.message.update({
+        where: { id: message.id },
+        data: {
+          status: 'FAILED',
+          failedAt,
+          errorMessage: !device ? 'Device not found' : `Device is ${device.status}`,
+        },
+      });
+
+      await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
+        event: 'message.failed',
+        workspaceId: message.workspaceId,
+        deviceId: message.deviceId,
+        messageId: message.id,
+        target: message.recipient,
+        type: message.type,
+        status: 'FAILED',
+        error: !device ? 'Device not found' : `Device is ${device.status}`,
+        timestamp: failedAt.toISOString(),
+      });
+
+      this.realtime.emitToWorkspace(message.workspaceId, 'message.failed', { messageId: message.id });
+      return;
+    }
+
     await this.prisma.message.update({ where: { id: message.id }, data: { status: 'PROCESSING' } });
     // Placeholder: integrate actual WA session engine here.
+    const sentAt = new Date();
     await this.prisma.message.update({
       where: { id: message.id },
       data: {
         status: 'SENT',
-        sentAt: new Date(),
+        sentAt,
         providerMessageId: `stub-${message.id}`,
+        errorMessage: null,
       },
     });
 
+    await this.enqueueWebhookDeliveries(message.workspaceId, 'message.sent', {
+      event: 'message.sent',
+      workspaceId: message.workspaceId,
+      deviceId: message.deviceId,
+      messageId: message.id,
+      target: message.recipient,
+      type: message.type,
+      status: 'SENT',
+      timestamp: sentAt.toISOString(),
+    });
+
+    this.realtime.emitToWorkspace(message.workspaceId, 'message.sent', { messageId: message.id });
+  }
+
+  private async enqueueWebhookDeliveries(workspaceId: string, eventType: string, payload: Record<string, unknown>) {
     const webhooks = await this.prisma.webhook.findMany({
-      where: { workspaceId: message.workspaceId, isActive: true },
+      where: { workspaceId, isActive: true },
       select: { id: true },
     });
 
@@ -35,17 +80,8 @@ export class MessagesProcessor extends WorkerHost {
       const delivery = await this.prisma.webhookDelivery.create({
         data: {
           webhookId: webhook.id,
-          eventType: 'message.sent',
-          payload: {
-            event: 'message.sent',
-            workspaceId: message.workspaceId,
-            deviceId: message.deviceId,
-            messageId: message.id,
-            target: message.recipient,
-            type: message.type,
-            status: 'SENT',
-            timestamp: new Date().toISOString(),
-          },
+          eventType,
+          payload,
         },
       });
 
@@ -56,7 +92,5 @@ export class MessagesProcessor extends WorkerHost {
         removeOnFail: 100,
       });
     }));
-
-    this.realtime.emitToWorkspace(message.workspaceId, 'message.sent', { messageId: message.id });
   }
 }

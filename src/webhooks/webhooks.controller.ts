@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
@@ -14,4 +14,7 @@ export class WebhooksController {
 
   @Get()
   list(@CurrentUser() user: { sub: string }, @Query('workspaceId') workspaceId: string) { return this.service.list(user.sub, workspaceId); }
+
+  @Post(':id/test')
+  test(@CurrentUser() user: { sub: string }, @Param('id') id: string) { return this.service.testDelivery(user.sub, id); }
 }
