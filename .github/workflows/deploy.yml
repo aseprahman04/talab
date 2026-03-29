@@ -24,15 +24,10 @@ jobs:
             APP_DIR=/opt/watether
             mkdir -p $APP_DIR
             cd $APP_DIR
-            echo "[bootstrap] cwd=$(pwd)"
-            if [ ! -d .git ]; then
-              echo "[bootstrap] git init"
-              git init
-              git remote add origin git@github.com:aseprahman04/watheter.git
-            else
-              echo "[bootstrap] repo exists, update remote"
-              git remote set-url origin git@github.com:aseprahman04/watheter.git
-            fi
+            echo "[bootstrap] cwd=$(pwd), .git=$([ -d .git ] && echo yes || echo no)"
+            [ -d .git ] || git init
+            git remote add origin git@github.com:aseprahman04/watheter.git 2>/dev/null || git remote set-url origin git@github.com:aseprahman04/watheter.git
+            echo "[bootstrap] remote=$(git remote get-url origin)"
             echo "[bootstrap] fetching..."
             export GIT_SSH_COMMAND="ssh -i /root/.ssh/watether_deploy -o StrictHostKeyChecking=no"
             git fetch origin main
