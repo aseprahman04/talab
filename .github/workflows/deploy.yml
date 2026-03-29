@@ -16,6 +16,25 @@ jobs:
           host: 194.233.67.65
           username: root
           key: ${{ secrets.PROD_SSH_KEY }}
-          script: bash /opt/watether/scripts/deploy.sh
-          script_stop: true
           command_timeout: 18m
+          script_stop: true
+          script: |
+            set -e
+            APP_DIR=/opt/watether
+
+            # ── Bootstrap git repo if not yet initialized ─────────────────────
+            mkdir -p $APP_DIR
+            cd $APP_DIR
+            if [ ! -d .git ]; then
+              git init
+              git remote add origin git@github.com:aseprahman04/watheter.git
+            else
+              git remote set-url origin git@github.com:aseprahman04/watheter.git
+            fi
+            GIT_SSH_COMMAND='ssh -i /root/.ssh/watether_deploy -o StrictHostKeyChecking=no' \
+              git fetch origin main
+            git checkout -f main 2>/dev/null || git checkout -b main FETCH_HEAD
+            git reset --hard FETCH_HEAD
+
+            # ── Run deploy script (now guaranteed to be latest) ───────────────
+            bash /opt/watether/scripts/deploy.sh

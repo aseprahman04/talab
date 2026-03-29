@@ -5,20 +5,8 @@ APP_DIR=/opt/watether
 
 echo "[deploy] $(date) — starting"
 
-# ── Pull latest via deploy key ────────────────────────────────────────────────
-cd $APP_DIR
-if [ ! -d .git ]; then
-  git init
-  git remote add origin git@github.com:aseprahman04/watheter.git
-else
-  git remote set-url origin git@github.com:aseprahman04/watheter.git
-fi
-GIT_SSH_COMMAND='ssh -i /root/.ssh/watether_deploy -o StrictHostKeyChecking=no' \
-  git fetch origin main
-git checkout -f main 2>/dev/null || git checkout -b main origin/main
-git reset --hard origin/main
-
 # ── Backend: build Docker image & restart ─────────────────────────────────────
+cd $APP_DIR
 echo "[deploy] building backend..."
 docker build -t watether-backend:latest .
 docker compose -f docker-compose.prod.yml up -d --force-recreate
