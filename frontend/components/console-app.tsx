@@ -525,6 +525,9 @@ function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, f
       loading: 'Memproses...',
       switchToRegister: 'Belum punya akun? Daftar gratis',
       switchToLogin: 'Sudah punya akun? Masuk',
+      metric1Label: 'Nomor WA', metric1Value: 'Per workspace',
+      metric2Label: 'Fitur', metric2Value: 'Broadcast · Auto Reply · Webhook',
+      metric3Label: 'Paket', metric3Value: 'Gratis untuk mulai',
       orContinueWith: 'atau lanjut dengan',
       continueWithGoogle: 'Lanjut dengan Google',
     },
@@ -544,6 +547,9 @@ function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, f
       loading: 'Processing...',
       switchToRegister: "Don't have an account? Sign up free",
       switchToLogin: 'Already have an account? Sign in',
+      metric1Label: 'WA Numbers', metric1Value: 'Per workspace',
+      metric2Label: 'Features', metric2Value: 'Broadcast · Auto Reply · Webhook',
+      metric3Label: 'Plan', metric3Value: 'Free to start',
       orContinueWith: 'or continue with',
       continueWithGoogle: 'Continue with Google',
     },
@@ -563,9 +569,9 @@ function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, f
           <h1>{t.headline}</h1>
           <p>{t.sub}</p>
           <div className="hero-metrics compact">
-            <Metric label="Devices" value="WhatsApp Numbers" />
-            <Metric label="Features" value="Broadcast · Auto Reply · Webhook" />
-            <Metric label="Plan" value="Free to start" />
+            <Metric label={t.metric1Label} value={t.metric1Value} />
+            <Metric label={t.metric2Label} value={t.metric2Value} />
+            <Metric label={t.metric3Label} value={t.metric3Value} />
           </div>
         </div>
         <div className="auth-panel">
