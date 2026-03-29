@@ -94,7 +94,7 @@ export class ContactsService {
       include: { _count: { select: { members: true } } },
       orderBy: { createdAt: 'desc' },
     });
-    return lists.map((list) => ({ ...list, memberCount: list._count.members }));
+    return lists.map((list: typeof lists[number]) => ({ ...list, memberCount: list._count.members }));
   }
 
   async addToList(userId: string, contactListId: string, contactIds: string[]) {
@@ -129,7 +129,7 @@ export class ContactsService {
       include: { contact: true },
       orderBy: { createdAt: 'desc' },
     });
-    return members.map((m) => m.contact);
+    return members.map((m: { contact: unknown }) => m.contact);
   }
 
   private async assertMembership(userId: string, workspaceId: string) {

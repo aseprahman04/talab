@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { AuditLogsService } from 'src/audit-logs/audit-logs.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { QueueService } from 'src/queue/queue.service';
+import { MessageTypeEnum } from './dto/send-message.dto';
 import { MessagesService } from './messages.service';
 
 const WS_ID = '00000000-0000-0000-0000-000000000001';
@@ -26,7 +27,7 @@ const message = {
   workspaceId: WS_ID,
   deviceId: DEVICE_ID,
   direction: 'OUTBOUND',
-  type: 'TEXT',
+  type: MessageTypeEnum.TEXT,
   recipient: '6281234567890',
   content: 'Halo dari WATether!',
   status: 'QUEUED',
@@ -59,7 +60,7 @@ describe('MessagesService', () => {
         workspaceId: WS_ID,
         deviceId: DEVICE_ID,
         target: '6281234567890',
-        type: 'TEXT',
+        type: MessageTypeEnum.TEXT,
         message: 'Halo dari WATether!',
       });
 
@@ -81,7 +82,7 @@ describe('MessagesService', () => {
           workspaceId: WS_ID,
           deviceId: DEVICE_ID,
           target: '6281234567890',
-          type: 'TEXT',
+          type: MessageTypeEnum.TEXT,
           message: 'hi',
         }),
       ).rejects.toThrow(ForbiddenException);
@@ -97,7 +98,7 @@ describe('MessagesService', () => {
           workspaceId: WS_ID,
           deviceId: DEVICE_ID,
           target: '6281234567890',
-          type: 'TEXT',
+          type: MessageTypeEnum.TEXT,
           message: 'hi',
         }),
       ).rejects.toThrow(ForbiddenException);
@@ -112,7 +113,7 @@ describe('MessagesService', () => {
           workspaceId: WS_ID,
           deviceId: DEVICE_ID,
           target: '6281234567890',
-          type: 'TEXT',
+          type: MessageTypeEnum.TEXT,
           message: 'hi',
         }),
       ).rejects.toThrow(ForbiddenException);

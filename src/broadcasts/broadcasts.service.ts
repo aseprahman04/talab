@@ -18,7 +18,7 @@ export class BroadcastsService {
         where: { contactListId: dto.contactListId },
         include: { contact: true },
       });
-      recipientPhones = members.map((m) => m.contact.phoneNumber);
+      recipientPhones = members.map((m: { contact: { phoneNumber: string } }) => m.contact.phoneNumber);
     }
 
     return this.prisma.broadcast.create({
