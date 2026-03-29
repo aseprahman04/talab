@@ -28,4 +28,10 @@ cd $APP_DIR
 pm2 startOrRestart $APP_DIR/ecosystem.config.js --update-env
 pm2 save
 
+# ── Nginx: update config & reload ────────────────────────────────────────────
+echo "[deploy] reloading nginx..."
+cp $APP_DIR/nginx/watheter.conf /etc/nginx/sites-available/watheter.conf
+ln -sf /etc/nginx/sites-available/watheter.conf /etc/nginx/sites-enabled/watheter.conf
+nginx -t && systemctl reload nginx
+
 echo "[deploy] done ✓"
