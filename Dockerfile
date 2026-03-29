@@ -18,8 +18,8 @@ RUN npm run build
 FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=builder /app/dist ./dist
-COPY --from=deps    /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
-COPY prisma ./prisma
+COPY --from=builder /app/prisma ./prisma
 EXPOSE 3003
-CMD ["sh", "-c", "npx prisma@5 migrate deploy && node dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma@5 db push --accept-data-loss && node dist/src/main.js"]
