@@ -7,6 +7,7 @@ echo "[deploy] $(date) — starting"
 
 # ── Pull latest via deploy key ────────────────────────────────────────────────
 cd $APP_DIR
+git remote set-url origin git@github.com:aseprahman04/watheter.git
 GIT_SSH_COMMAND='ssh -i /root/.ssh/watether_deploy -o StrictHostKeyChecking=no' \
   git pull origin main
 
