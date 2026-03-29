@@ -10,7 +10,10 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "worker": "ts-node -r tsconfig-paths/register src/worker.ts",
-    "prisma:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
+    "prisma:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
   },
   "prisma": {
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
@@ -45,10 +48,13 @@
     "@nestjs/schematics": "^10.1.4",
     "@nestjs/testing": "^10.4.9",
     "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.7.4",
     "@types/passport-jwt": "^4.0.1",
     "eslint": "^9.11.1",
+    "jest": "^30.3.0",
     "prisma": "^5.20.0",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.2"

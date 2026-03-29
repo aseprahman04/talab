@@ -17,11 +17,20 @@ const mockPrisma = {
 };
 
 const mockQueue = { messages: { add: jest.fn() } };
-const mockAudit = { log: jest.fn() };
+const mockAudit = { log: jest.fn().mockResolvedValue(undefined) };
 
 const member = { id: 'member-1', workspaceId: WS_ID, userId: USER_ID };
-const device = { id: DEVICE_ID, workspaceId: WS_ID };
-const message = { id: MSG_ID, workspaceId: WS_ID, deviceId: DEVICE_ID, status: 'QUEUED' };
+const device = { id: DEVICE_ID, workspaceId: WS_ID, name: 'CS 01' };
+const message = {
+  id: MSG_ID,
+  workspaceId: WS_ID,
+  deviceId: DEVICE_ID,
+  direction: 'OUTBOUND',
+  type: 'TEXT',
+  recipient: '6281234567890',
+  content: 'Halo dari WATether!',
+  status: 'QUEUED',
+};
 
 describe('MessagesService', () => {
   let service: MessagesService;
@@ -40,51 +49,127 @@ describe('MessagesService', () => {
   });
 
   describe('send', () => {
-    it('queues a message', async () => {
+    it('creates a message record and enqueues the send job', async () => {
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
       mockPrisma.device.findUnique.mockResolvedValue(device);
       mockPrisma.message.create.mockResolvedValue(message);
       mockQueue.messages.add.mockResolvedValue({});
-      mockAudit.log.mockResolvedValue({});
+
       const result = await service.send(USER_ID, {
-        workspaceId: WS_ID, deviceId: DEVICE_ID, target: '6281234567890',
-        type: 'TEXT', message: 'Test pesan', mediaUrl: undefined,
+        workspaceId: WS_ID,
+        deviceId: DEVICE_ID,
+        target: '6281234567890',
+        type: 'TEXT',
+        message: 'Halo dari WATether!',
       });
+
+      expect(result.success).toBe(true);
       expect(result.status).toBe('QUEUED');
       expect(result.messageId).toBe(MSG_ID);
+      expect(mockPrisma.message.create).toHaveBeenCalledTimes(1);
+      expect(mockQueue.messages.add).toHaveBeenCalledTimes(1);
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'message.enqueue' }),
+      );
     });
 
-    it('throws ForbiddenException if not a member', async () => {
+    it('throws ForbiddenException if user is not a workspace member', async () => {
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(null);
-      await expect(service.send(USER_ID, {
-        workspaceId: WS_ID, deviceId: DEVICE_ID, target: '6281234567890', type: 'TEXT', message: 'x',
-      })).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.send(USER_ID, {
+          workspaceId: WS_ID,
+          deviceId: DEVICE_ID,
+          target: '6281234567890',
+          type: 'TEXT',
+          message: 'hi',
+        }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.message.create).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException if device belongs to another workspace', async () => {
+      mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
+      mockPrisma.device.findUnique.mockResolvedValue({ ...device, workspaceId: 'other-ws' });
+
+      await expect(
+        service.send(USER_ID, {
+          workspaceId: WS_ID,
+          deviceId: DEVICE_ID,
+          target: '6281234567890',
+          type: 'TEXT',
+          message: 'hi',
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException if device does not exist', async () => {
+      mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
+      mockPrisma.device.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.send(USER_ID, {
+          workspaceId: WS_ID,
+          deviceId: DEVICE_ID,
+          target: '6281234567890',
+          type: 'TEXT',
+          message: 'hi',
+        }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('list', () => {
-    it('returns messages for workspace', async () => {
+    it('returns messages for a workspace', async () => {
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
       mockPrisma.message.findMany.mockResolvedValue([message]);
+
       const result = await service.list(USER_ID, WS_ID);
+
       expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(MSG_ID);
+    });
+
+    it('throws ForbiddenException if not a member', async () => {
+      mockPrisma.workspaceMember.findUnique.mockResolvedValue(null);
+
+      await expect(service.list(USER_ID, WS_ID)).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('retry', () => {
-    it('re-queues a failed message', async () => {
-      mockPrisma.message.findUnique.mockResolvedValue({ ...message, status: 'FAILED' });
+    it('resets status to QUEUED and re-enqueues the message', async () => {
+      const failedMsg = { ...message, status: 'FAILED', workspaceId: WS_ID };
+      const updatedMsg = { ...failedMsg, status: 'QUEUED', id: MSG_ID };
+      mockPrisma.message.findUnique.mockResolvedValue(failedMsg);
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
-      mockPrisma.message.update.mockResolvedValue({ ...message, status: 'QUEUED' });
+      mockPrisma.message.update.mockResolvedValue(updatedMsg);
       mockQueue.messages.add.mockResolvedValue({});
-      mockAudit.log.mockResolvedValue({});
+
       const result = await service.retry(USER_ID, MSG_ID);
+
+      expect(result.success).toBe(true);
       expect(result.status).toBe('QUEUED');
+      expect(result.messageId).toBe(MSG_ID);
+      expect(mockQueue.messages.add).toHaveBeenCalledTimes(1);
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'message.retry' }),
+      );
     });
 
-    it('throws NotFoundException for unknown message', async () => {
+    it('throws NotFoundException for an unknown message ID', async () => {
       mockPrisma.message.findUnique.mockResolvedValue(null);
-      await expect(service.retry(USER_ID, 'bad-id')).rejects.toThrow(NotFoundException);
+
+      await expect(service.retry(USER_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+      expect(mockQueue.messages.add).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException if user is not a workspace member', async () => {
+      mockPrisma.message.findUnique.mockResolvedValue(message);
+      mockPrisma.workspaceMember.findUnique.mockResolvedValue(null);
+
+      await expect(service.retry(USER_ID, MSG_ID)).rejects.toThrow(ForbiddenException);
+      expect(mockQueue.messages.add).not.toHaveBeenCalled();
     });
   });
 });
