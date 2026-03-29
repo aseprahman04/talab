@@ -16,6 +16,10 @@ const bodyFont = IBM_Plex_Sans({
 export const metadata: Metadata = {
   title: 'WATether',
   description: 'WhatsApp gateway dengan landing publik dan dashboard operasional untuk pasar Indonesia.',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
