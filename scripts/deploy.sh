@@ -40,6 +40,7 @@ fi
 
 # ── Nginx: update config & reload ────────────────────────────────────────────
 echo "[deploy] reloading nginx..."
+rm -f /etc/nginx/sites-enabled/watether  # remove old config without .conf extension
 cp $APP_DIR/nginx/watheter.conf /etc/nginx/sites-available/watheter.conf
 ln -sf /etc/nginx/sites-available/watheter.conf /etc/nginx/sites-enabled/watheter.conf
 nginx -t && systemctl reload nginx
