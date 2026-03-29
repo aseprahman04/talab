@@ -1,8 +1,8 @@
 module.exports = {
   apps: [{
     name: 'watether-frontend',
-    script: '/opt/watether/frontend/.next/standalone/server.js',
-    cwd: '/opt/watether/frontend',
+    script: '/opt/watether/frontend/.next/standalone/frontend/server.js',
+    cwd: '/opt/watether/frontend/.next/standalone/frontend',
     instances: 2,
     exec_mode: 'cluster',
     env: {
