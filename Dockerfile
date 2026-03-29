@@ -5,12 +5,12 @@ RUN apk add --no-cache libc6-compat
 # ── deps: production modules only ────────────────────────────────────────────
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # ── builder: compile TypeScript ───────────────────────────────────────────────
 FROM base AS builder
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
