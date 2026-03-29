@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { ContactsModule } from './contacts/contacts.module';
 import { AutoRepliesModule } from './auto-replies/auto-replies.module';
 import { BroadcastsModule } from './broadcasts/broadcasts.module';
 import { PrismaModule } from './database/prisma/prisma.module';
@@ -46,6 +47,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     BroadcastsModule,
     AutoRepliesModule,
     AuditLogsModule,
+    ContactsModule,
   ],
 })
 export class AppModule {}

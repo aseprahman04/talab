@@ -94,66 +94,68 @@ enum DemoRequestStatus {
 }
 
 model User {
-  id             String            @id @default(uuid())
-  email          String            @unique
-  name           String
-  passwordHash   String?
-  googleId       String?           @unique
-  isSuperAdmin   Boolean           @default(false)
-  status         UserStatus        @default(ACTIVE)
-  refreshVersion Int               @default(1)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  ownedWorkspaces Workspace[]      @relation("WorkspaceOwner")
+  id              String            @id @default(uuid())
+  email           String            @unique
+  name            String
+  passwordHash    String?
+  googleId        String?           @unique
+  isSuperAdmin    Boolean           @default(false)
+  status          UserStatus        @default(ACTIVE)
+  refreshVersion  Int               @default(1)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
   memberships     WorkspaceMember[]
   auditLogs       AuditLog[]
 }
 
 model Workspace {
-  id            String            @id @default(uuid())
-  ownerId       String
-  name          String
-  slug          String            @unique
-  status        WorkspaceStatus   @default(TRIAL)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  owner         User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
-  members       WorkspaceMember[]
-  devices       Device[]
-  contacts      Contact[]
-  webhooks      Webhook[]
-  broadcasts    Broadcast[]
-  autoReplies   AutoReplyRule[]
-  messages      Message[]
-  subscription  Subscription?
-  auditLogs     AuditLog[]
+  id           String            @id @default(uuid())
+  ownerId      String
+  name         String
+  slug         String            @unique
+  status       WorkspaceStatus   @default(TRIAL)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  owner        User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members      WorkspaceMember[]
+  devices      Device[]
+  contacts     Contact[]
+  contactLists ContactList[]
+  webhooks     Webhook[]
+  broadcasts   Broadcast[]
+  autoReplies  AutoReplyRule[]
+  messages     Message[]
+  subscription Subscription?
+  auditLogs    AuditLog[]
 }
 
 model WorkspaceMember {
-  id          String      @id @default(uuid())
+  id          String     @id @default(uuid())
   workspaceId String
   userId      String
   role        MemberRole
-  createdAt   DateTime    @default(now())
-  workspace   Workspace   @relation(fields: [workspaceId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
+  createdAt   DateTime   @default(now())
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+
   @@unique([workspaceId, userId])
 }
 
 model Device {
-  id             String         @id @default(uuid())
+  id             String          @id @default(uuid())
   workspaceId    String
   name           String
   phoneNumber    String?
   deviceLabel    String?
-  status         DeviceStatus   @default(CREATED)
-  healthScore    Int            @default(100)
+  status         DeviceStatus    @default(CREATED)
+  healthScore    Int             @default(100)
   lastSeenAt     DateTime?
   connectedAt    DateTime?
   disconnectedAt DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  workspace      Workspace      @relation(fields: [workspaceId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id])
   tokens         DeviceToken[]
   sessions       DeviceSession[]
   messages       Message[]
@@ -162,14 +164,14 @@ model Device {
 }
 
 model DeviceToken {
-  id          String     @id @default(uuid())
-  deviceId    String
-  name        String
-  tokenHash   String
-  lastUsedAt  DateTime?
-  revokedAt   DateTime?
-  createdAt   DateTime   @default(now())
-  device      Device     @relation(fields: [deviceId], references: [id])
+  id         String    @id @default(uuid())
+  deviceId   String
+  name       String
+  tokenHash  String
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  device     Device    @relation(fields: [deviceId], references: [id])
 }
 
 model DeviceSession {
@@ -184,20 +186,46 @@ model DeviceSession {
 }
 
 model Contact {
-  id            String    @id @default(uuid())
-  workspaceId   String
-  name          String?
-  phoneNumber   String
-  email         String?
-  tags          Json?
-  notes         String?
-  isBlacklisted Boolean   @default(false)
-  isOptOut      Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  workspace     Workspace @relation(fields: [workspaceId], references: [id])
-  messages      Message[]
-  @@index([workspaceId, phoneNumber])
+  id                 String              @id @default(uuid())
+  workspaceId        String
+  name               String?
+  phoneNumber        String
+  email              String?
+  tags               Json?
+  notes              String?
+  isBlacklisted      Boolean             @default(false)
+  isOptOut           Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  workspace          Workspace           @relation(fields: [workspaceId], references: [id])
+  messages           Message[]
+  contactListMembers ContactListMember[]
+
+  @@unique([workspaceId, phoneNumber])
+}
+
+model ContactList {
+  id          String              @id @default(uuid())
+  workspaceId String
+  name        String
+  description String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  workspace   Workspace           @relation(fields: [workspaceId], references: [id])
+  members     ContactListMember[]
+
+  @@index([workspaceId])
+}
+
+model ContactListMember {
+  id            String      @id @default(uuid())
+  contactListId String
+  contactId     String
+  createdAt     DateTime    @default(now())
+  contactList   ContactList @relation(fields: [contactListId], references: [id], onDelete: Cascade)
+  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([contactListId, contactId])
 }
 
 model Message {
@@ -225,69 +253,70 @@ model Message {
   workspace         Workspace        @relation(fields: [workspaceId], references: [id])
   device            Device           @relation(fields: [deviceId], references: [id])
   contact           Contact?         @relation(fields: [contactId], references: [id])
+
   @@index([workspaceId, createdAt])
   @@index([deviceId, status])
 }
 
 model Webhook {
-  id          String    @id @default(uuid())
+  id          String            @id @default(uuid())
   workspaceId String
   name        String
   url         String
   secret      String
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id])
   deliveries  WebhookDelivery[]
 }
 
 model WebhookDelivery {
-  id           String                 @id @default(uuid())
+  id           String                @id @default(uuid())
   webhookId    String
   eventType    String
   payload      Json
-  status       WebhookDeliveryStatus  @default(PENDING)
+  status       WebhookDeliveryStatus @default(PENDING)
   responseCode Int?
   responseBody String?
-  retryCount   Int                    @default(0)
+  retryCount   Int                   @default(0)
   nextRetryAt  DateTime?
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
-  webhook      Webhook                @relation(fields: [webhookId], references: [id])
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  webhook      Webhook               @relation(fields: [webhookId], references: [id])
 }
 
 model Broadcast {
-  id              String          @id @default(uuid())
+  id              String               @id @default(uuid())
   workspaceId     String
   deviceId        String
   name            String
   messageTemplate String
-  status          BroadcastStatus @default(DRAFT)
+  status          BroadcastStatus      @default(DRAFT)
   startedAt       DateTime?
   completedAt     DateTime?
-  totalTargets    Int             @default(0)
-  successCount    Int             @default(0)
-  failedCount     Int             @default(0)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  workspace       Workspace       @relation(fields: [workspaceId], references: [id])
-  device          Device          @relation(fields: [deviceId], references: [id])
+  totalTargets    Int                  @default(0)
+  successCount    Int                  @default(0)
+  failedCount     Int                  @default(0)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  workspace       Workspace            @relation(fields: [workspaceId], references: [id])
+  device          Device               @relation(fields: [deviceId], references: [id])
   recipients      BroadcastRecipient[]
 }
 
 model BroadcastRecipient {
-  id            String        @id @default(uuid())
-  broadcastId   String
-  contactId     String?
-  phoneNumber   String
-  status        MessageStatus @default(QUEUED)
-  errorMessage  String?
-  sentAt        DateTime?
-  deliveredAt   DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  broadcast     Broadcast     @relation(fields: [broadcastId], references: [id])
+  id           String        @id @default(uuid())
+  broadcastId  String
+  contactId    String?
+  phoneNumber  String
+  status       MessageStatus @default(QUEUED)
+  errorMessage String?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  broadcast    Broadcast     @relation(fields: [broadcastId], references: [id])
 }
 
 model AutoReplyRule {
@@ -308,16 +337,16 @@ model AutoReplyRule {
 }
 
 model Plan {
-  id                  String    @id @default(uuid())
-  code                String    @unique
+  id                  String         @id @default(uuid())
+  code                String         @unique
   name                String
   maxDevices          Int
   monthlyMessageQuota Int
   maxMembers          Int
   storageLimitMb      Int
-  price               Decimal   @db.Decimal(12, 2)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  price               Decimal        @db.Decimal(12, 2)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
   subscriptions       Subscription[]
 }
 
@@ -335,30 +364,30 @@ model Subscription {
 }
 
 model AuditLog {
-  id          String    @id @default(uuid())
+  id          String     @id @default(uuid())
   workspaceId String?
   userId      String?
   action      String
   entityType  String
   entityId    String?
   payload     Json?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime   @default(now())
   workspace   Workspace? @relation(fields: [workspaceId], references: [id])
   user        User?      @relation(fields: [userId], references: [id])
 }
 
 model DemoRequest {
-  id           String            @id @default(uuid())
-  name         String
-  email        String
-  phoneNumber  String?
-  companyName  String?
-  useCase      String?
-  desiredPlan  String?
-  status       DemoRequestStatus @default(NEW)
-  source       String            @default("landing-page")
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id          String            @id @default(uuid())
+  name        String
+  email       String
+  phoneNumber String?
+  companyName String?
+  useCase     String?
+  desiredPlan String?
+  status      DemoRequestStatus @default(NEW)
+  source      String            @default("landing-page")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   @@index([email, createdAt])
   @@index([status, createdAt])

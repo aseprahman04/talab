@@ -10,6 +10,8 @@ import {
   AuthTokens,
   AutoReplyRule,
   Broadcast,
+  Contact,
+  ContactList,
   Device,
   formatDateTime,
   Message,
@@ -19,7 +21,7 @@ import {
 } from '../lib/api';
 
 type AuthMode = 'login' | 'register';
-type ActiveSection = 'overview' | 'devices' | 'messages' | 'webhooks' | 'broadcasts' | 'auto-replies' | 'api-docs';
+type ActiveSection = 'overview' | 'devices' | 'messages' | 'webhooks' | 'broadcasts' | 'auto-replies' | 'leads' | 'api-docs';
 type SessionState = AuthTokens & { email?: string; name?: string };
 
 const sessionStorageKey = 'watether.console.session';
@@ -32,6 +34,7 @@ const navItems: Array<{ key: ActiveSection; label: string; href: string }> = [
   { key: 'webhooks', label: 'Webhooks', href: '/webhooks' },
   { key: 'broadcasts', label: 'Broadcasts', href: '/broadcasts' },
   { key: 'auto-replies', label: 'Auto Replies', href: '/auto-replies' },
+  { key: 'leads', label: 'Leads', href: '/leads' },
   { key: 'api-docs', label: 'API Docs', href: '/api-docs' },
 ];
 
@@ -44,7 +47,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   const [deviceForm, setDeviceForm] = useState({ name: '' });
   const [messageForm, setMessageForm] = useState({ deviceId: '', target: '', type: 'TEXT', message: '', mediaUrl: '' });
   const [webhookForm, setWebhookForm] = useState({ name: '', url: '', secret: '' });
-  const [broadcastForm, setBroadcastForm] = useState({ deviceId: '', name: '', messageTemplate: '', recipientsText: '' });
+  const [broadcastForm, setBroadcastForm] = useState({ deviceId: '', name: '', messageTemplate: '', recipientsText: '', contactListId: '' });
   const [autoReplyForm, setAutoReplyForm] = useState({ deviceId: '', name: '', matchType: 'contains', keyword: '', response: '', priority: '10' });
   const [workspaces, setWorkspaces] = useState<WorkspaceMembership[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
@@ -54,6 +57,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   const [webhookLogs, setWebhookLogs] = useState<Record<string, WebhookDelivery[]>>({});
   const [autoReplies, setAutoReplies] = useState<AutoReplyRule[]>([]);
   const [recentBroadcasts, setRecentBroadcasts] = useState<Broadcast[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactLists, setContactLists] = useState<ContactList[]>([]);
   const [generatedToken, setGeneratedToken] = useState<{ deviceName: string; token: string } | null>(null);
   const [messageSearch, setMessageSearch] = useState('');
   const deferredMessageSearch = useDeferredValue(messageSearch);
@@ -185,6 +190,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
           setWebhooks([]);
           setWebhookLogs({});
           setAutoReplies([]);
+          setContacts([]);
+          setContactLists([]);
           return;
         }
         const exists = data.some((item) => item.workspace.id === selectedWorkspaceId);
@@ -202,11 +209,13 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   async function refreshWorkspaceData(workspaceId: string, accessToken: string, silent = false) {
     if (!silent) setIsRefreshing(true);
     try {
-      const [deviceData, messageData, webhookData, autoReplyData] = await Promise.all([
+      const [deviceData, messageData, webhookData, autoReplyData, contactData, contactListData] = await Promise.all([
         apiRequest<Device[]>(`/devices?workspaceId=${workspaceId}`, undefined, accessToken),
         apiRequest<Message[]>(`/messages?workspaceId=${workspaceId}`, undefined, accessToken),
         apiRequest<Webhook[]>(`/webhooks?workspaceId=${workspaceId}`, undefined, accessToken),
         apiRequest<AutoReplyRule[]>(`/auto-replies?workspaceId=${workspaceId}`, undefined, accessToken),
+        apiRequest<Contact[]>(`/contacts?workspaceId=${workspaceId}`, undefined, accessToken),
+        apiRequest<ContactList[]>(`/contacts/lists?workspaceId=${workspaceId}`, undefined, accessToken),
       ]);
 
       startTransition(() => {
@@ -215,6 +224,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         setWebhooks(webhookData);
         setWebhookLogs({});
         setAutoReplies(autoReplyData);
+        setContacts(contactData);
+        setContactLists(contactListData);
         if (!messageForm.deviceId && deviceData[0]) setMessageForm((current) => ({ ...current, deviceId: deviceData[0].id }));
         if (!broadcastForm.deviceId && deviceData[0]) setBroadcastForm((current) => ({ ...current, deviceId: deviceData[0].id }));
         if (!autoReplyForm.deviceId && deviceData[0]) setAutoReplyForm((current) => ({ ...current, deviceId: deviceData[0].id }));
@@ -371,8 +382,19 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     const recipients = broadcastForm.recipientsText.split(/[,\n]/).map((item) => item.trim()).filter(Boolean);
     setIsLoading(true);
     try {
-      const broadcast = await apiRequest<Broadcast>('/broadcasts', { method: 'POST', body: JSON.stringify({ workspaceId: selectedWorkspaceId, deviceId: broadcastForm.deviceId, name: broadcastForm.name, messageTemplate: broadcastForm.messageTemplate, recipients }) }, session.accessToken);
-      setBroadcastForm((current) => ({ ...current, name: '', messageTemplate: '', recipientsText: '' }));
+      const payload: Record<string, unknown> = {
+        workspaceId: selectedWorkspaceId,
+        deviceId: broadcastForm.deviceId,
+        name: broadcastForm.name,
+        messageTemplate: broadcastForm.messageTemplate,
+      };
+      if (broadcastForm.contactListId) {
+        payload.contactListId = broadcastForm.contactListId;
+      } else {
+        payload.recipients = recipients;
+      }
+      const broadcast = await apiRequest<Broadcast>('/broadcasts', { method: 'POST', body: JSON.stringify(payload) }, session.accessToken);
+      setBroadcastForm((current) => ({ ...current, name: '', messageTemplate: '', recipientsText: '', contactListId: '' }));
       setRecentBroadcasts((current) => [broadcast, ...current].slice(0, 5));
       pushFeedback('success', 'Broadcast berhasil dibuat.');
     } catch (error) {
@@ -419,6 +441,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     setWebhookLogs({});
     setAutoReplies([]);
     setRecentBroadcasts([]);
+    setContacts([]);
+    setContactLists([]);
     setGeneratedToken(null);
     pushFeedback('info', 'Session lokal dibersihkan.');
   }
@@ -498,8 +522,9 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         {activeSection === 'devices' ? <DevicesPanel deviceForm={deviceForm} setDeviceForm={setDeviceForm} selectedWorkspaceId={selectedWorkspaceId} devices={devices} onCreate={handleDeviceCreate} onAction={handleDeviceAction} onCreateToken={handleTokenCreate} /> : null}
         {activeSection === 'messages' ? <MessagesPanel devices={devices} messageForm={messageForm} setMessageForm={setMessageForm} selectedWorkspaceId={selectedWorkspaceId} messageSearch={messageSearch} setMessageSearch={setMessageSearch} messages={filteredMessages} onSubmit={handleMessageSend} onRetry={handleMessageRetry} /> : null}
         {activeSection === 'webhooks' ? <WebhooksPanel selectedWorkspaceId={selectedWorkspaceId} webhookForm={webhookForm} setWebhookForm={setWebhookForm} webhooks={webhooks} webhookLogs={webhookLogs} onSubmit={handleWebhookCreate} onTest={handleWebhookTest} onLoadLogs={handleWebhookLogsLoad} /> : null}
-        {activeSection === 'broadcasts' ? <BroadcastsPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} broadcastForm={broadcastForm} setBroadcastForm={setBroadcastForm} recentBroadcasts={recentBroadcasts} onSubmit={handleBroadcastCreate} onStart={handleBroadcastStart} /> : null}
+        {activeSection === 'broadcasts' ? <BroadcastsPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} broadcastForm={broadcastForm} setBroadcastForm={setBroadcastForm} recentBroadcasts={recentBroadcasts} contactLists={contactLists} onSubmit={handleBroadcastCreate} onStart={handleBroadcastStart} /> : null}
         {activeSection === 'auto-replies' ? <AutoRepliesPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} autoReplyForm={autoReplyForm} setAutoReplyForm={setAutoReplyForm} autoReplies={autoReplies} isRefreshing={isRefreshing} onSubmit={handleAutoReplyCreate} /> : null}
+        {activeSection === 'leads' ? <LeadsPanel selectedWorkspaceId={selectedWorkspaceId} contacts={contacts} contactLists={contactLists} session={session} onRefresh={() => refreshWorkspaceData(selectedWorkspaceId, session.accessToken)} pushFeedback={pushFeedback} /> : null}
         {activeSection === 'api-docs' ? <ApiDocsPanel accessToken={session.accessToken} /> : null}
       </section>
     </main>
@@ -620,12 +645,217 @@ function WebhooksPanel({ selectedWorkspaceId, webhookForm, setWebhookForm, webho
   return <section className="panel glass-panel"><SectionHeading title="Webhooks" subtitle="Buat endpoint callback tenant, kirim test event manual, lalu audit histori delivery terakhir." /><form className="stack-form compact" onSubmit={onSubmit}><label className="field-block"><span>Nama</span><input value={webhookForm.name} onChange={(event) => setWebhookForm((current) => ({ ...current, name: event.target.value }))} placeholder="Main webhook" required /></label><label className="field-block"><span>URL</span><input value={webhookForm.url} onChange={(event) => setWebhookForm((current) => ({ ...current, url: event.target.value }))} placeholder="https://example.com/webhook" required /></label><label className="field-block"><span>Secret</span><input value={webhookForm.secret} onChange={(event) => setWebhookForm((current) => ({ ...current, secret: event.target.value }))} placeholder="supersecretkey" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Tambah Webhook</button></form><div className="list-stack compact-list">{webhooks.length ? webhooks.map((hook) => <article className="card-row slim" key={hook.id}><div><strong>{hook.name}</strong><p>{hook.url}</p><small>{hook.isActive ? 'Aktif' : 'Nonaktif'} · {formatDateTime(hook.createdAt)}</small>{webhookLogs[hook.id]?.length ? <div className="table-wrap compact-table"><table><thead><tr><th>Event</th><th>Status</th><th>Attempt</th><th>HTTP</th><th>Last Attempt</th></tr></thead><tbody>{webhookLogs[hook.id].map((log) => <tr key={log.id}><td>{log.eventType}</td><td><span className={`status-chip ${statusTone(log.status)}`}>{log.status}</span></td><td>{log.attemptCount}</td><td>{log.responseCode ?? '-'}</td><td>{formatDateTime(log.lastAttemptAt || log.createdAt)}</td></tr>)}</tbody></table></div> : null}</div><div className="action-row"><button className="mini-button" onClick={() => onLoadLogs(hook.id)} type="button">Logs</button><button className="mini-button accent" onClick={() => onTest(hook.id)} type="button">Test</button></div></article>) : <p className="empty-copy">Belum ada webhook aktif.</p>}</div></section>;
 }
 
-function BroadcastsPanel({ devices, selectedWorkspaceId, broadcastForm, setBroadcastForm, recentBroadcasts, onSubmit, onStart }: { devices: Device[]; selectedWorkspaceId: string; broadcastForm: { deviceId: string; name: string; messageTemplate: string; recipientsText: string }; setBroadcastForm: Dispatch<SetStateAction<{ deviceId: string; name: string; messageTemplate: string; recipientsText: string }>>; recentBroadcasts: Broadcast[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onStart: (broadcastId: string) => Promise<void>; }) {
-  return <section className="panel glass-panel"><SectionHeading title="Broadcast" subtitle="Create dan start broadcast memakai endpoint yang saat ini tersedia." /><form className="stack-form compact" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={broadcastForm.deviceId} onChange={(event) => setBroadcastForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Pilih device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Nama campaign</span><input value={broadcastForm.name} onChange={(event) => setBroadcastForm((current) => ({ ...current, name: event.target.value }))} placeholder="Promo Jumat" required /></label><label className="field-block"><span>Template pesan</span><textarea rows={3} value={broadcastForm.messageTemplate} onChange={(event) => setBroadcastForm((current) => ({ ...current, messageTemplate: event.target.value }))} placeholder="Halo, ada promo baru hari ini." required /></label><label className="field-block"><span>Recipients</span><textarea rows={4} value={broadcastForm.recipientsText} onChange={(event) => setBroadcastForm((current) => ({ ...current, recipientsText: event.target.value }))} placeholder="6281234567890&#10;6289876543210" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Buat Broadcast</button></form><div className="list-stack compact-list">{recentBroadcasts.length ? recentBroadcasts.map((item) => <article className="card-row" key={item.id}><div><strong>{item.name}</strong><p>{item.messageTemplate}</p><small>{item.totalTargets} recipients · {item.status}</small></div><button className="mini-button accent" onClick={() => onStart(item.id)} type="button">Start</button></article>) : <p className="empty-copy">Belum ada broadcast yang dibuat dari console ini.</p>}</div></section>;
+function BroadcastsPanel({ devices, selectedWorkspaceId, broadcastForm, setBroadcastForm, recentBroadcasts, contactLists, onSubmit, onStart }: { devices: Device[]; selectedWorkspaceId: string; broadcastForm: { deviceId: string; name: string; messageTemplate: string; recipientsText: string; contactListId: string }; setBroadcastForm: Dispatch<SetStateAction<{ deviceId: string; name: string; messageTemplate: string; recipientsText: string; contactListId: string }>>; recentBroadcasts: Broadcast[]; contactLists: ContactList[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onStart: (broadcastId: string) => Promise<void>; }) {
+  return <section className="panel glass-panel"><SectionHeading title="Broadcast" subtitle="Create dan start broadcast memakai endpoint yang saat ini tersedia." /><form className="stack-form compact" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={broadcastForm.deviceId} onChange={(event) => setBroadcastForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Pilih device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Nama campaign</span><input value={broadcastForm.name} onChange={(event) => setBroadcastForm((current) => ({ ...current, name: event.target.value }))} placeholder="Promo Jumat" required /></label><label className="field-block"><span>Template pesan</span><textarea rows={3} value={broadcastForm.messageTemplate} onChange={(event) => setBroadcastForm((current) => ({ ...current, messageTemplate: event.target.value }))} placeholder="Halo, ada promo baru hari ini." required /></label><label className="field-block"><span>Recipients (nomor per baris)</span><textarea rows={4} value={broadcastForm.recipientsText} onChange={(event) => setBroadcastForm((current) => ({ ...current, recipientsText: event.target.value, contactListId: '' }))} placeholder="6281234567890&#10;6289876543210" /></label>{contactLists.length > 0 ? <label className="field-block"><span>Atau pilih dari daftar kontak</span><select value={broadcastForm.contactListId} onChange={(event) => setBroadcastForm((current) => ({ ...current, contactListId: event.target.value, recipientsText: '' }))}><option value="">— pilih daftar —</option>{contactLists.map((list) => <option key={list.id} value={list.id}>{list.name} ({list.memberCount} kontak)</option>)}</select></label> : null}<button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Buat Broadcast</button></form><div className="list-stack compact-list">{recentBroadcasts.length ? recentBroadcasts.map((item) => <article className="card-row" key={item.id}><div><strong>{item.name}</strong><p>{item.messageTemplate}</p><small>{item.totalTargets} recipients · {item.status}</small></div><button className="mini-button accent" onClick={() => onStart(item.id)} type="button">Start</button></article>) : <p className="empty-copy">Belum ada broadcast yang dibuat dari console ini.</p>}</div></section>;
 }
 
 function AutoRepliesPanel({ devices, selectedWorkspaceId, autoReplyForm, setAutoReplyForm, autoReplies, isRefreshing, onSubmit }: { devices: Device[]; selectedWorkspaceId: string; autoReplyForm: { deviceId: string; name: string; matchType: string; keyword: string; response: string; priority: string }; setAutoReplyForm: Dispatch<SetStateAction<{ deviceId: string; name: string; matchType: string; keyword: string; response: string; priority: string }>>; autoReplies: AutoReplyRule[]; isRefreshing: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; }) {
   return <section className="panel glass-panel"><SectionHeading title="Auto Reply" subtitle="Rule sederhana per device untuk keyword-based response." /><form className="form-grid" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={autoReplyForm.deviceId} onChange={(event) => setAutoReplyForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Pilih device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Nama rule</span><input value={autoReplyForm.name} onChange={(event) => setAutoReplyForm((current) => ({ ...current, name: event.target.value }))} placeholder="Order keyword" required /></label><label className="field-block"><span>Match type</span><select value={autoReplyForm.matchType} onChange={(event) => setAutoReplyForm((current) => ({ ...current, matchType: event.target.value }))}><option value="contains">contains</option><option value="exact">exact</option></select></label><label className="field-block"><span>Priority</span><input value={autoReplyForm.priority} onChange={(event) => setAutoReplyForm((current) => ({ ...current, priority: event.target.value }))} type="number" min="0" max="100" required /></label><label className="field-block span-2"><span>Keyword</span><input value={autoReplyForm.keyword} onChange={(event) => setAutoReplyForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="cek pesanan" required /></label><label className="field-block span-2"><span>Response</span><textarea rows={4} value={autoReplyForm.response} onChange={(event) => setAutoReplyForm((current) => ({ ...current, response: event.target.value }))} placeholder="Halo, silakan kirim nomor order Anda." required /></label><div className="span-2 button-row"><button className="button-primary" disabled={!selectedWorkspaceId} type="submit">Tambah Rule</button><span className="helper-copy">{isRefreshing ? 'Menyegarkan data workspace...' : 'Data workspace sinkron.'}</span></div></form><div className="table-wrap compact-table"><table><thead><tr><th>Nama</th><th>Device</th><th>Keyword</th><th>Priority</th><th>Status</th></tr></thead><tbody>{autoReplies.length ? autoReplies.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{devices.find((device) => device.id === rule.deviceId)?.name || rule.deviceId}</td><td>{rule.keyword}</td><td>{rule.priority}</td><td><span className={`status-chip ${rule.isEnabled ? 'status-success' : 'status-danger'}`}>{rule.isEnabled ? 'ENABLED' : 'DISABLED'}</span></td></tr>) : <tr><td colSpan={5} className="empty-table">Belum ada auto-reply rule.</td></tr>}</tbody></table></div></section>;
+}
+
+function LeadsPanel({ selectedWorkspaceId, contacts, contactLists, session, onRefresh, pushFeedback }: { selectedWorkspaceId: string; contacts: Contact[]; contactLists: ContactList[]; session: { accessToken: string }; onRefresh: () => void; pushFeedback: (tone: 'success' | 'error' | 'info', text: string) => void; }) {
+  const [tab, setTab] = useState<'kontak' | 'daftar'>('kontak');
+  const [contactForm, setContactForm] = useState({ phoneNumber: '', name: '', tags: '' });
+  const [bulkText, setBulkText] = useState('');
+  const [showBulk, setShowBulk] = useState(false);
+  const [listForm, setListForm] = useState({ name: '', description: '' });
+  const [selectedListId, setSelectedListId] = useState('');
+  const [listMembers, setListMembers] = useState<Contact[]>([]);
+  const [addMembersText, setAddMembersText] = useState('');
+  const [isLoadingAction, setIsLoadingAction] = useState(false);
+
+  async function handleAddContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!session.accessToken || !selectedWorkspaceId) return;
+    setIsLoadingAction(true);
+    try {
+      const tags = contactForm.tags.split(',').map((t) => t.trim()).filter(Boolean);
+      await apiRequest('/contacts', { method: 'POST', body: JSON.stringify({ workspaceId: selectedWorkspaceId, phoneNumber: contactForm.phoneNumber, name: contactForm.name || undefined, tags: tags.length ? tags : undefined }) }, session.accessToken);
+      setContactForm({ phoneNumber: '', name: '', tags: '' });
+      pushFeedback('success', 'Kontak berhasil ditambahkan.');
+      onRefresh();
+    } catch (error) {
+      pushFeedback('error', error instanceof Error ? error.message : 'Gagal menambah kontak.');
+    } finally {
+      setIsLoadingAction(false);
+    }
+  }
+
+  async function handleBulkImport() {
+    if (!session.accessToken || !selectedWorkspaceId || !bulkText.trim()) return;
+    setIsLoadingAction(true);
+    try {
+      const entries = bulkText.trim().split('\n').map((line) => {
+        const [phoneNumber, name] = line.split(',').map((s) => s.trim());
+        return phoneNumber ? { phoneNumber, name: name || undefined } : null;
+      }).filter((entry): entry is { phoneNumber: string; name: string | undefined } => entry !== null);
+      const result = await apiRequest<{ imported: number; skipped: number }>('/contacts/bulk-import', { method: 'POST', body: JSON.stringify({ workspaceId: selectedWorkspaceId, contacts: entries }) }, session.accessToken);
+      setBulkText('');
+      setShowBulk(false);
+      pushFeedback('success', `Import selesai: ${result.imported} berhasil, ${result.skipped} dilewati.`);
+      onRefresh();
+    } catch (error) {
+      pushFeedback('error', error instanceof Error ? error.message : 'Gagal import kontak.');
+    } finally {
+      setIsLoadingAction(false);
+    }
+  }
+
+  async function handleDeleteContact(id: string) {
+    if (!session.accessToken) return;
+    try {
+      await apiRequest(`/contacts/${id}`, { method: 'DELETE' }, session.accessToken);
+      pushFeedback('success', 'Kontak dihapus.');
+      onRefresh();
+    } catch (error) {
+      pushFeedback('error', error instanceof Error ? error.message : 'Gagal hapus kontak.');
+    }
+  }
+
+  async function handleCreateList(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!session.accessToken || !selectedWorkspaceId) return;
+    setIsLoadingAction(true);
+    try {
+      await apiRequest('/contacts/lists', { method: 'POST', body: JSON.stringify({ workspaceId: selectedWorkspaceId, name: listForm.name, description: listForm.description || undefined }) }, session.accessToken);
+      setListForm({ name: '', description: '' });
+      pushFeedback('success', 'Daftar kontak berhasil dibuat.');
+      onRefresh();
+    } catch (error) {
+      pushFeedback('error', error instanceof Error ? error.message : 'Gagal buat daftar.');
+    } finally {
+      setIsLoadingAction(false);
+    }
+  }
+
+  async function handleSelectList(listId: string) {
+    setSelectedListId(listId);
+    if (!session.accessToken || !listId) { setListMembers([]); return; }
+    try {
+      const members = await apiRequest<Contact[]>(`/contacts/lists/${listId}/members`, undefined, session.accessToken);
+      setListMembers(members);
+    } catch (error) {
+      pushFeedback('error', error instanceof Error ? error.message : 'Gagal memuat anggota daftar.');
+    }
+  }
+
+  async function handleAddToList() {
+    if (!session.accessToken || !selectedListId || !addMembersText.trim()) return;
+    setIsLoadingAction(true);
+    try {
+      const contactIds = addMembersText.trim().split('\n').map((s) => s.trim()).filter(Boolean);
+      const result = await apiRequest<{ added: number; skipped: number }>(`/contacts/lists/${selectedListId}/members`, { method: 'POST', body: JSON.stringify({ contactIds }) }, session.accessToken);
+      setAddMembersText('');
+      pushFeedback('success', `${result.added} kontak ditambahkan ke daftar.`);
+      await handleSelectList(selectedListId);
+      onRefresh();
+    } catch (error) {
+      pushFeedback('error', error instanceof Error ? error.message : 'Gagal tambah ke daftar.');
+    } finally {
+      setIsLoadingAction(false);
+    }
+  }
+
+  async function handleRemoveFromList(contactId: string) {
+    if (!session.accessToken || !selectedListId) return;
+    try {
+      await apiRequest(`/contacts/lists/${selectedListId}/members/${contactId}`, { method: 'DELETE' }, session.accessToken);
+      pushFeedback('success', 'Kontak dihapus dari daftar.');
+      await handleSelectList(selectedListId);
+      onRefresh();
+    } catch (error) {
+      pushFeedback('error', error instanceof Error ? error.message : 'Gagal hapus dari daftar.');
+    }
+  }
+
+  const selectedList = contactLists.find((l) => l.id === selectedListId);
+
+  return (
+    <section className="panel glass-panel">
+      <SectionHeading title="Leads / Kontak" subtitle="Kelola daftar kontak dan grup pengiriman untuk workspace aktif." />
+      <div className="auth-switch" style={{ marginBottom: '16px' }}>
+        <button className={tab === 'kontak' ? 'pill active' : 'pill'} onClick={() => setTab('kontak')} type="button">Kontak</button>
+        <button className={tab === 'daftar' ? 'pill active' : 'pill'} onClick={() => setTab('daftar')} type="button">Daftar</button>
+      </div>
+
+      {tab === 'kontak' ? (
+        <div>
+          <form className="form-grid" onSubmit={handleAddContact}>
+            <label className="field-block"><span>Nomor (62...)</span><input value={contactForm.phoneNumber} onChange={(e) => setContactForm((c) => ({ ...c, phoneNumber: e.target.value }))} placeholder="6281234567890" required /></label>
+            <label className="field-block"><span>Nama</span><input value={contactForm.name} onChange={(e) => setContactForm((c) => ({ ...c, name: e.target.value }))} placeholder="Budi Santoso" /></label>
+            <label className="field-block"><span>Tags (pisah koma)</span><input value={contactForm.tags} onChange={(e) => setContactForm((c) => ({ ...c, tags: e.target.value }))} placeholder="vip, pelanggan" /></label>
+            <div className="button-row">
+              <button className="button-secondary" disabled={isLoadingAction || !selectedWorkspaceId} type="submit">Tambah Kontak</button>
+              <button className="button-ghost" type="button" onClick={() => setShowBulk((v) => !v)}>Import CSV</button>
+            </div>
+          </form>
+          {showBulk ? (
+            <div className="stack-form compact" style={{ marginTop: '12px' }}>
+              <label className="field-block"><span>CSV: phone,nama (satu per baris)</span><textarea rows={5} value={bulkText} onChange={(e) => setBulkText(e.target.value)} placeholder={'6281234567890,Budi\n6289876543210,Siti'} /></label>
+              <button className="button-secondary" disabled={isLoadingAction} type="button" onClick={handleBulkImport}>Import</button>
+            </div>
+          ) : null}
+          <div className="table-wrap" style={{ marginTop: '16px' }}>
+            <table>
+              <thead><tr><th>Nama</th><th>Nomor</th><th>Tags</th><th>Aksi</th></tr></thead>
+              <tbody>
+                {contacts.length ? contacts.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.name || '-'}</td>
+                    <td>{c.phoneNumber}</td>
+                    <td>{Array.isArray(c.tags) ? (c.tags as string[]).join(', ') : '-'}</td>
+                    <td><button className="mini-button" style={{ color: 'var(--danger, #e55)' }} type="button" onClick={() => handleDeleteContact(c.id)}>Hapus</button></td>
+                  </tr>
+                )) : <tr><td colSpan={4} className="empty-table">Belum ada kontak.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <form className="stack-form compact" onSubmit={handleCreateList}>
+            <label className="field-block"><span>Nama daftar</span><input value={listForm.name} onChange={(e) => setListForm((l) => ({ ...l, name: e.target.value }))} placeholder="Pelanggan VIP" required /></label>
+            <label className="field-block"><span>Deskripsi (opsional)</span><input value={listForm.description} onChange={(e) => setListForm((l) => ({ ...l, description: e.target.value }))} placeholder="Pelanggan tier atas" /></label>
+            <button className="button-secondary" disabled={isLoadingAction || !selectedWorkspaceId} type="submit">Buat Daftar</button>
+          </form>
+          <div className="list-stack compact-list" style={{ marginTop: '16px' }}>
+            {contactLists.length ? contactLists.map((list) => (
+              <article className={`card-row slim${selectedListId === list.id ? ' active' : ''}`} key={list.id} style={{ cursor: 'pointer' }} onClick={() => handleSelectList(list.id)}>
+                <div>
+                  <strong>{list.name}</strong>
+                  <p>{list.description || 'Tidak ada deskripsi'}</p>
+                  <small>{list.memberCount} anggota</small>
+                </div>
+              </article>
+            )) : <p className="empty-copy">Belum ada daftar kontak.</p>}
+          </div>
+          {selectedList ? (
+            <div style={{ marginTop: '20px' }}>
+              <h4 style={{ marginBottom: '8px' }}>Anggota: {selectedList.name}</h4>
+              <div className="stack-form compact">
+                <label className="field-block"><span>Tambah kontak (ID per baris)</span><textarea rows={3} value={addMembersText} onChange={(e) => setAddMembersText(e.target.value)} placeholder="uuid-kontak-1&#10;uuid-kontak-2" /></label>
+                <button className="button-ghost" disabled={isLoadingAction} type="button" onClick={handleAddToList}>Tambah ke Daftar</button>
+              </div>
+              <div className="table-wrap" style={{ marginTop: '12px' }}>
+                <table>
+                  <thead><tr><th>Nama</th><th>Nomor</th><th>Aksi</th></tr></thead>
+                  <tbody>
+                    {listMembers.length ? listMembers.map((m) => (
+                      <tr key={m.id}>
+                        <td>{m.name || '-'}</td>
+                        <td>{m.phoneNumber}</td>
+                        <td><button className="mini-button" style={{ color: 'var(--danger, #e55)' }} type="button" onClick={() => handleRemoveFromList(m.id)}>Hapus</button></td>
+                      </tr>
+                    )) : <tr><td colSpan={3} className="empty-table">Belum ada anggota.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function ApiDocsPanel({ accessToken }: { accessToken: string }) {

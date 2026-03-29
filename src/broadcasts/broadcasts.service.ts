@@ -11,14 +11,24 @@ export class BroadcastsService {
   async create(userId: string, dto: CreateBroadcastDto) {
     await this.assertWorkspaceMembership(userId, dto.workspaceId);
     await this.assertDeviceInWorkspace(dto.deviceId, dto.workspaceId);
+
+    let recipientPhones = dto.recipients ?? [];
+    if (dto.contactListId) {
+      const members = await this.prisma.contactListMember.findMany({
+        where: { contactListId: dto.contactListId },
+        include: { contact: true },
+      });
+      recipientPhones = members.map((m) => m.contact.phoneNumber);
+    }
+
     return this.prisma.broadcast.create({
       data: {
         workspaceId: dto.workspaceId,
         deviceId: dto.deviceId,
         name: dto.name,
         messageTemplate: dto.messageTemplate,
-        totalTargets: dto.recipients.length,
-        recipients: { create: dto.recipients.map((phoneNumber) => ({ phoneNumber })) },
+        totalTargets: recipientPhones.length,
+        recipients: { create: recipientPhones.map((phoneNumber) => ({ phoneNumber })) },
       },
       include: { recipients: true },
     });

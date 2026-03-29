@@ -83,6 +83,28 @@ export type AutoReplyRule = {
   isEnabled: boolean;
 };
 
+export type Contact = {
+  id: string;
+  workspaceId: string;
+  name?: string | null;
+  phoneNumber: string;
+  email?: string | null;
+  tags?: string[] | null;
+  notes?: string | null;
+  isBlacklisted: boolean;
+  isOptOut: boolean;
+  createdAt: string;
+};
+
+export type ContactList = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string | null;
+  memberCount: number;
+  createdAt: string;
+};
+
 export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
 export class ApiError extends Error {
