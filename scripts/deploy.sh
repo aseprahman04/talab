@@ -28,6 +28,16 @@ cd $APP_DIR
 pm2 startOrRestart $APP_DIR/ecosystem.config.js --update-env
 pm2 save
 
+# ── Nginx: ensure SSL cert exists (self-signed, works with Cloudflare Full mode)
+mkdir -p /etc/ssl/watether
+if [ ! -f /etc/ssl/watether/origin.pem ]; then
+  echo "[deploy] generating self-signed cert..."
+  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout /etc/ssl/watether/origin.key \
+    -out /etc/ssl/watether/origin.pem \
+    -subj "/CN=watheter.com"
+fi
+
 # ── Nginx: update config & reload ────────────────────────────────────────────
 echo "[deploy] reloading nginx..."
 cp $APP_DIR/nginx/watheter.conf /etc/nginx/sites-available/watheter.conf
