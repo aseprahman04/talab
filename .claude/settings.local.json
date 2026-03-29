@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const p = require\\(''./node_modules/@nestjs/core/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(npx nest:*)",
+      "Bash(redis-cli ping:*)",
+      "Bash(node -e \":*)",
+      "Bash(docker compose:*)",
+      "Bash(where redis-server:*)",
+      "Bash(wsl redis-server:*)",
+      "Bash(wsl redis-cli:*)",
+      "Bash(wsl -- bash -c \"redis-cli ping 2>/dev/null || echo ''Redis not available in WSL''\")",
+      "Bash(npm install:*)",
+      "Bash(ls f:/Projects/WATether/.env*)",
+      "Bash(npx prisma:*)",
+      "Bash(docker run:*)",
+      "Bash(grep -v \"^$\\\\|Update available\\\\|major update\\\\|pris.ly\\\\|Run the\\\\|npm i\")",
+      "Bash(PORT=3002 npx nest start)",
+      "Bash(PORT=3003 npx nest start)",
+      "Bash(PORT=3003 node dist/main.js)",
+      "Bash(netstat -ano)",
+      "Read(//f/Projects/WATether/**)",
+      "Bash(PORT=3010 node dist/main.js)",
+      "Bash(xargs -I{} taskkill /PID {} /F)",
+      "Bash(cmd //c \"taskkill /PID 42128 /F & taskkill /PID 31432 /F & taskkill /PID 11872 /F\")",
+      "Bash(PORT=3002 node dist/main.js)",
+      "Bash(while read:*)",
+      "Bash(do cmd:*)",
+      "Bash(done)",
+      "WebFetch(domain:fonnte.com)",
+      "Bash(ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no root@194.233.67.65 \"uname -a && cat /etc/os-release | head -5 && ss -tlnp | grep -E ''LISTEN'' && ufw status 2>/dev/null || iptables -L INPUT --line-numbers -n 2>/dev/null | head -30\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@194.233.67.65 \"which docker && docker --version && which docker-compose || which docker compose && nginx -v && ls /etc/nginx/sites-enabled/ && cat /etc/nginx/sites-enabled/* 2>/dev/null | head -80\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@194.233.67.65 \"ls /etc/ssl/\")"
+    ]
+  }
+}

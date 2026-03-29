@@ -1,0 +1,366 @@
+{
+  "info": {
+    "name": "WATether API",
+    "description": "WhatsApp gateway control plane — full API collection.\n\n**Setup:**\n1. Set the `baseUrl` variable to your backend URL (default: `http://localhost:3003`)\n2. Call **Auth / Login** or **Auth / Register** — the test script auto-saves `accessToken` and `refreshToken`\n3. All protected requests use `{{accessToken}}` via Bearer auth\n\n**Sample seed values (local dev):**\n- `workspaceId`: look up in Workspaces / List after login\n- `deviceId`: `seed-device-01`\n- `apiToken`: `wt_seeddemo000000000000000000000000000000000000000001`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3003", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "workspaceId", "value": "", "type": "string" },
+    { "key": "deviceId", "value": "seed-device-01", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Asep Rahmanurhakim\",\n  \"email\": \"asep@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["const r = pm.response.json();", "if (r.accessToken) {", "  pm.collectionVariables.set('accessToken', r.accessToken);", "  pm.collectionVariables.set('refreshToken', r.refreshToken);", "}"] }
+          }]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aseprahmanurhakim04@gmail.com\",\n  \"password\": \"password123\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["const r = pm.response.json();", "if (r.accessToken) {", "  pm.collectionVariables.set('accessToken', r.accessToken);", "  pm.collectionVariables.set('refreshToken', r.refreshToken);", "}"] }
+          }]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["const r = pm.response.json();", "if (r.accessToken) {", "  pm.collectionVariables.set('accessToken', r.accessToken);", "  pm.collectionVariables.set('refreshToken', r.refreshToken);", "}"] }
+          }]
+        },
+        {
+          "name": "Logout All Sessions",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["auth", "logout-all"] }
+          }
+        },
+        {
+          "name": "Google OAuth (browser only)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/auth/google", "host": ["{{baseUrl}}"], "path": ["auth", "google"] },
+            "description": "Open this URL in a browser — it redirects to Google. On callback, tokens are passed to the frontend via URL fragment."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workspaces",
+      "item": [
+        {
+          "name": "List Workspaces",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/workspaces", "host": ["{{baseUrl}}"], "path": ["workspaces"] }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["const r = pm.response.json();", "if (Array.isArray(r) && r.length > 0) {", "  pm.collectionVariables.set('workspaceId', r[0].workspace.id);", "}"] }
+          }]
+        },
+        {
+          "name": "Create Workspace",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/workspaces", "host": ["{{baseUrl}}"], "path": ["workspaces"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ops Sales\",\n  \"slug\": \"ops-sales\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devices",
+      "item": [
+        {
+          "name": "List Devices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/devices?workspaceId={{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices"],
+              "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Create Device",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/devices", "host": ["{{baseUrl}}"], "path": ["devices"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"name\": \"CS Jakarta 01\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Start Pairing",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/devices/{{deviceId}}/pair",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", "{{deviceId}}", "pair"]
+            }
+          }
+        },
+        {
+          "name": "Reconnect Device",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/devices/{{deviceId}}/reconnect",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", "{{deviceId}}", "reconnect"]
+            }
+          }
+        },
+        {
+          "name": "Generate API Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/devices/{{deviceId}}/tokens",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", "{{deviceId}}", "tokens"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Production token\"\n}"
+            },
+            "description": "Returns `{ tokenId, token }`. The plain token is shown **once** — store it securely."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/messages/send", "host": ["{{baseUrl}}"], "path": ["messages", "send"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"target\": \"6285795950115\",\n  \"type\": \"TEXT\",\n  \"message\": \"Halo, pesanan kamu sudah diproses!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Retry Failed Message",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/messages/:id/retry",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages", ":id", "retry"],
+              "variable": [{ "key": "id", "value": "MESSAGE_ID_HERE" }]
+            }
+          }
+        },
+        {
+          "name": "List Messages",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/messages?workspaceId={{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages"],
+              "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Create Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/webhooks", "host": ["{{baseUrl}}"], "path": ["webhooks"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"name\": \"Order Notifications\",\n  \"url\": \"https://api.example.com/webhooks/watether\",\n  \"secret\": \"supersecretkey123\",\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "List Webhooks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks?workspaceId={{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhooks"],
+              "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Webhook Logs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/:id/logs?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhooks", ":id", "logs"],
+              "query": [{ "key": "limit", "value": "20" }],
+              "variable": [{ "key": "id", "value": "WEBHOOK_ID_HERE" }]
+            }
+          }
+        },
+        {
+          "name": "Send Test Event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/:id/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhooks", ":id", "test"],
+              "variable": [{ "key": "id", "value": "WEBHOOK_ID_HERE" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Broadcasts",
+      "item": [
+        {
+          "name": "Create Broadcast",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/broadcasts", "host": ["{{baseUrl}}"], "path": ["broadcasts"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"name\": \"Promo Ramadan 2025\",\n  \"messageTemplate\": \"Halo! Ada promo spesial untuk kamu hari ini.\",\n  \"recipients\": [\"6285795950115\", \"628579590115\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Start Broadcast",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/broadcasts/:id/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["broadcasts", ":id", "start"],
+              "variable": [{ "key": "id", "value": "BROADCAST_ID_HERE" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auto Replies",
+      "item": [
+        {
+          "name": "Create Auto Reply Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auto-replies", "host": ["{{baseUrl}}"], "path": ["auto-replies"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"name\": \"Cek Status Order\",\n  \"matchType\": \"contains\",\n  \"keyword\": \"cek pesanan\",\n  \"response\": \"Halo! Silakan kirim nomor order kamu ya.\",\n  \"priority\": 10,\n  \"isEnabled\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "List Auto Reply Rules",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/auto-replies?workspaceId={{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auto-replies"],
+              "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

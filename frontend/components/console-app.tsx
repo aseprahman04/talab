@@ -19,7 +19,7 @@ import {
 } from '../lib/api';
 
 type AuthMode = 'login' | 'register';
-type ActiveSection = 'overview' | 'devices' | 'messages' | 'webhooks' | 'broadcasts' | 'auto-replies';
+type ActiveSection = 'overview' | 'devices' | 'messages' | 'webhooks' | 'broadcasts' | 'auto-replies' | 'api-docs';
 type SessionState = AuthTokens & { email?: string; name?: string };
 
 const sessionStorageKey = 'watether.console.session';
@@ -32,6 +32,7 @@ const navItems: Array<{ key: ActiveSection; label: string; href: string }> = [
   { key: 'webhooks', label: 'Webhooks', href: '/webhooks' },
   { key: 'broadcasts', label: 'Broadcasts', href: '/broadcasts' },
   { key: 'auto-replies', label: 'Auto Replies', href: '/auto-replies' },
+  { key: 'api-docs', label: 'API Docs', href: '/api-docs' },
 ];
 
 export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) {
@@ -60,6 +61,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [liveState, setLiveState] = useState<'idle' | 'connecting' | 'live' | 'offline'>('idle');
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const rawSession = window.localStorage.getItem(sessionStorageKey);
@@ -68,6 +70,20 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
 
     if (requestedMode === 'register' || requestedMode === 'login') {
       setAuthMode(requestedMode);
+    }
+
+    // Handle Google OAuth redirect — tokens arrive via URL fragment to avoid server logs
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      if (accessToken && refreshToken) {
+        setSession({ accessToken, refreshToken });
+        // Clean the fragment from the URL without a page reload
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        return;
+      }
     }
 
     if (rawSession) {
@@ -81,6 +97,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     if (rawWorkspace) {
       setSelectedWorkspaceId(rawWorkspace);
     }
+
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -409,6 +427,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     setFeedback({ tone, text });
   }
 
+  if (!hydrated) return null;
+
   if (!session) {
     return <AuthScreen authMode={authMode} setAuthMode={setAuthMode} authForm={authForm} setAuthForm={setAuthForm} isLoading={isLoading} feedback={feedback} onSubmit={handleAuthSubmit} />;
   }
@@ -480,36 +500,97 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         {activeSection === 'webhooks' ? <WebhooksPanel selectedWorkspaceId={selectedWorkspaceId} webhookForm={webhookForm} setWebhookForm={setWebhookForm} webhooks={webhooks} webhookLogs={webhookLogs} onSubmit={handleWebhookCreate} onTest={handleWebhookTest} onLoadLogs={handleWebhookLogsLoad} /> : null}
         {activeSection === 'broadcasts' ? <BroadcastsPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} broadcastForm={broadcastForm} setBroadcastForm={setBroadcastForm} recentBroadcasts={recentBroadcasts} onSubmit={handleBroadcastCreate} onStart={handleBroadcastStart} /> : null}
         {activeSection === 'auto-replies' ? <AutoRepliesPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} autoReplyForm={autoReplyForm} setAutoReplyForm={setAutoReplyForm} autoReplies={autoReplies} isRefreshing={isRefreshing} onSubmit={handleAutoReplyCreate} /> : null}
+        {activeSection === 'api-docs' ? <ApiDocsPanel accessToken={session.accessToken} /> : null}
       </section>
     </main>
   );
 }
 
 function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, feedback, onSubmit }: { authMode: AuthMode; setAuthMode: (value: AuthMode) => void; authForm: { name: string; email: string; password: string }; setAuthForm: Dispatch<SetStateAction<{ name: string; email: string; password: string }>>; isLoading: boolean; feedback: { tone: 'success' | 'error' | 'info'; text: string } | null; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; }) {
+  const [lang, setLang] = useState<'id' | 'en'>('id');
+  const t = {
+    id: {
+      eyebrow: 'WATether Console',
+      headline: 'Kelola nomor WhatsApp, kirim pesan, dan otomasi notifikasi bisnis kamu.',
+      sub: 'Broadcast, auto reply, webhook, dan log pesan — semua dalam satu dashboard.',
+      trialTitle: 'Mulai gratis sekarang',
+      trialDesc: 'Buat akun, hubungkan nomor WhatsApp pertama kamu, dan mulai kirim pesan dalam hitungan menit.',
+      loginTitle: 'Masuk ke console',
+      loginDesc: 'Lanjutkan pengelolaan device dan workspace kamu.',
+      nameLabel: 'Nama', namePlaceholder: 'Nama lengkap',
+      emailLabel: 'Email', emailPlaceholder: 'kamu@email.com',
+      passLabel: 'Password', passPlaceholder: 'Min. 8 karakter',
+      submitRegister: 'Buat Akun Gratis',
+      submitLogin: 'Masuk',
+      loading: 'Memproses...',
+      switchToRegister: 'Belum punya akun? Daftar gratis',
+      switchToLogin: 'Sudah punya akun? Masuk',
+      orContinueWith: 'atau lanjut dengan',
+      continueWithGoogle: 'Lanjut dengan Google',
+    },
+    en: {
+      eyebrow: 'WATether Console',
+      headline: 'Manage WhatsApp numbers, send messages, and automate business notifications.',
+      sub: 'Broadcast, auto reply, webhooks, and message logs — all in one dashboard.',
+      trialTitle: 'Start for free',
+      trialDesc: 'Create an account, connect your first WhatsApp number, and start sending messages in minutes.',
+      loginTitle: 'Sign in to console',
+      loginDesc: 'Continue managing your devices and workspaces.',
+      nameLabel: 'Name', namePlaceholder: 'Full name',
+      emailLabel: 'Email', emailPlaceholder: 'you@email.com',
+      passLabel: 'Password', passPlaceholder: 'Min. 8 characters',
+      submitRegister: 'Create Free Account',
+      submitLogin: 'Sign In',
+      loading: 'Processing...',
+      switchToRegister: "Don't have an account? Sign up free",
+      switchToLogin: 'Already have an account? Sign in',
+      orContinueWith: 'or continue with',
+      continueWithGoogle: 'Continue with Google',
+    },
+  }[lang];
+
   return (
     <main className="landing-shell">
       <section className="hero-card glass-panel">
         <div className="hero-copy">
-          <span className="eyebrow">WATether Console</span>
-          <h1>Dashboard operasional untuk device WhatsApp, queue pesan, dan webhook tenant.</h1>
-          <p>Frontend ini sekarang sudah punya route terpisah per modul dan indikator realtime workspace aktif.</p>
-          <div className="hero-metrics"><Metric label="Stack" value="Next.js + NestJS" /><Metric label="API Base" value={apiBaseUrl.replace(/^https?:\/\//, '')} /><Metric label="Mode" value="Realtime workspace" /></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span className="eyebrow">{t.eyebrow}</span>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button className={lang === 'id' ? 'pill active' : 'pill'} style={{ minHeight: 'auto', padding: '4px 10px', fontSize: '12px' }} onClick={() => setLang('id')} type="button">ID</button>
+              <button className={lang === 'en' ? 'pill active' : 'pill'} style={{ minHeight: 'auto', padding: '4px 10px', fontSize: '12px' }} onClick={() => setLang('en')} type="button">EN</button>
+            </div>
+          </div>
+          <h1>{t.headline}</h1>
+          <p>{t.sub}</p>
+          <div className="hero-metrics compact">
+            <Metric label="Devices" value="WhatsApp Numbers" />
+            <Metric label="Features" value="Broadcast · Auto Reply · Webhook" />
+            <Metric label="Plan" value="Free to start" />
+          </div>
         </div>
         <div className="auth-panel">
           <div className="auth-intro">
-            <strong>{authMode === 'register' ? 'Mode trial aktif' : 'Masuk ke workspace'}</strong>
-            <p>{authMode === 'register' ? 'Buat akun dulu, lalu lanjut buat workspace pertama untuk eksplor alur device dan message.' : 'Login untuk kembali ke workspace dan melanjutkan operasional.'}</p>
+            <strong>{authMode === 'register' ? t.trialTitle : t.loginTitle}</strong>
+            <p>{authMode === 'register' ? t.trialDesc : t.loginDesc}</p>
           </div>
           <div className="auth-switch">
             <button className={authMode === 'login' ? 'pill active' : 'pill'} onClick={() => setAuthMode('login')} type="button">Login</button>
             <button className={authMode === 'register' ? 'pill active' : 'pill'} onClick={() => setAuthMode('register')} type="button">Register</button>
           </div>
           <form className="stack-form" onSubmit={onSubmit}>
-            {authMode === 'register' ? <label className="field-block"><span>Nama</span><input value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} placeholder="Asep Rahman" required /></label> : null}
-            <label className="field-block"><span>Email</span><input type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} placeholder="you@example.com" required /></label>
-            <label className="field-block"><span>Password</span><input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} placeholder="Minimal 8 karakter" required minLength={8} /></label>
-            <button className="button-primary" disabled={isLoading} type="submit">{isLoading ? 'Memproses...' : authMode === 'login' ? 'Masuk ke Console' : 'Buat Akun'}</button>
+            {authMode === 'register' ? <label className="field-block"><span>{t.nameLabel}</span><input value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} placeholder={t.namePlaceholder} required /></label> : null}
+            <label className="field-block"><span>{t.emailLabel}</span><input type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} placeholder={t.emailPlaceholder} required /></label>
+            <label className="field-block"><span>{t.passLabel}</span><input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} placeholder={t.passPlaceholder} required minLength={8} /></label>
+            <button className="button-primary" disabled={isLoading} type="submit">{isLoading ? t.loading : authMode === 'login' ? t.submitLogin : t.submitRegister}</button>
           </form>
+          <div className="auth-divider"><span>{t.orContinueWith}</span></div>
+          <a className="button-google" href={`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3003'}/auth/google`}>
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+            {t.continueWithGoogle}
+          </a>
+          <button className="button-ghost" style={{ width: '100%', marginTop: '4px', fontSize: '13px' }} onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} type="button">
+            {authMode === 'login' ? t.switchToRegister : t.switchToLogin}
+          </button>
           {feedback ? <Feedback tone={feedback.tone} text={feedback.text} /> : null}
         </div>
       </section>
@@ -539,6 +620,38 @@ function BroadcastsPanel({ devices, selectedWorkspaceId, broadcastForm, setBroad
 
 function AutoRepliesPanel({ devices, selectedWorkspaceId, autoReplyForm, setAutoReplyForm, autoReplies, isRefreshing, onSubmit }: { devices: Device[]; selectedWorkspaceId: string; autoReplyForm: { deviceId: string; name: string; matchType: string; keyword: string; response: string; priority: string }; setAutoReplyForm: Dispatch<SetStateAction<{ deviceId: string; name: string; matchType: string; keyword: string; response: string; priority: string }>>; autoReplies: AutoReplyRule[]; isRefreshing: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; }) {
   return <section className="panel glass-panel"><SectionHeading title="Auto Reply" subtitle="Rule sederhana per device untuk keyword-based response." /><form className="form-grid" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={autoReplyForm.deviceId} onChange={(event) => setAutoReplyForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Pilih device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Nama rule</span><input value={autoReplyForm.name} onChange={(event) => setAutoReplyForm((current) => ({ ...current, name: event.target.value }))} placeholder="Order keyword" required /></label><label className="field-block"><span>Match type</span><select value={autoReplyForm.matchType} onChange={(event) => setAutoReplyForm((current) => ({ ...current, matchType: event.target.value }))}><option value="contains">contains</option><option value="exact">exact</option></select></label><label className="field-block"><span>Priority</span><input value={autoReplyForm.priority} onChange={(event) => setAutoReplyForm((current) => ({ ...current, priority: event.target.value }))} type="number" min="0" max="100" required /></label><label className="field-block span-2"><span>Keyword</span><input value={autoReplyForm.keyword} onChange={(event) => setAutoReplyForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="cek pesanan" required /></label><label className="field-block span-2"><span>Response</span><textarea rows={4} value={autoReplyForm.response} onChange={(event) => setAutoReplyForm((current) => ({ ...current, response: event.target.value }))} placeholder="Halo, silakan kirim nomor order Anda." required /></label><div className="span-2 button-row"><button className="button-primary" disabled={!selectedWorkspaceId} type="submit">Tambah Rule</button><span className="helper-copy">{isRefreshing ? 'Menyegarkan data workspace...' : 'Data workspace sinkron.'}</span></div></form><div className="table-wrap compact-table"><table><thead><tr><th>Nama</th><th>Device</th><th>Keyword</th><th>Priority</th><th>Status</th></tr></thead><tbody>{autoReplies.length ? autoReplies.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{devices.find((device) => device.id === rule.deviceId)?.name || rule.deviceId}</td><td>{rule.keyword}</td><td>{rule.priority}</td><td><span className={`status-chip ${rule.isEnabled ? 'status-success' : 'status-danger'}`}>{rule.isEnabled ? 'ENABLED' : 'DISABLED'}</span></td></tr>) : <tr><td colSpan={5} className="empty-table">Belum ada auto-reply rule.</td></tr>}</tbody></table></div></section>;
+}
+
+function ApiDocsPanel({ accessToken }: { accessToken: string }) {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3003';
+  const docsUrl = `${apiBase}/docs`;
+  return (
+    <section className="panel glass-panel api-docs-panel">
+      <div className="api-docs-toolbar">
+        <SectionHeading title="API Docs" subtitle="Swagger UI — explore and test all endpoints directly." />
+        <a className="button-ghost" href={docsUrl} target="_blank" rel="noreferrer" style={{ whiteSpace: 'nowrap' }}>
+          Open in tab
+        </a>
+      </div>
+      <div className="api-docs-token-hint">
+        <span className="eyebrow">Bearer token aktif</span>
+        <code className="token-preview">{accessToken.slice(0, 40)}…</code>
+        <button
+          className="mini-button"
+          type="button"
+          onClick={() => navigator.clipboard.writeText(accessToken)}
+        >
+          Copy
+        </button>
+      </div>
+      <iframe
+        src={docsUrl}
+        title="WATether API Docs"
+        className="docs-frame"
+        allow="clipboard-write"
+      />
+    </section>
+  );
 }
 
 function Metric({ label, value }: { label: string; value: string }) { return <div className="metric-pill"><span>{label}</span><strong>{value}</strong></div>; }
