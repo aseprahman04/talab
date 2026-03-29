@@ -21,12 +21,16 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     ConfigModule.forRoot({ isGlobal: true }),
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.get<string>('REDIS_HOST', 'localhost'),
-          port: Number(config.get<string>('REDIS_PORT', '6379')),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const password = config.get<string>('REDIS_PASSWORD');
+        return {
+          connection: {
+            host: config.get<string>('REDIS_HOST', 'localhost'),
+            port: Number(config.get<string>('REDIS_PORT', '6379')),
+            ...(password ? { password } : {}),
+          },
+        };
+      },
     }),
     JwtModule.register({}),
     PrismaModule,
