@@ -20,21 +20,23 @@ jobs:
           script_stop: true
           script: |
             set -e
+            echo "[bootstrap] start $(date)"
             APP_DIR=/opt/watether
-
-            # ── Bootstrap git repo if not yet initialized ─────────────────────
             mkdir -p $APP_DIR
             cd $APP_DIR
+            echo "[bootstrap] cwd=$(pwd)"
             if [ ! -d .git ]; then
+              echo "[bootstrap] git init"
               git init
               git remote add origin git@github.com:aseprahman04/watheter.git
             else
+              echo "[bootstrap] repo exists, update remote"
               git remote set-url origin git@github.com:aseprahman04/watheter.git
             fi
-            GIT_SSH_COMMAND='ssh -i /root/.ssh/watether_deploy -o StrictHostKeyChecking=no' \
-              git fetch origin main
-            git checkout -f main 2>/dev/null || git checkout -b main FETCH_HEAD
+            echo "[bootstrap] fetching..."
+            export GIT_SSH_COMMAND="ssh -i /root/.ssh/watether_deploy -o StrictHostKeyChecking=no"
+            git fetch origin main
+            echo "[bootstrap] resetting to FETCH_HEAD"
             git reset --hard FETCH_HEAD
-
-            # ── Run deploy script (now guaranteed to be latest) ───────────────
+            echo "[bootstrap] done, running deploy.sh"
             bash /opt/watether/scripts/deploy.sh
