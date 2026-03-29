@@ -13,8 +13,8 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          username: ${{ secrets.PROD_SSH_USER }}
+          host: 194.233.67.65
+          username: root
           key: ${{ secrets.PROD_SSH_KEY }}
           script: bash /opt/watether/scripts/deploy.sh
           script_stop: true
