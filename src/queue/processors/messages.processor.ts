@@ -82,7 +82,7 @@ export class MessagesProcessor extends WorkerHost {
         data: {
           webhookId: webhook.id,
           eventType,
-          payload: payload as Prisma.InputJsonValue,
+          payload: payload as object,
         },
       });
 
