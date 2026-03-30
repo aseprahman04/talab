@@ -9,8 +9,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3009
+      GOOGLE_CALLBACK_URL: https://watheter.com/api/auth/google/callback
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3009/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(()=>process.exit(0)).catch(()=>process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3009/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(()=>process.exit(0)).catch(()=>process.exit(1))\""]
       interval: 20s
       timeout: 10s
       retries: 5
