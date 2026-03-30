@@ -71,34 +71,51 @@ export class SubscriptionsService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const checkoutPayload = {
-      data: {
-        type: 'checkouts',
-        attributes: {
-          checkout_options: { embed: false },
-          checkout_data: {
-            email: user.email,
-            name: user.name,
-            custom: { workspaceId, planCode, userId },
+    // Try to create a dynamic checkout via API (injects custom_data for webhook auto-provisioning)
+    try {
+      const checkoutPayload = {
+        data: {
+          type: 'checkouts',
+          attributes: {
+            checkout_options: { embed: false },
+            checkout_data: {
+              email: user.email,
+              name: user.name,
+              custom: { workspaceId, planCode, userId },
+            },
+          },
+          relationships: {
+            store: {
+              data: { type: 'stores', id: process.env.LEMONSQUEEZY_STORE_ID ?? '' },
+            },
+            variant: {
+              data: { type: 'variants', id: plan.lemonSqueezyVariantId },
+            },
           },
         },
-        relationships: {
-          store: {
-            data: { type: 'stores', id: process.env.LEMONSQUEEZY_STORE_ID ?? '' },
-          },
-          variant: {
-            data: { type: 'variants', id: plan.lemonSqueezyVariantId },
-          },
-        },
-      },
-    };
+      };
 
-    const response = await this.lsRequest<LsCheckoutResponse>('/checkouts', {
-      method: 'POST',
-      body: JSON.stringify(checkoutPayload),
-    });
+      const response = await this.lsRequest<LsCheckoutResponse>('/checkouts', {
+        method: 'POST',
+        body: JSON.stringify(checkoutPayload),
+      });
 
-    return { url: response.data.attributes.url };
+      return { url: response.data.attributes.url };
+    } catch {
+      // Fallback: direct checkout URL with custom metadata in query string
+      // LS supports ?checkout[custom][key]=value; webhook will carry these back
+      if (!plan.lemonSqueezyCheckoutUrl) {
+        throw new BadRequestException(`No checkout URL configured for plan '${planCode}'`);
+      }
+      const params = new URLSearchParams({
+        'checkout[custom][workspaceId]': workspaceId,
+        'checkout[custom][planCode]': planCode,
+        'checkout[custom][userId]': userId,
+        'checkout[email]': user.email,
+        'checkout[name]': user.name,
+      });
+      return { url: `${plan.lemonSqueezyCheckoutUrl}?${params.toString()}` };
+    }
   }
 
   async handleWebhook(eventName: string, data: Record<string, unknown>): Promise<void> {

@@ -30,6 +30,8 @@ async function main() {
       maxMembers: 5,
       storageLimitMb: 1000,
       price: 49000,
+      lemonSqueezyVariantId: '1464622',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/227aa20b-d2d6-4b81-bc74-75d6962eac54',
     },
   });
 
@@ -44,6 +46,8 @@ async function main() {
       maxMembers: 20,
       storageLimitMb: 5000,
       price: 149000,
+      lemonSqueezyVariantId: '1464624',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/e23bb8a9-2fc3-43b7-bada-664b2d09428a',
     },
   });
 
