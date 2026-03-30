@@ -217,6 +217,17 @@ export default function HomePage() {
           <a className="button-ghost" href="#paket">Lihat paket</a>
         </div>
       </section>
+
+      <footer className="site-footer">
+        <p>© {new Date().getFullYear()} WATether. Semua hak dilindungi.</p>
+        <nav className="footer-links">
+          <Link href="/syarat-ketentuan">Syarat &amp; Ketentuan</Link>
+          <Link href="/kebijakan-privasi">Kebijakan Privasi</Link>
+          <Link href="/refund-policy">Refund Policy</Link>
+          <Link href="/faq">FAQ</Link>
+          <a href="mailto:support@watether.com">Kontak</a>
+        </nav>
+      </footer>
     </main>
   );
 }
