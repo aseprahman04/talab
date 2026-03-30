@@ -17,11 +17,12 @@ async function bootstrap() {
   });
 
   // Allow Swagger UI to be embedded in the console iframe
-  app.use('/docs', (_req: unknown, res: { setHeader: (k: string, v: string) => void }, next: () => void) => {
+  app.use('/api/docs', (_req: unknown, res: { setHeader: (k: string, v: string) => void }, next: () => void) => {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Content-Security-Policy', `frame-ancestors 'self' ${process.env.FRONTEND_URL || 'http://localhost:3001'}`);
     next();
   });
+  app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const config = new DocumentBuilder()
@@ -32,7 +33,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(process.env.PORT || 3000);
 }
