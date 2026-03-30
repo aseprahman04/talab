@@ -8,7 +8,6 @@
     "start": "next start -p 3001"
   },
   "dependencies": {
-    "ioredis": "^5.10.1",
     "next": "^15.2.4",
     "qrcode": "^1.5.4",
     "qrcode-svg": "^1.1.0",
