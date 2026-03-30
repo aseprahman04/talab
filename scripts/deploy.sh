@@ -16,7 +16,7 @@ docker image prune -f
 echo "[deploy] building frontend..."
 cd $APP_DIR/frontend
 npm ci --legacy-peer-deps
-NEXT_PUBLIC_API_BASE_URL=https://watheter.com npm run build
+NEXT_PUBLIC_API_BASE_URL=https://watheter.com/api npm run build
 
 mkdir -p $APP_DIR/frontend/.next/standalone/frontend/.next
 cp -r $APP_DIR/frontend/.next/static $APP_DIR/frontend/.next/standalone/frontend/.next/static
