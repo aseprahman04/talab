@@ -107,6 +107,7 @@ model User {
   ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
   memberships     WorkspaceMember[]
   auditLogs       AuditLog[]
+  sessions        UserSession[]
 }
 
 model Workspace {
@@ -176,7 +177,7 @@ model DeviceToken {
 
 model DeviceSession {
   id                   String    @id @default(uuid())
-  deviceId             String
+  deviceId             String    @unique
   sessionBlobEncrypted String
   sessionVersion       Int       @default(1)
   expiresAt            DateTime?
@@ -337,30 +338,48 @@ model AutoReplyRule {
 }
 
 model Plan {
-  id                  String         @id @default(uuid())
-  code                String         @unique
-  name                String
-  maxDevices          Int
-  monthlyMessageQuota Int
-  maxMembers          Int
-  storageLimitMb      Int
-  price               Decimal        @db.Decimal(12, 2)
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  subscriptions       Subscription[]
+  id                     String         @id @default(uuid())
+  code                   String         @unique
+  name                   String
+  maxDevices             Int
+  monthlyMessageQuota    Int
+  maxMembers             Int
+  storageLimitMb         Int
+  price                  Decimal        @db.Decimal(12, 2)
+  lemonSqueezyVariantId  String?        @unique
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  subscriptions          Subscription[]
 }
 
 model Subscription {
-  id          String             @id @default(uuid())
-  workspaceId String             @unique
-  planId      String
-  status      SubscriptionStatus @default(TRIAL)
-  startedAt   DateTime
-  endedAt     DateTime?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  workspace   Workspace          @relation(fields: [workspaceId], references: [id])
-  plan        Plan               @relation(fields: [planId], references: [id])
+  id                        String             @id @default(uuid())
+  workspaceId               String             @unique
+  planId                    String
+  status                    SubscriptionStatus @default(TRIAL)
+  startedAt                 DateTime
+  endedAt                   DateTime?
+  lemonSqueezySubscriptionId String?           @unique
+  lemonSqueezyCustomerId    String?
+  lemonSqueezyOrderId       String?
+  renewsAt                  DateTime?
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+  workspace                 Workspace          @relation(fields: [workspaceId], references: [id])
+  plan                      Plan               @relation(fields: [planId], references: [id])
+}
+
+model UserSession {
+  id         String    @id @default(uuid())
+  userId     String
+  tokenHash  String    @unique
+  userAgent  String?
+  ipAddress  String?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model AuditLog {

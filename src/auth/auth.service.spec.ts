@@ -2,6 +2,7 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/database/prisma/prisma.service';
+import { SessionService } from './session.service';
 import { AuthService } from './auth.service';
 
 // Mock argon2 to avoid native bindings in test environment
@@ -41,6 +42,13 @@ const mockJwt = {
   verifyAsync: jest.fn(),
 };
 
+const mockSession = {
+  create: jest.fn().mockResolvedValue('mock-session-token'),
+  revokeAll: jest.fn().mockResolvedValue(undefined),
+  revoke: jest.fn().mockResolvedValue(undefined),
+  listSessions: jest.fn().mockResolvedValue([]),
+};
+
 const user = {
   id: USER_ID,
   email: 'budi@example.com',
@@ -59,16 +67,17 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
+        { provide: SessionService, useValue: mockSession },
       ],
     }).compile();
     service = module.get(AuthService);
     jest.clearAllMocks();
-    // Restore signAsync default after clearAllMocks
     mockJwt.signAsync.mockResolvedValue('mock-jwt-token');
+    mockSession.create.mockResolvedValue('mock-session-token');
   });
 
   describe('register', () => {
-    it('creates a new user and returns tokens', async () => {
+    it('creates a new user and returns a session token', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue(user);
 
@@ -78,9 +87,10 @@ describe('AuthService', () => {
         password: 'S3cur3P@ss!',
       });
 
-      expect(result.accessToken).toBe('mock-jwt-token');
-      expect(result.refreshToken).toBe('mock-jwt-token');
+      expect(result.sessionToken).toBe('mock-session-token');
+      expect(result.user.email).toBe('budi@example.com');
       expect(mockPrisma.user.create).toHaveBeenCalledTimes(1);
+      expect(mockSession.create).toHaveBeenCalledWith(USER_ID, expect.any(Object));
     });
 
     it('throws ConflictException when email is already registered', async () => {
@@ -94,15 +104,15 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns tokens for valid credentials', async () => {
+    it('returns session token for valid credentials', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(user);
       const argon2 = await import('argon2');
       (argon2.verify as jest.Mock).mockResolvedValue(true);
 
       const result = await service.login({ email: 'budi@example.com', password: 'S3cur3P@ss!' });
 
-      expect(result.accessToken).toBeDefined();
-      expect(result.refreshToken).toBeDefined();
+      expect(result.sessionToken).toBe('mock-session-token');
+      expect(result.user.id).toBe(USER_ID);
     });
 
     it('throws UnauthorizedException for unknown email', async () => {
@@ -132,42 +142,12 @@ describe('AuthService', () => {
     });
   });
 
-  describe('refresh', () => {
-    it('issues new tokens for a valid refresh token', async () => {
-      mockJwt.verifyAsync.mockResolvedValue({ sub: USER_ID, refreshVersion: 0 });
-      mockPrisma.user.findUnique.mockResolvedValue(user);
-      mockJwt.signAsync.mockResolvedValue('new-jwt-token');
-
-      const result = await service.refresh('valid-refresh-token');
-
-      expect(result.accessToken).toBe('new-jwt-token');
-    });
-
-    it('throws UnauthorizedException for an invalid refresh token', async () => {
-      mockJwt.verifyAsync.mockRejectedValue(new Error('jwt expired'));
-
-      await expect(service.refresh('bad-token')).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('throws UnauthorizedException when refreshVersion mismatches (revoked session)', async () => {
-      mockJwt.verifyAsync.mockResolvedValue({ sub: USER_ID, refreshVersion: 0 });
-      mockPrisma.user.findUnique.mockResolvedValue({ ...user, refreshVersion: 1 });
-
-      await expect(service.refresh('stale-token')).rejects.toThrow(UnauthorizedException);
-    });
-  });
-
   describe('revokeAllSessions', () => {
-    it('increments refreshVersion to invalidate all sessions', async () => {
-      mockPrisma.user.update.mockResolvedValue({ ...user, refreshVersion: 1 });
-
+    it('revokes all DB sessions for the user', async () => {
       const result = await service.revokeAllSessions(USER_ID);
 
       expect(result.success).toBe(true);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: { refreshVersion: { increment: 1 } },
-      });
+      expect(mockSession.revokeAll).toHaveBeenCalledWith(USER_ID);
     });
   });
 
@@ -187,31 +167,29 @@ describe('AuthService', () => {
       mockJwt.verifyAsync.mockResolvedValue({ nonce: 'abc' });
       mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue(user);
-      mockJwt.signAsync.mockResolvedValue('google-jwt');
 
       const result = await service.googleCallback('auth-code', 'valid-csrf-state');
 
-      expect(result.accessToken).toBe('google-jwt');
+      expect(result.sessionToken).toBe('mock-session-token');
+      expect(result.accessToken).toBe('mock-jwt-token');
       expect(mockPrisma.user.create).toHaveBeenCalledTimes(1);
     });
 
     it('returns tokens for an existing Google user without creating a new record', async () => {
       mockJwt.verifyAsync.mockResolvedValue({ nonce: 'abc' });
       mockPrisma.user.findFirst.mockResolvedValue({ ...user, googleId: 'google-sub-123' });
-      mockJwt.signAsync.mockResolvedValue('google-jwt');
 
       const result = await service.googleCallback('auth-code', 'valid-csrf-state');
 
-      expect(result.accessToken).toBe('google-jwt');
+      expect(result.sessionToken).toBe('mock-session-token');
+      expect(result.accessToken).toBe('mock-jwt-token');
       expect(mockPrisma.user.create).not.toHaveBeenCalled();
     });
 
     it('links googleId to an existing email-registered account', async () => {
       mockJwt.verifyAsync.mockResolvedValue({ nonce: 'abc' });
-      // User exists but has no googleId yet
       mockPrisma.user.findFirst.mockResolvedValue({ ...user, googleId: null });
       mockPrisma.user.update.mockResolvedValue({ ...user, googleId: 'google-sub-123' });
-      mockJwt.signAsync.mockResolvedValue('google-jwt');
 
       await service.googleCallback('auth-code', 'valid-csrf-state');
 

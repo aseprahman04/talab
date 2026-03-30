@@ -1,13 +1,21 @@
-import { Body, Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
+
+const SESSION_COOKIE = 'sid';
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  path: '/',
+};
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -18,28 +26,75 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new account with email & password' })
-  @ApiResponse({ status: 201, description: 'Returns accessToken + refreshToken' })
+  @ApiResponse({ status: 201, description: 'Returns accessToken + refreshToken; also sets session cookie' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
-  register(@Body() dto: RegisterDto) { return this.authService.register(dto); }
+  async register(@Body() dto: RegisterDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.register(dto, {
+      userAgent: req.headers['user-agent'],
+      ipAddress: req.ip,
+    });
+    res.cookie(SESSION_COOKIE, result.sessionToken, COOKIE_OPTS);
+    return { accessToken: result.accessToken, refreshToken: result.refreshToken };
+  }
 
   @Public()
   @Post('login')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Login with email & password' })
-  @ApiResponse({ status: 200, description: 'Returns accessToken + refreshToken' })
+  @ApiResponse({ status: 200, description: 'Returns accessToken + refreshToken; also sets session cookie' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  login(@Body() dto: LoginDto) { return this.authService.login(dto); }
+  async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.login(dto, {
+      userAgent: req.headers['user-agent'],
+      ipAddress: req.ip,
+    });
+    res.cookie(SESSION_COOKIE, result.sessionToken, COOKIE_OPTS);
+    return { accessToken: result.accessToken, refreshToken: result.refreshToken };
+  }
 
-  @Public()
-  @Post('refresh')
-  @ApiOperation({ summary: 'Refresh access token using refresh token' })
-  @ApiResponse({ status: 200, description: 'Returns new accessToken + refreshToken' })
-  refresh(@Body() dto: RefreshDto) { return this.authService.refresh(dto.refreshToken); }
+  @Post('logout')
+  @HttpCode(200)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Log out (revoke current session)' })
+  async logout(@CurrentUser() user: { sub: string; sessionId?: string }, @Res({ passthrough: true }) res: Response) {
+    if (user.sessionId) {
+      await this.authService.revokeSession(user.sessionId, user.sub);
+    }
+    res.clearCookie(SESSION_COOKIE, { path: '/' });
+    return { success: true };
+  }
 
   @Post('logout-all')
+  @HttpCode(200)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Revoke all sessions for the current user' })
-  @ApiResponse({ status: 200, description: '{ success: true }' })
-  logoutAll(@CurrentUser() user: { sub: string }) { return this.authService.revokeAllSessions(user.sub); }
+  async logoutAll(@CurrentUser() user: { sub: string }, @Res({ passthrough: true }) res: Response) {
+    await this.authService.revokeAllSessions(user.sub);
+    res.clearCookie(SESSION_COOKIE, { path: '/' });
+    return { success: true };
+  }
+
+  @Get('sessions')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all active sessions for the current user' })
+  listSessions(@CurrentUser() user: { sub: string }) {
+    return this.authService.listSessions(user.sub);
+  }
+
+  @Delete('sessions/:id')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Revoke a specific session by ID' })
+  revokeSession(@Param('id') sessionId: string, @CurrentUser() user: { sub: string }) {
+    return this.authService.revokeSession(sessionId, user.sub);
+  }
+
+  @Get('access-token')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Exchange session cookie for a short-lived JWT access token (for API SDK clients)' })
+  async getAccessToken(@CurrentUser() user: { sub: string; email: string }) {
+    const accessToken = await this.authService.issueAccessToken(user.sub, user.email);
+    return { accessToken };
+  }
 
   @Public()
   @Get('google')
@@ -52,17 +107,23 @@ export class AuthController {
 
   @Public()
   @Get('google/callback')
-  @ApiOperation({ summary: 'Google OAuth callback — redirects to frontend with tokens in fragment' })
+  @ApiOperation({ summary: 'Google OAuth callback — sets session cookie and redirects to frontend with tokens in fragment' })
   @ApiResponse({ status: 302, description: 'Redirects to /console#access_token=...&refresh_token=...' })
   async googleCallback(
     @Query('code') code: string,
     @Query('state') state: string,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
-    const tokens = await this.authService.googleCallback(code, state);
+    const result = await this.authService.googleCallback(code, state);
+    res.cookie(SESSION_COOKIE, result.sessionToken, {
+      ...COOKIE_OPTS,
+      userAgent: undefined,
+      ipAddress: undefined,
+    } as typeof COOKIE_OPTS);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
     res.redirect(
-      `${frontendUrl}/console#access_token=${tokens.accessToken}&refresh_token=${tokens.refreshToken}`,
+      `${frontendUrl}/console#access_token=${result.accessToken}&refresh_token=${result.refreshToken}`,
     );
   }
 }

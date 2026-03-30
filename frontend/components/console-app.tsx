@@ -1,5 +1,6 @@
 'use client';
 
+import QRCode from 'qrcode';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Dispatch, FormEvent, SetStateAction, startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
@@ -59,6 +60,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   const [recentBroadcasts, setRecentBroadcasts] = useState<Broadcast[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactLists, setContactLists] = useState<ContactList[]>([]);
+  const [activeQrCode, setActiveQrCode] = useState<{ deviceId: string; dataUrl: string } | null>(null);
   const [generatedToken, setGeneratedToken] = useState<{ deviceName: string; token: string } | null>(null);
   const [messageSearch, setMessageSearch] = useState('');
   const deferredMessageSearch = useDeferredValue(messageSearch);
@@ -155,14 +157,25 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
       }
     };
 
+    const handleDeviceStatusUpdated = (payload: { deviceId: string; status: string; qrCode?: string }) => {
+      refreshFromRealtime();
+      if (payload.qrCode) {
+        QRCode.toDataURL(payload.qrCode, { width: 280, margin: 2 })
+          .then((dataUrl) => setActiveQrCode({ deviceId: payload.deviceId, dataUrl }))
+          .catch(() => {});
+      } else if (payload.status !== 'PAIRING') {
+        setActiveQrCode((prev) => (prev?.deviceId === payload.deviceId ? null : prev));
+      }
+    };
+
     socket.on('message.sent', refreshFromRealtime);
     socket.on('message.failed', refreshFromRealtime);
-    socket.on('device.status.updated', refreshFromRealtime);
+    socket.on('device.status.updated', handleDeviceStatusUpdated);
 
     return () => {
       socket.off('message.sent', refreshFromRealtime);
       socket.off('message.failed', refreshFromRealtime);
-      socket.off('device.status.updated', refreshFromRealtime);
+      socket.off('device.status.updated', handleDeviceStatusUpdated);
       socket.disconnect();
     };
   }, [selectedWorkspaceId, session?.accessToken]);
@@ -291,8 +304,11 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   async function handleDeviceAction(deviceId: string, action: 'pair' | 'reconnect') {
     if (!session?.accessToken || !selectedWorkspaceId) return;
     try {
-      const result = await apiRequest<{ qrCode?: string }>(`/devices/${deviceId}/${action}`, { method: 'POST' }, session.accessToken);
-      pushFeedback(action === 'pair' && result.qrCode ? 'info' : 'success', action === 'pair' && result.qrCode ? `Stub QR siap: ${result.qrCode}` : `Device berhasil di-${action}.`);
+      if (action === 'pair') {
+        setActiveQrCode(null);
+      }
+      await apiRequest(`/devices/${deviceId}/${action}`, { method: 'POST' }, session.accessToken);
+      pushFeedback('info', action === 'pair' ? 'Memulai pairing... Scan QR yang muncul di bawah.' : 'Device reconnect dimulai.');
       await refreshWorkspaceData(selectedWorkspaceId, session.accessToken);
     } catch (error) {
       pushFeedback('error', getErrorMessage(error));
@@ -519,7 +535,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         {generatedToken ? <section className="token-strip glass-panel"><div><span className="eyebrow">Token baru</span><strong>{generatedToken.deviceName}</strong></div><code>{generatedToken.token}</code></section> : null}
 
         {activeSection === 'overview' ? <OverviewGrid devices={devices} messages={filteredMessages} webhooks={webhooks} autoReplies={autoReplies} /> : null}
-        {activeSection === 'devices' ? <DevicesPanel deviceForm={deviceForm} setDeviceForm={setDeviceForm} selectedWorkspaceId={selectedWorkspaceId} devices={devices} onCreate={handleDeviceCreate} onAction={handleDeviceAction} onCreateToken={handleTokenCreate} /> : null}
+        {activeSection === 'devices' ? <DevicesPanel deviceForm={deviceForm} setDeviceForm={setDeviceForm} selectedWorkspaceId={selectedWorkspaceId} devices={devices} onCreate={handleDeviceCreate} onAction={handleDeviceAction} onCreateToken={handleTokenCreate} activeQrCode={activeQrCode} /> : null}
         {activeSection === 'messages' ? <MessagesPanel devices={devices} messageForm={messageForm} setMessageForm={setMessageForm} selectedWorkspaceId={selectedWorkspaceId} messageSearch={messageSearch} setMessageSearch={setMessageSearch} messages={filteredMessages} onSubmit={handleMessageSend} onRetry={handleMessageRetry} /> : null}
         {activeSection === 'webhooks' ? <WebhooksPanel selectedWorkspaceId={selectedWorkspaceId} webhookForm={webhookForm} setWebhookForm={setWebhookForm} webhooks={webhooks} webhookLogs={webhookLogs} onSubmit={handleWebhookCreate} onTest={handleWebhookTest} onLoadLogs={handleWebhookLogsLoad} /> : null}
         {activeSection === 'broadcasts' ? <BroadcastsPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} broadcastForm={broadcastForm} setBroadcastForm={setBroadcastForm} recentBroadcasts={recentBroadcasts} contactLists={contactLists} onSubmit={handleBroadcastCreate} onStart={handleBroadcastStart} /> : null}
@@ -633,8 +649,8 @@ function OverviewGrid({ devices, messages, webhooks, autoReplies }: { devices: D
   return <div className="panel-grid"><section className="panel glass-panel"><SectionHeading title="Devices Snapshot" subtitle="Status device terkini untuk workspace aktif." /><div className="list-stack">{devices.length ? devices.map((device) => <article className="card-row" key={device.id}><div><strong>{device.name}</strong><p>{device.phoneNumber || 'Nomor belum terhubung'}</p><small>{device.status} · Health {device.healthScore}</small></div></article>) : <p className="empty-copy">Belum ada device.</p>}</div></section><section className="panel glass-panel"><SectionHeading title="Webhook Snapshot" subtitle="Daftar webhook aktif yang sudah tersimpan." /><div className="list-stack compact-list">{webhooks.length ? webhooks.map((hook) => <article className="card-row slim" key={hook.id}><div><strong>{hook.name}</strong><p>{hook.url}</p><small>{hook.isActive ? 'Aktif' : 'Nonaktif'}</small></div></article>) : <p className="empty-copy">Belum ada webhook.</p>}</div></section><section className="panel glass-panel wide"><SectionHeading title="Latest Messages" subtitle="Ringkasan log pesan terbaru tanpa pindah ke route message penuh." /><div className="table-wrap"><table><thead><tr><th>Waktu</th><th>Arah</th><th>Target / From</th><th>Tipe</th><th>Status</th><th>Konten</th></tr></thead><tbody>{messages.length ? messages.slice(0, 8).map((entry) => <tr key={entry.id}><td>{formatDateTime(entry.createdAt)}</td><td>{entry.direction}</td><td>{entry.recipient || entry.sender || '-'}</td><td>{entry.type}</td><td><span className={`status-chip ${statusTone(entry.status)}`}>{entry.status}</span></td><td>{entry.content || entry.errorMessage || '-'}</td></tr>) : <tr><td colSpan={6} className="empty-table">Belum ada log message.</td></tr>}</tbody></table></div></section><section className="panel glass-panel wide"><SectionHeading title="Auto Reply Snapshot" subtitle="Rule yang aktif untuk device di workspace ini." /><div className="table-wrap compact-table"><table><thead><tr><th>Nama</th><th>Keyword</th><th>Priority</th><th>Status</th></tr></thead><tbody>{autoReplies.length ? autoReplies.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{rule.keyword}</td><td>{rule.priority}</td><td><span className={`status-chip ${rule.isEnabled ? 'status-success' : 'status-danger'}`}>{rule.isEnabled ? 'ENABLED' : 'DISABLED'}</span></td></tr>) : <tr><td colSpan={4} className="empty-table">Belum ada auto reply.</td></tr>}</tbody></table></div></section></div>;
 }
 
-function DevicesPanel({ deviceForm, setDeviceForm, selectedWorkspaceId, devices, onCreate, onAction, onCreateToken }: { deviceForm: { name: string }; setDeviceForm: Dispatch<SetStateAction<{ name: string }>>; selectedWorkspaceId: string; devices: Device[]; onCreate: (event: FormEvent<HTMLFormElement>) => Promise<void>; onAction: (deviceId: string, action: 'pair' | 'reconnect') => Promise<void>; onCreateToken: (device: Device) => Promise<void>; }) {
-  return <section className="panel glass-panel"><SectionHeading title="Devices" subtitle="Buat device, start pairing stub, reconnect, dan generate token API." /><div className="disclaimer-band" style={{marginBottom:'16px'}}><strong>Penting sebelum menambahkan device</strong><p style={{marginTop:'4px',marginBottom:0}}>WATether adalah platform gateway dan bukan produk resmi Meta atau WhatsApp Inc. Penggunaan nomor WhatsApp melalui pihak ketiga berpotensi menyebabkan pembatasan, pemblokiran, atau ban permanen oleh WhatsApp. Segala risiko ban, pembatasan fitur, atau penonaktifan nomor sepenuhnya merupakan tanggung jawab pengguna dan di luar tanggung jawab WATether.</p></div><form className="stack-form compact" onSubmit={onCreate}><label className="field-block"><span>Nama device</span><input value={deviceForm.name} onChange={(event) => setDeviceForm({ name: event.target.value })} placeholder="CS Jakarta 01" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Tambah Device</button></form><div className="list-stack">{devices.length ? devices.map((device) => <article className="card-row" key={device.id}><div><strong>{device.name}</strong><p>{device.phoneNumber || 'Nomor belum terhubung'}</p><small>{device.status} · Health {device.healthScore}</small></div><div className="action-row"><button className="mini-button" onClick={() => onAction(device.id, 'pair')} type="button">Pair</button><button className="mini-button" onClick={() => onAction(device.id, 'reconnect')} type="button">Reconnect</button><button className="mini-button accent" onClick={() => onCreateToken(device)} type="button">Token</button></div></article>) : <p className="empty-copy">Belum ada device untuk workspace ini.</p>}</div></section>;
+function DevicesPanel({ deviceForm, setDeviceForm, selectedWorkspaceId, devices, onCreate, onAction, onCreateToken, activeQrCode }: { deviceForm: { name: string }; setDeviceForm: Dispatch<SetStateAction<{ name: string }>>; selectedWorkspaceId: string; devices: Device[]; onCreate: (event: FormEvent<HTMLFormElement>) => Promise<void>; onAction: (deviceId: string, action: 'pair' | 'reconnect') => Promise<void>; onCreateToken: (device: Device) => Promise<void>; activeQrCode: { deviceId: string; dataUrl: string } | null; }) {
+  return <section className="panel glass-panel"><SectionHeading title="Devices" subtitle="Buat device, hubungkan WhatsApp via QR, dan generate token API." /><div className="disclaimer-band" style={{marginBottom:'16px'}}><strong>Penting sebelum menambahkan device</strong><p style={{marginTop:'4px',marginBottom:0}}>WATether adalah platform gateway dan bukan produk resmi Meta atau WhatsApp Inc. Penggunaan nomor WhatsApp melalui pihak ketiga berpotensi menyebabkan pembatasan, pemblokiran, atau ban permanen oleh WhatsApp. Segala risiko ban, pembatasan fitur, atau penonaktifan nomor sepenuhnya merupakan tanggung jawab pengguna dan di luar tanggung jawab WATether.</p></div><form className="stack-form compact" onSubmit={onCreate}><label className="field-block"><span>Nama device</span><input value={deviceForm.name} onChange={(event) => setDeviceForm({ name: event.target.value })} placeholder="CS Jakarta 01" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId} type="submit">Tambah Device</button></form><div className="list-stack">{devices.length ? devices.map((device) => <article className="card-row" key={device.id}><div><strong>{device.name}</strong><p>{device.phoneNumber || 'Nomor belum terhubung'}</p><small>{device.status} · Health {device.healthScore}</small></div><div className="action-row"><button className="mini-button" onClick={() => onAction(device.id, 'pair')} type="button">Pair WhatsApp</button><button className="mini-button" onClick={() => onAction(device.id, 'reconnect')} type="button">Reconnect</button><button className="mini-button accent" onClick={() => onCreateToken(device)} type="button">Token</button></div>{activeQrCode?.deviceId === device.id ? <div className="qr-wrap" style={{marginTop:'12px',textAlign:'center'}}><p style={{marginBottom:'8px',fontSize:'13px',color:'var(--text-muted)'}}>Scan QR ini dengan WhatsApp di HP kamu. QR akan diperbarui otomatis.</p><img src={activeQrCode.dataUrl} alt="WhatsApp QR Code" style={{width:'240px',height:'240px',borderRadius:'8px',border:'1px solid var(--border)'}} /></div> : null}</article>) : <p className="empty-copy">Belum ada device untuk workspace ini.</p>}</div></section>;
 }
 
 function MessagesPanel({ devices, messageForm, setMessageForm, selectedWorkspaceId, messageSearch, setMessageSearch, messages, onSubmit, onRetry }: { devices: Device[]; messageForm: { deviceId: string; target: string; type: string; message: string; mediaUrl: string }; setMessageForm: Dispatch<SetStateAction<{ deviceId: string; target: string; type: string; message: string; mediaUrl: string }>>; selectedWorkspaceId: string; messageSearch: string; setMessageSearch: Dispatch<SetStateAction<string>>; messages: Message[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onRetry: (messageId: string) => Promise<void>; }) {
