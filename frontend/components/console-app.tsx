@@ -22,7 +22,7 @@ import {
 } from '../lib/api';
 
 type AuthMode = 'login' | 'register';
-type ActiveSection = 'overview' | 'devices' | 'messages' | 'webhooks' | 'broadcasts' | 'auto-replies' | 'leads' | 'api-docs';
+type ActiveSection = 'overview' | 'devices' | 'messages' | 'webhooks' | 'broadcasts' | 'auto-replies' | 'leads' | 'api-docs' | 'billing';
 type SessionState = AuthTokens & { email?: string; name?: string };
 
 const sessionStorageKey = 'watether.console.session';
@@ -37,6 +37,7 @@ const navItems: Array<{ key: ActiveSection; label: string; href: string }> = [
   { key: 'auto-replies', label: 'Auto Replies', href: '/auto-replies' },
   { key: 'leads', label: 'Leads', href: '/leads' },
   { key: 'api-docs', label: 'API Docs', href: '/api-docs' },
+  { key: 'billing', label: 'Billing', href: '/billing' },
 ];
 
 export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) {
@@ -69,6 +70,8 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [liveState, setLiveState] = useState<'idle' | 'connecting' | 'live' | 'offline'>('idle');
   const [hydrated, setHydrated] = useState(false);
+  const [subscription, setSubscription] = useState<{ status: string; plan: { code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number } | null; renewsAt?: string | null } | null>(null);
+  const [plans, setPlans] = useState<Array<{ id: string; code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number; lemonSqueezyVariantId: string | null }>>([]);
 
   useEffect(() => {
     const rawSession = window.localStorage.getItem(sessionStorageKey);
@@ -189,6 +192,36 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   }, [deferredMessageSearch, messages]);
 
   const selectedWorkspace = workspaces.find((item) => item.workspace.id === selectedWorkspaceId) ?? null;
+
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    apiRequest<Array<{ id: string; code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number; lemonSqueezyVariantId: string | null }>>('/subscriptions/plans')
+      .then((data) => setPlans(data))
+      .catch(() => {});
+  }, [session?.accessToken]);
+
+  useEffect(() => {
+    if (!session?.accessToken || !selectedWorkspaceId) return;
+    apiRequest<{ status: string; plan: { code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number } | null; renewsAt?: string | null } | null>(`/subscriptions/${selectedWorkspaceId}`, undefined, session.accessToken)
+      .then((data) => setSubscription(data))
+      .catch(() => {});
+  }, [selectedWorkspaceId, session?.accessToken]);
+
+  async function handleUpgrade(planCode: string) {
+    if (!session?.accessToken || !selectedWorkspaceId) return;
+    setIsLoading(true);
+    try {
+      const result = await apiRequest<{ url: string }>('/subscriptions/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ workspaceId: selectedWorkspaceId, planCode }),
+      }, session.accessToken);
+      window.open(result.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      pushFeedback('error', getErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function loadWorkspaces(accessToken: string) {
     setIsRefreshing(true);
@@ -542,6 +575,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         {activeSection === 'auto-replies' ? <AutoRepliesPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} autoReplyForm={autoReplyForm} setAutoReplyForm={setAutoReplyForm} autoReplies={autoReplies} isRefreshing={isRefreshing} onSubmit={handleAutoReplyCreate} /> : null}
         {activeSection === 'leads' ? <LeadsPanel selectedWorkspaceId={selectedWorkspaceId} contacts={contacts} contactLists={contactLists} session={session} onRefresh={() => refreshWorkspaceData(selectedWorkspaceId, session.accessToken)} pushFeedback={pushFeedback} /> : null}
         {activeSection === 'api-docs' ? <ApiDocsPanel accessToken={session.accessToken} /> : null}
+        {activeSection === 'billing' ? <BillingPanel subscription={subscription} plans={plans} isLoading={isLoading} onUpgrade={handleUpgrade} /> : null}
       </section>
     </main>
   );
@@ -870,6 +904,76 @@ function LeadsPanel({ selectedWorkspaceId, contacts, contactLists, session, onRe
           ) : null}
         </div>
       )}
+    </section>
+  );
+}
+
+type PlanItem = { id: string; code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number; lemonSqueezyVariantId: string | null };
+type SubInfo = { status: string; plan: { code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number } | null; renewsAt?: string | null } | null;
+
+function BillingPanel({ subscription, plans, isLoading, onUpgrade }: { subscription: SubInfo; plans: PlanItem[]; isLoading: boolean; onUpgrade: (planCode: string) => void }) {
+  const fmt = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+
+  return (
+    <section className="panel glass-panel">
+      <SectionHeading title="Billing & Langganan" subtitle="Kelola paket aktif dan upgrade workspace kamu." />
+
+      {subscription ? (
+        <div className="card-row" style={{ marginBottom: '24px' }}>
+          <div>
+            <strong>Paket aktif: {subscription.plan?.name ?? 'Trial'}</strong>
+            <p>Status: <span className={`status-chip ${subscription.status === 'ACTIVE' ? 'status-success' : subscription.status === 'TRIAL' ? 'status-warning' : 'status-danger'}`}>{subscription.status}</span></p>
+            {subscription.renewsAt ? <small>Perpanjang: {formatDateTime(subscription.renewsAt)}</small> : null}
+            {subscription.plan ? (
+              <small style={{ display: 'block', marginTop: '4px' }}>
+                {subscription.plan.maxDevices} device · {subscription.plan.monthlyMessageQuota === 0 ? 'Unlimited pesan' : `${subscription.plan.monthlyMessageQuota.toLocaleString('id-ID')} pesan/bulan`} · {subscription.plan.maxMembers} member
+              </small>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="disclaimer-band" style={{ marginBottom: '24px' }}>
+          <strong>Workspace ini belum memiliki langganan aktif.</strong>
+          <p style={{ marginTop: '4px', marginBottom: 0 }}>Pilih paket di bawah untuk mulai.</p>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
+        {plans.filter((p) => p.code !== 'free').map((plan) => {
+          const isCurrent = subscription?.plan?.code === plan.code;
+          return (
+            <article key={plan.id} className="card-row" style={{ flexDirection: 'column', gap: '12px', padding: '20px', position: 'relative' }}>
+              {isCurrent ? <span className="status-chip status-success" style={{ position: 'absolute', top: '12px', right: '12px' }}>Aktif</span> : null}
+              <div>
+                <strong style={{ fontSize: '18px' }}>{plan.name}</strong>
+                <p style={{ fontSize: '22px', fontWeight: 700, margin: '8px 0 4px' }}>{fmt(plan.price)}<span style={{ fontSize: '13px', fontWeight: 400 }}>/bulan</span></p>
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <li>{plan.maxDevices} device WhatsApp</li>
+                <li>{plan.monthlyMessageQuota === 0 ? 'Unlimited pesan' : `${plan.monthlyMessageQuota.toLocaleString('id-ID')} pesan/bulan`}</li>
+                <li>{plan.maxMembers} anggota tim</li>
+              </ul>
+              {plan.lemonSqueezyVariantId ? (
+                <button
+                  className={isCurrent ? 'button-secondary' : 'button-primary'}
+                  disabled={isCurrent || isLoading}
+                  onClick={() => onUpgrade(plan.code)}
+                  type="button"
+                  style={{ marginTop: 'auto' }}
+                >
+                  {isCurrent ? 'Paket saat ini' : 'Upgrade sekarang'}
+                </button>
+              ) : (
+                <button className="button-secondary" disabled type="button" style={{ marginTop: 'auto' }}>Segera hadir</button>
+              )}
+            </article>
+          );
+        })}
+      </div>
+
+      <p className="helper-copy" style={{ marginTop: '16px' }}>
+        Pembayaran diproses aman melalui LemonSqueezy. Kamu akan diarahkan ke halaman checkout LS setelah klik upgrade.
+      </p>
     </section>
   );
 }
