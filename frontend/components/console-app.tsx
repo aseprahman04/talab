@@ -583,7 +583,10 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
 }
 
 function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, feedback, onSubmit }: { authMode: AuthMode; setAuthMode: (value: AuthMode) => void; authForm: { name: string; email: string; password: string }; setAuthForm: Dispatch<SetStateAction<{ name: string; email: string; password: string }>>; isLoading: boolean; feedback: { tone: 'success' | 'error' | 'info'; text: string } | null; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; }) {
-  const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [lang, setLang] = useState<'id' | 'en'>(() => {
+    if (typeof navigator === 'undefined') return 'id';
+    return navigator.language.startsWith('id') ? 'id' : 'en';
+  });
   const t = {
     id: {
       eyebrow: 'WATether Console',
