@@ -105,7 +105,8 @@ export type ContactList = {
   createdAt: string;
 };
 
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3009/api';
+// Use relative /api in production (no env var needed); set NEXT_PUBLIC_API_BASE_URL for local dev
+export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
 export class ApiError extends Error {
   status: number;
