@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // ── Plans ──────────────────────────────────────────────────────────────────
-  const planFree = await prisma.plan.upsert({
+  await prisma.plan.upsert({
     where: { code: 'free' },
     update: {},
     create: {
@@ -22,8 +22,8 @@ async function main() {
   await prisma.plan.upsert({
     where: { code: 'bisnis' },
     update: {
-      lemonSqueezyVariantId: '1464622',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/227aa20b-d2d6-4b81-bc74-75d6962eac54',
+      lemonSqueezyVariantId: '1469498',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/74a09a0b-6f4c-44c0-aa07-237b09221d42',
     },
     create: {
       code: 'bisnis',
@@ -33,16 +33,16 @@ async function main() {
       maxMembers: 5,
       storageLimitMb: 1000,
       price: 49000,
-      lemonSqueezyVariantId: '1464622',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/227aa20b-d2d6-4b81-bc74-75d6962eac54',
+      lemonSqueezyVariantId: '1469498',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/74a09a0b-6f4c-44c0-aa07-237b09221d42',
     },
   });
 
   await prisma.plan.upsert({
     where: { code: 'tim' },
     update: {
-      lemonSqueezyVariantId: '1464624',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/e23bb8a9-2fc3-43b7-bada-664b2d09428a',
+      lemonSqueezyVariantId: '1469512',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/88ef51c2-7c58-417f-b8bc-53b5886c4800',
     },
     create: {
       code: 'tim',
@@ -52,8 +52,8 @@ async function main() {
       maxMembers: 20,
       storageLimitMb: 5000,
       price: 149000,
-      lemonSqueezyVariantId: '1464624',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/e23bb8a9-2fc3-43b7-bada-664b2d09428a',
+      lemonSqueezyVariantId: '1469512',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/88ef51c2-7c58-417f-b8bc-53b5886c4800',
     },
   });
 
