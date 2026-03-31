@@ -18,6 +18,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           command_timeout: 18m
           script_stop: true
+          envs: LEMONSQUEEZY_API_KEY,LEMONSQUEEZY_WEBHOOK_SECRET
           script: |
             set -e
             echo "[bootstrap] start $(date)"
@@ -33,5 +34,12 @@ jobs:
             git fetch origin main
             echo "[bootstrap] resetting to FETCH_HEAD"
             git reset --hard FETCH_HEAD
+            # Patch secrets into .env.production from GitHub Secrets
+            if [ -n "$LEMONSQUEEZY_API_KEY" ]; then
+              sed -i "s|^LEMONSQUEEZY_API_KEY=.*|LEMONSQUEEZY_API_KEY=$LEMONSQUEEZY_API_KEY|" /opt/watether/.env.production || echo "LEMONSQUEEZY_API_KEY=$LEMONSQUEEZY_API_KEY" >> /opt/watether/.env.production
+            fi
+            if [ -n "$LEMONSQUEEZY_WEBHOOK_SECRET" ]; then
+              sed -i "s|^LEMONSQUEEZY_WEBHOOK_SECRET=.*|LEMONSQUEEZY_WEBHOOK_SECRET=$LEMONSQUEEZY_WEBHOOK_SECRET|" /opt/watether/.env.production || echo "LEMONSQUEEZY_WEBHOOK_SECRET=$LEMONSQUEEZY_WEBHOOK_SECRET" >> /opt/watether/.env.production
+            fi
             echo "[bootstrap] done, running deploy.sh"
             bash /opt/watether/scripts/deploy.sh
