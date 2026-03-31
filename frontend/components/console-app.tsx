@@ -2,7 +2,7 @@
 
 import QRCode from 'qrcode';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Dispatch, FormEvent, SetStateAction, startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import {
@@ -42,6 +42,7 @@ const navItems: Array<{ key: ActiveSection; label: string; href: string }> = [
 
 export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [session, setSession] = useState<SessionState | null>(null);
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
@@ -85,8 +86,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     }
 
     if (billingReturn === '1') {
-      setActiveSection('billing');
-      window.history.replaceState(null, '', window.location.pathname);
+      router.replace('/billing');
     }
 
     // Handle Google OAuth redirect — tokens arrive via URL fragment to avoid server logs
