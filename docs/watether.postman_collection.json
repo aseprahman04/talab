@@ -1,11 +1,11 @@
 {
   "info": {
     "name": "WATether API",
-    "description": "WhatsApp gateway control plane — full API collection.\n\n**Setup:**\n1. Set the `baseUrl` variable to your backend URL (default: `http://localhost:3003`)\n2. Call **Auth / Login** or **Auth / Register** — the test script auto-saves `accessToken` and `refreshToken`\n3. All protected requests use `{{accessToken}}` via Bearer auth\n\n**Sample seed values (local dev):**\n- `workspaceId`: look up in Workspaces / List after login\n- `deviceId`: `seed-device-01`\n- `apiToken`: `wt_seeddemo000000000000000000000000000000000000000001`",
+    "description": "WhatsApp gateway control plane — full API collection.\n\n**Setup:**\n1. Set `baseUrl` to your backend (default: `http://localhost:3003/api`)\n2. Call **Auth / Login** or **Auth / Register** — test scripts auto-save `accessToken` and `workspaceId`\n3. All protected requests use `{{accessToken}}` via Bearer auth\n\n**Production:** set `baseUrl` to `https://watheter.com/api`\n\n**Seed values (local dev):**\n- `deviceId`: `seed-device-01`\n- `apiToken`: `wt_seeddemo000000000000000000000000000000000000000001`",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3003", "type": "string" },
+    { "key": "baseUrl", "value": "http://localhost:3003/api", "type": "string" },
     { "key": "accessToken", "value": "", "type": "string" },
     { "key": "refreshToken", "value": "", "type": "string" },
     { "key": "workspaceId", "value": "", "type": "string" },
@@ -28,7 +28,14 @@
           },
           "event": [{
             "listen": "test",
-            "script": { "exec": ["const r = pm.response.json();", "if (r.accessToken) {", "  pm.collectionVariables.set('accessToken', r.accessToken);", "  pm.collectionVariables.set('refreshToken', r.refreshToken);", "}"] }
+            "script": { "exec": [
+              "const r = pm.response.json();",
+              "if (r.accessToken) {",
+              "  pm.collectionVariables.set('accessToken', r.accessToken);",
+              "  pm.collectionVariables.set('refreshToken', r.refreshToken);",
+              "  pm.test('Register returns tokens', () => pm.expect(r.accessToken).to.be.a('string'));",
+              "}"
+            ]}
           }]
         },
         {
@@ -44,31 +51,49 @@
           },
           "event": [{
             "listen": "test",
-            "script": { "exec": ["const r = pm.response.json();", "if (r.accessToken) {", "  pm.collectionVariables.set('accessToken', r.accessToken);", "  pm.collectionVariables.set('refreshToken', r.refreshToken);", "}"] }
+            "script": { "exec": [
+              "const r = pm.response.json();",
+              "if (r.accessToken) {",
+              "  pm.collectionVariables.set('accessToken', r.accessToken);",
+              "  pm.collectionVariables.set('refreshToken', r.refreshToken);",
+              "  pm.test('Login returns tokens', () => pm.expect(r.accessToken).to.be.a('string'));",
+              "}"
+            ]}
           }]
         },
         {
-          "name": "Refresh Token",
+          "name": "Logout",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            }
-          },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": ["const r = pm.response.json();", "if (r.accessToken) {", "  pm.collectionVariables.set('accessToken', r.accessToken);", "  pm.collectionVariables.set('refreshToken', r.refreshToken);", "}"] }
-          }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] },
+            "description": "Revokes current session. JWT Bearer token remains valid until expiry — use Logout All for full revocation."
+          }
         },
         {
           "name": "Logout All Sessions",
           "request": {
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": { "raw": "{{baseUrl}}/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["auth", "logout-all"] }
+            "url": { "raw": "{{baseUrl}}/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["auth", "logout-all"] },
+            "description": "Revokes all active sessions for the current user."
+          }
+        },
+        {
+          "name": "List Sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/sessions", "host": ["{{baseUrl}}"], "path": ["auth", "sessions"] }
+          }
+        },
+        {
+          "name": "Get Access Token (from session cookie)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/access-token", "host": ["{{baseUrl}}"], "path": ["auth", "access-token"] },
+            "description": "Exchange a valid session cookie (sid) for a short-lived JWT access token. Useful for SDK clients."
           }
         },
         {
@@ -76,7 +101,7 @@
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/auth/google", "host": ["{{baseUrl}}"], "path": ["auth", "google"] },
-            "description": "Open this URL in a browser — it redirects to Google. On callback, tokens are passed to the frontend via URL fragment."
+            "description": "Open in browser — redirects to Google. On success, redirects to /console#access_token=...&refresh_token=..."
           }
         }
       ]
@@ -93,7 +118,13 @@
           },
           "event": [{
             "listen": "test",
-            "script": { "exec": ["const r = pm.response.json();", "if (Array.isArray(r) && r.length > 0) {", "  pm.collectionVariables.set('workspaceId', r[0].workspace.id);", "}"] }
+            "script": { "exec": [
+              "const r = pm.response.json();",
+              "if (Array.isArray(r) && r.length > 0) {",
+              "  pm.collectionVariables.set('workspaceId', r[0].workspace.id);",
+              "  pm.test('Got workspaceId', () => pm.expect(r[0].workspace.id).to.be.a('string'));",
+              "}"
+            ]}
           }]
         },
         {
@@ -109,7 +140,14 @@
               "mode": "raw",
               "raw": "{\n  \"name\": \"Ops Sales\",\n  \"slug\": \"ops-sales\"\n}"
             }
-          }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const r = pm.response.json();",
+              "if (r.id) pm.collectionVariables.set('workspaceId', r.id);"
+            ]}
+          }]
         }
       ]
     },
@@ -142,10 +180,17 @@
               "mode": "raw",
               "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"name\": \"CS Jakarta 01\"\n}"
             }
-          }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const r = pm.response.json();",
+              "if (r.id) pm.collectionVariables.set('deviceId', r.id);"
+            ]}
+          }]
         },
         {
-          "name": "Start Pairing",
+          "name": "Start Pairing (QR)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
@@ -153,7 +198,8 @@
               "raw": "{{baseUrl}}/devices/{{deviceId}}/pair",
               "host": ["{{baseUrl}}"],
               "path": ["devices", "{{deviceId}}", "pair"]
-            }
+            },
+            "description": "Initiates WhatsApp QR pairing. Poll device status or listen to Socket.IO `device.updated` event."
           }
         },
         {
@@ -185,7 +231,7 @@
               "mode": "raw",
               "raw": "{\n  \"name\": \"Production token\"\n}"
             },
-            "description": "Returns `{ tokenId, token }`. The plain token is shown **once** — store it securely."
+            "description": "Returns `{ tokenId, token }`. The plain `token` is shown **once** — store it securely. Use as `Authorization: Bearer <token>` on message send."
           }
         }
       ]
@@ -194,7 +240,7 @@
       "name": "Messages",
       "item": [
         {
-          "name": "Send Message",
+          "name": "Send Message (JWT)",
           "request": {
             "method": "POST",
             "header": [
@@ -209,6 +255,22 @@
           }
         },
         {
+          "name": "List Messages",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/messages?workspaceId={{workspaceId}}&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["messages"],
+              "query": [
+                { "key": "workspaceId", "value": "{{workspaceId}}" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
           "name": "Retry Failed Message",
           "request": {
             "method": "POST",
@@ -218,19 +280,6 @@
               "host": ["{{baseUrl}}"],
               "path": ["messages", ":id", "retry"],
               "variable": [{ "key": "id", "value": "MESSAGE_ID_HERE" }]
-            }
-          }
-        },
-        {
-          "name": "List Messages",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": {
-              "raw": "{{baseUrl}}/messages?workspaceId={{workspaceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["messages"],
-              "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }]
             }
           }
         }
@@ -268,6 +317,19 @@
           }
         },
         {
+          "name": "Send Test Event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/:id/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhooks", ":id", "test"],
+              "variable": [{ "key": "id", "value": "WEBHOOK_ID_HERE" }]
+            }
+          }
+        },
+        {
           "name": "Get Webhook Logs",
           "request": {
             "method": "GET",
@@ -277,19 +339,6 @@
               "host": ["{{baseUrl}}"],
               "path": ["webhooks", ":id", "logs"],
               "query": [{ "key": "limit", "value": "20" }],
-              "variable": [{ "key": "id", "value": "WEBHOOK_ID_HERE" }]
-            }
-          }
-        },
-        {
-          "name": "Send Test Event",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": {
-              "raw": "{{baseUrl}}/webhooks/:id/test",
-              "host": ["{{baseUrl}}"],
-              "path": ["webhooks", ":id", "test"],
               "variable": [{ "key": "id", "value": "WEBHOOK_ID_HERE" }]
             }
           }
@@ -310,7 +359,7 @@
             "url": { "raw": "{{baseUrl}}/broadcasts", "host": ["{{baseUrl}}"], "path": ["broadcasts"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"name\": \"Promo Ramadan 2025\",\n  \"messageTemplate\": \"Halo! Ada promo spesial untuk kamu hari ini.\",\n  \"recipients\": [\"6285795950115\", \"628579590115\"]\n}"
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"name\": \"Promo Ramadan 2025\",\n  \"messageTemplate\": \"Halo {name}! Ada promo spesial untuk kamu hari ini.\",\n  \"recipients\": [\"6285795950115\", \"628579590115\"]\n}"
             }
           }
         },
@@ -324,6 +373,19 @@
               "host": ["{{baseUrl}}"],
               "path": ["broadcasts", ":id", "start"],
               "variable": [{ "key": "id", "value": "BROADCAST_ID_HERE" }]
+            }
+          }
+        },
+        {
+          "name": "List Broadcasts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/broadcasts?workspaceId={{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["broadcasts"],
+              "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }]
             }
           }
         }
@@ -358,6 +420,71 @@
               "path": ["auto-replies"],
               "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "List Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/subscriptions/plans", "host": ["{{baseUrl}}"], "path": ["subscriptions", "plans"] },
+            "description": "Public — no auth required. Returns free, bisnis, and tim plans with pricing and limits."
+          }
+        },
+        {
+          "name": "Get Workspace Subscription",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/subscriptions/{{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["subscriptions", "{{workspaceId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Checkout URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/subscriptions/checkout", "host": ["{{baseUrl}}"], "path": ["subscriptions", "checkout"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"planCode\": \"bisnis\"\n}"
+            },
+            "description": "Returns `{ url }` — redirect user to this LemonSqueezy checkout URL. After payment, user is redirected back to /console?billing=1."
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const r = pm.response.json();",
+              "pm.test('Returns checkout URL', () => {",
+              "  pm.expect(r.url).to.include('lemonsqueezy.com');",
+              "});"
+            ]}
+          }]
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
+            "description": "Public — returns service health status."
           }
         }
       ]
