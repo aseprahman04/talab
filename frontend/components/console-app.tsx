@@ -76,10 +76,17 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
   useEffect(() => {
     const rawSession = window.localStorage.getItem(sessionStorageKey);
     const rawWorkspace = window.localStorage.getItem(workspaceStorageKey);
-    const requestedMode = new URLSearchParams(window.location.search).get('mode');
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedMode = searchParams.get('mode');
+    const billingReturn = searchParams.get('billing');
 
     if (requestedMode === 'register' || requestedMode === 'login') {
       setAuthMode(requestedMode);
+    }
+
+    if (billingReturn === '1') {
+      setActiveSection('billing');
+      window.history.replaceState(null, '', window.location.pathname);
     }
 
     // Handle Google OAuth redirect — tokens arrive via URL fragment to avoid server logs
@@ -206,7 +213,14 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     apiRequest<{ status: string; plan: { code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number } | null; renewsAt?: string | null } | null>(`/subscriptions/${selectedWorkspaceId}`, undefined, session.accessToken)
       .then((data) => setSubscription(data))
       .catch(() => {});
-  }, [selectedWorkspaceId, session?.accessToken]);
+  }, [selectedWorkspaceId, session?.accessToken, activeSection]);
+
+  function refreshSubscription() {
+    if (!session?.accessToken || !selectedWorkspaceId) return;
+    apiRequest<{ status: string; plan: { code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number } | null; renewsAt?: string | null } | null>(`/subscriptions/${selectedWorkspaceId}`, undefined, session.accessToken)
+      .then((data) => setSubscription(data))
+      .catch(() => {});
+  }
 
   async function handleUpgrade(planCode: string) {
     if (!session?.accessToken || !selectedWorkspaceId) return;
@@ -576,7 +590,7 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         {activeSection === 'auto-replies' ? <AutoRepliesPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} autoReplyForm={autoReplyForm} setAutoReplyForm={setAutoReplyForm} autoReplies={autoReplies} isRefreshing={isRefreshing} onSubmit={handleAutoReplyCreate} /> : null}
         {activeSection === 'leads' ? <LeadsPanel selectedWorkspaceId={selectedWorkspaceId} contacts={contacts} contactLists={contactLists} session={session} onRefresh={() => refreshWorkspaceData(selectedWorkspaceId, session.accessToken)} pushFeedback={pushFeedback} /> : null}
         {activeSection === 'api-docs' ? <ApiDocsPanel accessToken={session.accessToken} /> : null}
-        {activeSection === 'billing' ? <BillingPanel subscription={subscription} plans={plans} isLoading={isLoading} onUpgrade={handleUpgrade} /> : null}
+        {activeSection === 'billing' ? <BillingPanel subscription={subscription} plans={plans} isLoading={isLoading} onUpgrade={handleUpgrade} onRefresh={refreshSubscription} /> : null}
       </section>
     </main>
   );
@@ -915,12 +929,15 @@ function LeadsPanel({ selectedWorkspaceId, contacts, contactLists, session, onRe
 type PlanItem = { id: string; code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number; lemonSqueezyVariantId: string | null };
 type SubInfo = { status: string; plan: { code: string; name: string; price: number; maxDevices: number; monthlyMessageQuota: number; maxMembers: number } | null; renewsAt?: string | null } | null;
 
-function BillingPanel({ subscription, plans, isLoading, onUpgrade }: { subscription: SubInfo; plans: PlanItem[]; isLoading: boolean; onUpgrade: (planCode: string) => void }) {
+function BillingPanel({ subscription, plans, isLoading, onUpgrade, onRefresh }: { subscription: SubInfo; plans: PlanItem[]; isLoading: boolean; onUpgrade: (planCode: string) => void; onRefresh: () => void }) {
   const fmt = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 
   return (
     <section className="panel glass-panel">
-      <SectionHeading title="Billing & Langganan" subtitle="Kelola paket aktif dan upgrade workspace kamu." />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <SectionHeading title="Billing & Langganan" subtitle="Kelola paket aktif dan upgrade workspace kamu." />
+        <button className="button-ghost" style={{ fontSize: '13px', padding: '6px 12px', marginTop: '2px' }} onClick={onRefresh} type="button">↻ Cek status</button>
+      </div>
 
       {subscription ? (
         <div className="card-row" style={{ marginBottom: '24px' }}>

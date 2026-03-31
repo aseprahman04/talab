@@ -73,11 +73,15 @@ export class SubscriptionsService {
 
     // Try to create a dynamic checkout via API (injects custom_data for webhook auto-provisioning)
     try {
+      const frontendUrl = process.env.FRONTEND_URL || 'https://watheter.com';
       const checkoutPayload = {
         data: {
           type: 'checkouts',
           attributes: {
-            checkout_options: { embed: false },
+            checkout_options: {
+              embed: false,
+              redirect_url: `${frontendUrl}/console?billing=1`,
+            },
             checkout_data: {
               email: user.email,
               name: user.name,
@@ -107,12 +111,14 @@ export class SubscriptionsService {
       if (!plan.lemonSqueezyCheckoutUrl) {
         throw new BadRequestException(`No checkout URL configured for plan '${planCode}'`);
       }
+      const fallbackFrontendUrl = process.env.FRONTEND_URL || 'https://watheter.com';
       const params = new URLSearchParams({
         'checkout[custom][workspaceId]': workspaceId,
         'checkout[custom][planCode]': planCode,
         'checkout[custom][userId]': userId,
         'checkout[email]': user.email,
         'checkout[name]': user.name,
+        'redirect_url': `${fallbackFrontendUrl}/console?billing=1`,
       });
       return { url: `${plan.lemonSqueezyCheckoutUrl}?${params.toString()}` };
     }

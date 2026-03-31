@@ -21,12 +21,15 @@ async function main() {
 
   await prisma.plan.upsert({
     where: { code: 'bisnis' },
-    update: {},
+    update: {
+      lemonSqueezyVariantId: '1464622',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/227aa20b-d2d6-4b81-bc74-75d6962eac54',
+    },
     create: {
       code: 'bisnis',
       name: 'Bisnis',
       maxDevices: 5,
-      monthlyMessageQuota: 0, // unlimited
+      monthlyMessageQuota: 0,
       maxMembers: 5,
       storageLimitMb: 1000,
       price: 49000,
@@ -37,12 +40,15 @@ async function main() {
 
   await prisma.plan.upsert({
     where: { code: 'tim' },
-    update: {},
+    update: {
+      lemonSqueezyVariantId: '1464624',
+      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/e23bb8a9-2fc3-43b7-bada-664b2d09428a',
+    },
     create: {
       code: 'tim',
       name: 'Tim',
       maxDevices: 20,
-      monthlyMessageQuota: 0, // unlimited
+      monthlyMessageQuota: 0,
       maxMembers: 20,
       storageLimitMb: 5000,
       price: 149000,
