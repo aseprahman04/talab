@@ -8,7 +8,7 @@ export class SendMessageDto {
   @IsUUID() workspaceId!: string;
 
   @ApiProperty({ example: 'seed-device-01' })
-  @IsUUID() deviceId!: string;
+  @IsString() deviceId!: string;
 
   @ApiProperty({ example: '6285795950115', description: 'Indonesian phone number starting with 62' })
   @Matches(/^62\d{8,15}$/) target!: string;
