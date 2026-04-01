@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { makeWASocket, DisconnectReason, WASocket, Browsers } from '@whiskeysockets/baileys';
+import { makeWASocket, DisconnectReason, WASocket, Browsers, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
@@ -41,12 +41,14 @@ export class WhatsAppSessionManager implements OnModuleInit {
     }
 
     const { state, saveCreds } = await usePrismaAuthState(deviceId, this.prisma);
+    const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
+      version,
       auth: state,
       printQRInTerminal: false,
       logger: this.makeSilentLogger(),
-      browser: Browsers.appropriate('Chrome'),
+      browser: Browsers.ubuntu('Chrome'),
       connectTimeoutMs: 30_000,
       keepAliveIntervalMs: 15_000,
     });
@@ -174,12 +176,21 @@ export class WhatsAppSessionManager implements OnModuleInit {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     const logger = {
-      level: 'silent',
+      level: 'info',
       trace: noop,
       debug: noop,
-      info: noop,
-      warn: (msg: unknown) => self.logger.warn(String(msg)),
-      error: (msg: unknown) => self.logger.error(String(msg)),
+      info: (obj: unknown, msg?: string) => {
+        const text = typeof obj === 'string' ? obj : (msg ?? JSON.stringify(obj));
+        self.logger.log(`[baileys] ${text}`);
+      },
+      warn: (obj: unknown, msg?: string) => {
+        const text = typeof obj === 'string' ? obj : (msg ?? JSON.stringify(obj));
+        self.logger.warn(`[baileys] ${text}`);
+      },
+      error: (obj: unknown, msg?: string) => {
+        const text = typeof obj === 'string' ? obj : (msg ?? JSON.stringify(obj));
+        self.logger.error(`[baileys] ${text}`);
+      },
       child: (_obj: Record<string, unknown>) => logger,
     };
     return logger;
