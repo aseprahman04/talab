@@ -27,10 +27,12 @@ export class DevicesService {
 
   async startPairing(userId: string, deviceId: string) {
     const device = await this.getOwnedDeviceForUser(userId, deviceId);
+    // Clear old session so Baileys always starts fresh and emits a QR
+    await this.prisma.deviceSession.deleteMany({ where: { deviceId } });
     await this.prisma.device.update({ where: { id: deviceId }, data: { status: 'PAIRING' } });
     await this.queue.devices.add(JOB_NAMES.DEVICE_PAIR_START, { deviceId });
     this.realtime.emitToWorkspace(device.workspaceId, 'device.status.updated', { deviceId, status: 'PAIRING' });
-    return { success: true, status: 'PAIRING', qrCode: 'stubbed-qr-from-worker', workspaceId: device.workspaceId };
+    return { success: true, status: 'PAIRING', workspaceId: device.workspaceId };
   }
 
   async reconnect(userId: string, deviceId: string) {

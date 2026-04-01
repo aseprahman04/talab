@@ -104,7 +104,13 @@ export class WhatsAppSessionManager implements OnModuleInit {
         // 403 = banned/forbidden, 405 = session not found on WA servers (never paired), 500 = bad session
         const isPermanent = loggedOut || statusCode === 403 || statusCode === 405 || statusCode === 500;
         this.logger.warn(`Device ${deviceId} disconnected (code=${statusCode}, permanent=${isPermanent})`);
-        this.sessions.delete(deviceId);
+
+        // Only manage state if this socket is still the active one — prevents
+        // a stale close event from a replaced socket from clobbering the new one
+        const isActiveSocket = this.sessions.get(deviceId) === sock;
+        if (isActiveSocket) {
+          this.sessions.delete(deviceId);
+        }
 
         if (isPermanent) {
           await this.prisma.deviceSession.deleteMany({ where: { deviceId } });
@@ -116,7 +122,8 @@ export class WhatsAppSessionManager implements OnModuleInit {
             deviceId,
             status: 'DISCONNECTED',
           });
-        } else {
+        } else if (isActiveSocket) {
+          // Only schedule reconnect for the active socket, not replaced ones
           setTimeout(() => {
             this.connect(deviceId).catch((err) =>
               this.logger.error(`Reconnect failed for device ${deviceId}: ${err}`),
