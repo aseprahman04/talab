@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { makeWASocket, DisconnectReason, WASocket, Browsers, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import type { Contact as WAContact } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
@@ -56,6 +57,21 @@ export class WhatsAppSessionManager implements OnModuleInit {
     this.sessions.set(deviceId, sock);
 
     sock.ev.on('creds.update', saveCreds);
+
+    // Sync phone contacts → Leads when WA sends the initial contact list
+    sock.ev.on('messaging-history.set', async ({ contacts }) => {
+      const rows = (contacts as WAContact[])
+        .map((c) => ({
+          workspaceId: device.workspaceId,
+          phoneNumber: (c.phoneNumber ?? c.id)?.split('@')[0] ?? '',
+          name: c.name ?? c.notify ?? c.verifiedName ?? null,
+        }))
+        .filter((c) => /^\d{7,15}$/.test(c.phoneNumber));
+
+      if (!rows.length) return;
+      await this.prisma.contact.createMany({ data: rows, skipDuplicates: true });
+      this.logger.log(`Synced ${rows.length} contacts for device ${deviceId}`);
+    });
 
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
