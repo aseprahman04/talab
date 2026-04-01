@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { makeWASocket, DisconnectReason, WASocket } from '@whiskeysockets/baileys';
+import { makeWASocket, DisconnectReason, WASocket, Browsers } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
@@ -46,6 +46,9 @@ export class WhatsAppSessionManager implements OnModuleInit {
       auth: state,
       printQRInTerminal: false,
       logger: this.makeSilentLogger(),
+      browser: Browsers.appropriate('Chrome'),
+      connectTimeoutMs: 30_000,
+      keepAliveIntervalMs: 15_000,
     });
 
     this.sessions.set(deviceId, sock);
@@ -99,11 +102,13 @@ export class WhatsAppSessionManager implements OnModuleInit {
       }
 
       if (connection === 'close') {
-        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+        const boom = lastDisconnect?.error as Boom | undefined;
+        const statusCode = boom?.output?.statusCode;
+        const reason = boom?.message ?? boom?.output?.payload?.error ?? 'unknown';
         const loggedOut = statusCode === DisconnectReason.loggedOut;
         // 403 = banned/forbidden, 405 = session not found on WA servers (never paired), 500 = bad session
         const isPermanent = loggedOut || statusCode === 403 || statusCode === 405 || statusCode === 500;
-        this.logger.warn(`Device ${deviceId} disconnected (code=${statusCode}, permanent=${isPermanent})`);
+        this.logger.warn(`Device ${deviceId} disconnected — code=${statusCode} reason="${reason}" permanent=${isPermanent}`);
 
         // Only manage state if this socket is still the active one — prevents
         // a stale close event from a replaced socket from clobbering the new one
