@@ -176,21 +176,12 @@ export class WhatsAppSessionManager implements OnModuleInit {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     const logger = {
-      level: 'info',
+      level: 'silent',
       trace: noop,
       debug: noop,
-      info: (obj: unknown, msg?: string) => {
-        const text = typeof obj === 'string' ? obj : (msg ?? JSON.stringify(obj));
-        self.logger.log(`[baileys] ${text}`);
-      },
-      warn: (obj: unknown, msg?: string) => {
-        const text = typeof obj === 'string' ? obj : (msg ?? JSON.stringify(obj));
-        self.logger.warn(`[baileys] ${text}`);
-      },
-      error: (obj: unknown, msg?: string) => {
-        const text = typeof obj === 'string' ? obj : (msg ?? JSON.stringify(obj));
-        self.logger.error(`[baileys] ${text}`);
-      },
+      info: noop,
+      warn: (msg: unknown) => self.logger.warn(String(msg)),
+      error: (msg: unknown) => self.logger.error(String(msg)),
       child: (_obj: Record<string, unknown>) => logger,
     };
     return logger;
