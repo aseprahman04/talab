@@ -66,6 +66,10 @@ export class MessagesProcessor extends WorkerHost {
         where: { id: message.id },
         data: { status: 'FAILED', failedAt, errorMessage: String(err) },
       });
+      const meta = message.metadata as { broadcastRecipientId?: string } | null;
+      if (meta?.broadcastRecipientId) {
+        await this.updateBroadcastProgress(meta.broadcastRecipientId, 'FAILED', null, String(err));
+      }
       await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
         event: 'message.failed',
         workspaceId: message.workspaceId,
@@ -87,6 +91,21 @@ export class MessagesProcessor extends WorkerHost {
       data: { status: 'SENT', sentAt, providerMessageId, errorMessage: null },
     });
 
+    // Auto-upsert recipient as a lead so tested numbers are instantly available in Leads
+    if (message.recipient) {
+      await this.prisma.contact.upsert({
+        where: { workspaceId_phoneNumber: { workspaceId: message.workspaceId, phoneNumber: message.recipient } },
+        create: { workspaceId: message.workspaceId, phoneNumber: message.recipient },
+        update: {},
+      });
+    }
+
+    // Track broadcast completion
+    const meta = message.metadata as { broadcastRecipientId?: string } | null;
+    if (meta?.broadcastRecipientId) {
+      await this.updateBroadcastProgress(meta.broadcastRecipientId, 'SENT', sentAt, null);
+    }
+
     await this.enqueueWebhookDeliveries(message.workspaceId, 'message.sent', {
       event: 'message.sent',
       workspaceId: message.workspaceId,
@@ -99,6 +118,29 @@ export class MessagesProcessor extends WorkerHost {
     });
 
     this.realtime.emitToWorkspace(message.workspaceId, 'message.sent', { messageId: message.id });
+  }
+
+  private async updateBroadcastProgress(
+    broadcastRecipientId: string,
+    status: 'SENT' | 'FAILED',
+    sentAt: Date | null,
+    errorMessage: string | null,
+  ) {
+    const recipient = await this.prisma.broadcastRecipient.update({
+      where: { id: broadcastRecipientId },
+      data: { status, sentAt: sentAt ?? undefined, errorMessage: errorMessage ?? undefined },
+    });
+    const field = status === 'SENT' ? { successCount: { increment: 1 } } : { failedCount: { increment: 1 } };
+    const broadcast = await this.prisma.broadcast.update({
+      where: { id: recipient.broadcastId },
+      data: field,
+    });
+    if (broadcast.successCount + broadcast.failedCount >= broadcast.totalTargets) {
+      await this.prisma.broadcast.update({
+        where: { id: broadcast.id },
+        data: { status: 'COMPLETED', completedAt: new Date() },
+      });
+    }
   }
 
   private async enqueueWebhookDeliveries(workspaceId: string, eventType: string, payload: Record<string, unknown>) {

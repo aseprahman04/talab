@@ -68,6 +68,8 @@ export type Broadcast = {
   messageTemplate: string;
   status: string;
   totalTargets: number;
+  successCount: number;
+  failedCount: number;
   createdAt: string;
 };
 
