@@ -4,10 +4,16 @@ import { PrismaService } from 'src/database/prisma/prisma.service';
 import { JOB_NAMES } from 'src/queue/jobs/job-names';
 import { QueueService } from 'src/queue/queue.service';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
+import { WhatsAppSessionManager } from 'src/whatsapp/whatsapp-session.manager';
 
 @Processor('messages')
 export class MessagesProcessor extends WorkerHost {
-  constructor(private prisma: PrismaService, private queue: QueueService, private realtime: RealtimeGateway) { super(); }
+  constructor(
+    private prisma: PrismaService,
+    private queue: QueueService,
+    private realtime: RealtimeGateway,
+    private sessionManager: WhatsAppSessionManager,
+  ) { super(); }
 
   async process(job: Job<{ messageId: string }>): Promise<void> {
     if (job.name !== JOB_NAMES.MESSAGE_SEND) return;
@@ -44,16 +50,41 @@ export class MessagesProcessor extends WorkerHost {
     }
 
     await this.prisma.message.update({ where: { id: message.id }, data: { status: 'PROCESSING' } });
-    // Placeholder: integrate actual WA session engine here.
+
+    let providerMessageId: string;
+    try {
+      providerMessageId = await this.sessionManager.sendMessage(
+        message.deviceId,
+        message.recipient!,
+        message.type as 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'AUDIO' | 'VIDEO',
+        message.content ?? undefined,
+        message.mediaUrl ?? undefined,
+      );
+    } catch (err) {
+      const failedAt = new Date();
+      await this.prisma.message.update({
+        where: { id: message.id },
+        data: { status: 'FAILED', failedAt, errorMessage: String(err) },
+      });
+      await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
+        event: 'message.failed',
+        workspaceId: message.workspaceId,
+        deviceId: message.deviceId,
+        messageId: message.id,
+        target: message.recipient,
+        type: message.type,
+        status: 'FAILED',
+        error: String(err),
+        timestamp: failedAt.toISOString(),
+      });
+      this.realtime.emitToWorkspace(message.workspaceId, 'message.failed', { messageId: message.id });
+      return;
+    }
+
     const sentAt = new Date();
     await this.prisma.message.update({
       where: { id: message.id },
-      data: {
-        status: 'SENT',
-        sentAt,
-        providerMessageId: `stub-${message.id}`,
-        errorMessage: null,
-      },
+      data: { status: 'SENT', sentAt, providerMessageId, errorMessage: null },
     });
 
     await this.enqueueWebhookDeliveries(message.workspaceId, 'message.sent', {

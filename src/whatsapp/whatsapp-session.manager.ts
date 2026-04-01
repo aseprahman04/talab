@@ -153,6 +153,40 @@ export class WhatsAppSessionManager implements OnModuleInit {
     return this.sessions.has(deviceId);
   }
 
+  async sendMessage(
+    deviceId: string,
+    recipient: string,
+    type: 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'AUDIO' | 'VIDEO',
+    content?: string,
+    mediaUrl?: string,
+  ): Promise<string> {
+    const sock = this.sessions.get(deviceId);
+    if (!sock) throw new Error(`Device ${deviceId} is not connected`);
+
+    const jid = `${recipient}@s.whatsapp.net`;
+    let result: { key?: { id?: string | null } } | undefined;
+
+    switch (type) {
+      case 'TEXT':
+        result = await sock.sendMessage(jid, { text: content ?? '' });
+        break;
+      case 'IMAGE':
+        result = await sock.sendMessage(jid, { image: { url: mediaUrl! }, caption: content });
+        break;
+      case 'VIDEO':
+        result = await sock.sendMessage(jid, { video: { url: mediaUrl! }, caption: content });
+        break;
+      case 'AUDIO':
+        result = await sock.sendMessage(jid, { audio: { url: mediaUrl! }, mimetype: 'audio/mpeg' });
+        break;
+      case 'DOCUMENT':
+        result = await sock.sendMessage(jid, { document: { url: mediaUrl! }, mimetype: 'application/octet-stream', fileName: mediaUrl!.split('/').pop() ?? 'file' });
+        break;
+    }
+
+    return result?.key?.id ?? '';
+  }
+
   private async dispatchWebhooks(workspaceId: string, eventType: string, payload: unknown) {
     const webhooks = await this.prisma.webhook.findMany({
       where: { workspaceId, isActive: true },
