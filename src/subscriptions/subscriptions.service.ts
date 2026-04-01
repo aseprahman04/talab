@@ -131,13 +131,10 @@ export class SubscriptionsService {
     if (!attrs) return;
 
     const lsSubscriptionId = String(data['id']);
-    const customData = (attrs as unknown as { first_subscription_item?: unknown; meta?: { custom_data?: { workspaceId?: string } } });
 
     // Extract workspaceId from custom data passed at checkout time
-    // It may be nested in different places depending on the event type
-    let workspaceId: string | undefined;
     const meta = (data as unknown as { meta?: { custom_data?: { workspaceId?: string } } })['meta'];
-    workspaceId = meta?.custom_data?.workspaceId;
+    const workspaceId: string | undefined = meta?.custom_data?.workspaceId;
 
     switch (eventName) {
       case 'subscription_created':

@@ -21,6 +21,7 @@ const mockPrisma = {
   workspaceMember: { findUnique: jest.fn() },
   device: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
   deviceToken: { create: jest.fn() },
+  deviceSession: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
 };
 
 const mockQueue = { devices: { add: jest.fn() } };
@@ -86,7 +87,7 @@ describe('DevicesService', () => {
   });
 
   describe('startPairing', () => {
-    it('sets device to PAIRING and enqueues job', async () => {
+    it('sets device to PAIRING, clears session, and enqueues job', async () => {
       mockPrisma.device.findUnique.mockResolvedValue(device);
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
       mockPrisma.device.update.mockResolvedValue({ ...device, status: 'PAIRING' });
@@ -95,6 +96,7 @@ describe('DevicesService', () => {
       const result = await service.startPairing(USER_ID, DEVICE_ID);
 
       expect(result.status).toBe('PAIRING');
+      expect(mockPrisma.deviceSession.deleteMany).toHaveBeenCalledWith({ where: { deviceId: DEVICE_ID } });
       expect(mockPrisma.device.update).toHaveBeenCalledWith({
         where: { id: DEVICE_ID },
         data: { status: 'PAIRING' },

@@ -14,7 +14,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:e2e": "jest --config jest.e2e.config.ts --runInBand"
+    "test:e2e": "jest --config jest.e2e.config.ts --runInBand",
+    "prepare": "husky"
   },
   "prisma": {
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
@@ -49,6 +50,10 @@
     "socket.io": "^4.8.1",
     "uuid": "^11.0.3"
   },
+  "lint-staged": {
+    "src/**/*.ts": "eslint --fix",
+    "test/**/*.ts": "eslint --fix"
+  },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",
     "@nestjs/schematics": "^10.1.4",
@@ -59,12 +64,15 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.2.0",
     "eslint": "^9.11.1",
+    "husky": "^9.1.7",
     "jest": "^30.3.0",
+    "lint-staged": "^16.4.0",
     "prisma": "^5.20.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.58.0"
   }
 }
