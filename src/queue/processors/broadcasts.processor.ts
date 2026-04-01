@@ -18,11 +18,7 @@ export class BroadcastsProcessor extends WorkerHost {
 
     const broadcast = await this.prisma.broadcast.findUnique({
       where: { id: job.data.broadcastId },
-      include: {
-        recipients: {
-          include: { contact: true },
-        },
-      },
+      include: { recipients: true },
     });
     if (!broadcast) return;
 
@@ -35,11 +31,15 @@ export class BroadcastsProcessor extends WorkerHost {
     let activeCount = 0;
 
     for (const recipient of broadcast.recipients) {
-      // Respect opt-out and blacklist
-      if (recipient.contact?.isOptOut || recipient.contact?.isBlacklisted) {
+      // Respect opt-out and blacklist — look up contact by phoneNumber
+      const contact = await this.prisma.contact.findUnique({
+        where: { workspaceId_phoneNumber: { workspaceId: broadcast.workspaceId, phoneNumber: recipient.phoneNumber } },
+        select: { isOptOut: true, isBlacklisted: true },
+      });
+      if (contact?.isOptOut || contact?.isBlacklisted) {
         await this.prisma.broadcastRecipient.update({
           where: { id: recipient.id },
-          data: { status: 'FAILED', errorMessage: recipient.contact.isOptOut ? 'Opt-out' : 'Blacklisted' },
+          data: { status: 'FAILED', errorMessage: contact.isOptOut ? 'Opt-out' : 'Blacklisted' },
         });
         continue;
       }

@@ -15,8 +15,11 @@ export class AutoRepliesProcessor extends WorkerHost {
       where: { workspaceId: inbound.workspaceId, deviceId: inbound.deviceId, isEnabled: true },
       orderBy: { priority: 'desc' },
     });
-    const content = (inbound.content || '').toLowerCase();
-    const match = rules.find((rule: { keyword: string }) => content.includes(rule.keyword.toLowerCase()));
+    const content = (inbound.content || '').toLowerCase().trim();
+    const match = rules.find((rule: { keyword: string; matchType: string }) => {
+      const kw = rule.keyword.toLowerCase();
+      return rule.matchType === 'exact' ? content === kw : content.includes(kw);
+    });
     if (!match) return;
 
     const reply = await this.prisma.message.create({

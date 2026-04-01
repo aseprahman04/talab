@@ -6,7 +6,7 @@ export class CreateAutoReplyDto {
   @IsUUID() workspaceId!: string;
 
   @ApiProperty({ example: 'seed-device-01' })
-  @IsUUID() deviceId!: string;
+  @IsString() deviceId!: string;
 
   @ApiProperty({ example: 'Cek Status Order' })
   @IsString() name!: string;

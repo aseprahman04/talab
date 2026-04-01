@@ -58,6 +58,46 @@ export class WhatsAppSessionManager implements OnModuleInit {
 
     sock.ev.on('creds.update', saveCreds);
 
+    // Receive inbound messages → save to DB + trigger auto-reply
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (type !== 'notify') return; // ignore history sync
+      for (const msg of messages) {
+        if (msg.key.fromMe) continue;                        // skip our own outbound
+        const jid = msg.key.remoteJid ?? '';
+        if (!jid.endsWith('@s.whatsapp.net')) continue;      // skip groups for now
+
+        const senderPhone = jid.split('@')[0];
+        const content =
+          msg.message?.conversation ??
+          msg.message?.extendedTextMessage?.text ??
+          msg.message?.imageMessage?.caption ??
+          msg.message?.videoMessage?.caption ??
+          null;
+
+        // Upsert sender as a lead
+        await this.prisma.contact.upsert({
+          where: { workspaceId_phoneNumber: { workspaceId: device.workspaceId, phoneNumber: senderPhone } },
+          create: { workspaceId: device.workspaceId, phoneNumber: senderPhone },
+          update: {},
+        });
+
+        const saved = await this.prisma.message.create({
+          data: {
+            workspaceId: device.workspaceId,
+            deviceId,
+            direction: 'INBOUND',
+            type: 'TEXT',
+            sender: senderPhone,
+            content,
+            status: 'DELIVERED',
+          },
+        });
+
+        // Fire auto-reply check
+        await this.queue.autoReplies.add(JOB_NAMES.AUTO_REPLY_PROCESS, { messageId: saved.id });
+      }
+    });
+
     // Sync phone contacts → Leads when WA sends the initial contact list
     sock.ev.on('messaging-history.set', async ({ contacts }) => {
       const rows = (contacts as WAContact[])
