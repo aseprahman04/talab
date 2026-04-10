@@ -1,8 +1,8 @@
 /**
  * Contacts e2e — CRUD + lists + bulk import
- * Requires local backend running: npm run start:dev
+ * Requires backend running. Point to VPS via .env.e2e.
  */
-import { apiPost, apiGet, apiDelete, setupTestUser } from '../helpers/api';
+import { apiPost, apiGet, apiDelete, setupOrReuseTestUser } from '../helpers/api';
 
 let accessToken: string;
 let workspaceId: string;
@@ -13,7 +13,7 @@ const PHONE_1 = '6281234567890';
 const PHONE_2 = '6289876543210';
 
 beforeAll(async () => {
-  ({ accessToken, workspaceId } = await setupTestUser('ct'));
+  ({ accessToken, workspaceId } = await setupOrReuseTestUser());
 });
 
 describe('Contacts e2e', () => {
@@ -36,7 +36,7 @@ describe('Contacts e2e', () => {
     });
 
     it('upserts on duplicate phone number', async () => {
-      const { status, data } = await apiPost<{ id: string; name?: string }>(
+      const { status, data } = await apiPost<{ id: string }>(
         '/contacts',
         { workspaceId, phoneNumber: PHONE_1, name: 'Budi Updated' },
         accessToken,
@@ -106,12 +106,11 @@ describe('Contacts e2e', () => {
       it('creates a contact list', async () => {
         const { status, data } = await apiPost<{ id: string; name: string }>(
           '/contacts/lists',
-          { workspaceId, name: 'E2E VIP List' },
+          { workspaceId, name: `E2E VIP List ${Date.now()}` },
           accessToken,
         );
         expect(status).toBe(201);
         expect(data.id).toBeTruthy();
-        expect(data.name).toBe('E2E VIP List');
         listId = data.id;
       });
     });

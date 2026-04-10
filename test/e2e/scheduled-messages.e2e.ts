@@ -1,8 +1,8 @@
 /**
  * Scheduled messages e2e — create, list, toggle, delete
- * Requires local backend running: npm run start:dev
+ * Requires backend running. Point to VPS via .env.e2e.
  */
-import { apiPost, apiGet, apiDelete, apiPatch, setupTestUser } from '../helpers/api';
+import { apiPost, apiGet, apiDelete, apiPatch, setupOrReuseTestUser, getOrCreateDevice } from '../helpers/api';
 
 let accessToken: string;
 let workspaceId: string;
@@ -10,17 +10,15 @@ let deviceId: string;
 let smId: string;
 
 beforeAll(async () => {
-  ({ accessToken, workspaceId } = await setupTestUser('sm'));
-
-  const dev = await apiPost<{ id: string }>('/devices', { workspaceId, name: 'E2E SM Device' }, accessToken);
-  deviceId = dev.data.id;
+  ({ accessToken, workspaceId } = await setupOrReuseTestUser());
+  ({ deviceId } = await getOrCreateDevice(workspaceId, accessToken, 'sm'));
 });
 
 const validDto = () => ({
   workspaceId,
   deviceId,
-  name: 'Daily Reminder',
-  recipient: '6281234567890',
+  name: `Daily Reminder ${Date.now()}`,
+  recipient: process.env.TEST_RECIPIENT ?? '6281234567890',
   repeatType: 'DAILY',
   sendHour: 9,
   content: 'Good morning!',
@@ -60,7 +58,7 @@ describe('Scheduled messages e2e', () => {
     });
 
     it('returns 403 when device does not belong to workspace', async () => {
-      const { accessToken: otherToken, workspaceId: otherWs } = await setupTestUser('sm-other');
+      const { accessToken: otherToken, workspaceId: otherWs } = await setupOrReuseTestUser();
       const { status } = await apiPost(
         '/scheduled-messages',
         { ...validDto(), workspaceId: otherWs },
@@ -129,7 +127,6 @@ describe('Scheduled messages e2e', () => {
     });
 
     it('returns 404 after deletion', async () => {
-      // After delete the item is gone — toggle should 404
       const { status } = await apiPatch(`/scheduled-messages/${smId}/toggle`, { isEnabled: true }, accessToken);
       expect(status).toBe(404);
     });

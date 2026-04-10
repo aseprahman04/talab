@@ -1,5 +1,6 @@
 .env
 .env.local
+.env.e2e
 node_modules/
 dist/
 frontend/node_modules/

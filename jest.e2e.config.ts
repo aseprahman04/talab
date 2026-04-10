@@ -1,6 +1,11 @@
+import { config } from 'dotenv';
 import type { Config } from 'jest';
 
-const config: Config = {
+// Load .env.e2e if present (VPS / remote target config).
+// Falls back silently when the file doesn't exist (local dev).
+config({ path: '.env.e2e', override: false });
+
+const jestConfig: Config = {
   testEnvironment: 'node',
   rootDir: '.',
   testRegex: 'test/e2e/.*\\.e2e\\.ts$',
@@ -10,7 +15,8 @@ const config: Config = {
   transform: {
     '^.+\\.ts$': ['ts-jest', { diagnostics: false }],
   },
-  testTimeout: 30000,
+  // VPS round-trips can be slow; give each test suite 60 s
+  testTimeout: 60000,
 };
 
-export default config;
+export default jestConfig;

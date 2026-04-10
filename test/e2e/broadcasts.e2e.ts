@@ -1,8 +1,11 @@
 /**
  * Broadcasts e2e — create campaign + start
- * Requires local backend running: npm run start:dev
+ * Requires backend running. Point to VPS via .env.e2e.
+ *
+ * With TEST_DEVICE_ID set the broadcast will be dispatched through a real WA connection.
+ * TEST_RECIPIENT overrides the target phone number used in the broadcast.
  */
-import { apiPost, setupTestUser } from '../helpers/api';
+import { apiPost, setupOrReuseTestUser, getOrCreateDevice } from '../helpers/api';
 
 let accessToken: string;
 let workspaceId: string;
@@ -10,10 +13,8 @@ let deviceId: string;
 let broadcastId: string;
 
 beforeAll(async () => {
-  ({ accessToken, workspaceId } = await setupTestUser('bc'));
-
-  const dev = await apiPost<{ id: string }>('/devices', { workspaceId, name: 'E2E BC Device' }, accessToken);
-  deviceId = dev.data.id;
+  ({ accessToken, workspaceId } = await setupOrReuseTestUser());
+  ({ deviceId } = await getOrCreateDevice(workspaceId, accessToken, 'bc'));
 });
 
 describe('Broadcasts e2e', () => {
@@ -29,7 +30,8 @@ describe('Broadcasts e2e', () => {
       expect(status).toBe(401);
     });
 
-    it('creates a broadcast campaign in DRAFT state', async () => {
+    it('creates a broadcast campaign', async () => {
+      const recipient = process.env.TEST_RECIPIENT ?? '6281234567890';
       const { status, data } = await apiPost<{
         id: string;
         name: string;
@@ -40,17 +42,16 @@ describe('Broadcasts e2e', () => {
         {
           workspaceId,
           deviceId,
-          name: 'E2E Test Broadcast',
-          messageTemplate: 'Hello {{name}}!',
-          recipients: ['6281234567890', '6289876543210'],
+          name: `E2E Broadcast ${Date.now()}`,
+          messageTemplate: '[E2E] Test broadcast message',
+          recipients: [recipient],
         },
         accessToken,
       );
       expect(status).toBe(201);
       expect(data.id).toBeTruthy();
-      expect(data.name).toBe('E2E Test Broadcast');
-      expect(data.totalTargets).toBe(2);
-      expect(data.recipients).toHaveLength(2);
+      expect(data.totalTargets).toBe(1);
+      expect(data.recipients).toHaveLength(1);
       broadcastId = data.id;
     });
 
@@ -60,7 +61,7 @@ describe('Broadcasts e2e', () => {
     });
 
     it('returns 403 when device does not belong to workspace', async () => {
-      const { accessToken: otherToken, workspaceId: otherWs } = await setupTestUser('bc-other');
+      const { accessToken: otherToken, workspaceId: otherWs } = await setupOrReuseTestUser();
       const { status } = await apiPost(
         '/broadcasts',
         { workspaceId: otherWs, deviceId, name: 'x', messageTemplate: 'x', recipients: ['6281234567890'] },

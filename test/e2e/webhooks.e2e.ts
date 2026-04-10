@@ -1,15 +1,15 @@
 /**
  * Webhooks e2e — create, list, logs, test delivery
- * Requires local backend running: npm run start:dev
+ * Requires backend running. Point to VPS via .env.e2e.
  */
-import { apiPost, apiGet, setupTestUser } from '../helpers/api';
+import { apiPost, apiGet, setupOrReuseTestUser } from '../helpers/api';
 
 let accessToken: string;
 let workspaceId: string;
 let webhookId: string;
 
 beforeAll(async () => {
-  ({ accessToken, workspaceId } = await setupTestUser('wh'));
+  ({ accessToken, workspaceId } = await setupOrReuseTestUser());
 });
 
 describe('Webhooks e2e', () => {
@@ -45,7 +45,7 @@ describe('Webhooks e2e', () => {
     });
 
     it('returns 403 for workspace the user is not a member of', async () => {
-      const { accessToken: otherToken } = await setupTestUser('wh-other');
+      const { accessToken: otherToken } = await setupOrReuseTestUser();
       const { status } = await apiPost(
         '/webhooks',
         { workspaceId, url: 'https://example.com/hook', events: ['message.received'] },

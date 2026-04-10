@@ -1,20 +1,21 @@
 /**
  * Messages e2e — send, list, retry
- * Requires local backend running: npm run start:dev
- * Note: messages require a CONNECTED device to actually deliver. Tests verify API contract only.
+ * Requires backend running. Point to VPS via .env.e2e.
+ *
+ * With TEST_DEVICE_ID set the device is CONNECTED and messages go through
+ * the full WA pipeline. Without it a new CREATED device is used (QUEUED only).
  */
-import { apiPost, apiGet, setupTestUser } from '../helpers/api';
+import { apiPost, apiGet, setupOrReuseTestUser, getOrCreateDevice } from '../helpers/api';
 
 let accessToken: string;
 let workspaceId: string;
 let deviceId: string;
+let isConnected: boolean;
 let messageId: string;
 
 beforeAll(async () => {
-  ({ accessToken, workspaceId } = await setupTestUser('msg'));
-
-  const dev = await apiPost<{ id: string }>('/devices', { workspaceId, name: 'E2E Msg Device' }, accessToken);
-  deviceId = dev.data.id;
+  ({ accessToken, workspaceId } = await setupOrReuseTestUser());
+  ({ deviceId, isConnected } = await getOrCreateDevice(workspaceId, accessToken, 'msg'));
 });
 
 describe('Messages e2e', () => {
@@ -22,7 +23,7 @@ describe('Messages e2e', () => {
     it('returns 401 without auth', async () => {
       const { status } = await apiPost('/messages/send', {
         workspaceId,
-        deviceId: 'any',
+        deviceId,
         target: '6281234567890',
         type: 'TEXT',
         message: 'hello',
@@ -31,14 +32,15 @@ describe('Messages e2e', () => {
     });
 
     it('enqueues a message and returns QUEUED status', async () => {
+      const recipient = process.env.TEST_RECIPIENT ?? '6281234567890';
       const { status, data } = await apiPost<{ success: boolean; messageId: string; status: string }>(
         '/messages/send',
         {
           workspaceId,
           deviceId,
-          target: '6281234567890',
+          target: recipient,
           type: 'TEXT',
-          message: 'E2E test message',
+          message: `[E2E] Test message — ${new Date().toISOString()}`,
         },
         accessToken,
       );
@@ -49,13 +51,29 @@ describe('Messages e2e', () => {
       messageId = data.messageId;
     });
 
+    it('message reaches SENT/DELIVERED status when device is connected', async () => {
+      if (!isConnected) {
+        console.log('Skipping delivery check — no connected device (set TEST_DEVICE_ID to enable)');
+        return;
+      }
+      // Poll up to 15 s for status to advance past QUEUED
+      let finalStatus = 'QUEUED';
+      for (let i = 0; i < 15; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        const { data } = await apiGet<Array<{ id: string; status: string }>>(`/messages?workspaceId=${workspaceId}`, accessToken);
+        const found = data.find((m) => m.id === messageId);
+        if (found && found.status !== 'QUEUED') { finalStatus = found.status; break; }
+      }
+      expect(['SENT', 'DELIVERED', 'READ']).toContain(finalStatus);
+    });
+
     it('returns 400 for missing required fields', async () => {
       const { status } = await apiPost('/messages/send', { workspaceId }, accessToken);
       expect(status).toBe(400);
     });
 
     it('returns 403 when device does not belong to workspace', async () => {
-      const { accessToken: otherToken, workspaceId: otherWs } = await setupTestUser('msg-other');
+      const { accessToken: otherToken, workspaceId: otherWs } = await setupOrReuseTestUser();
       const { status } = await apiPost(
         '/messages/send',
         { workspaceId: otherWs, deviceId, target: '6281234567890', type: 'TEXT', message: 'hi' },
@@ -91,7 +109,6 @@ describe('Messages e2e', () => {
         {},
         accessToken,
       );
-      // Accept 200/201 — controller may return either for retry
       expect([200, 201]).toContain(status);
       expect(data.success).toBe(true);
       expect(data.status).toBe('QUEUED');

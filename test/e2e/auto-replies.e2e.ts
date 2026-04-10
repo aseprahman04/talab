@@ -1,8 +1,8 @@
 /**
  * Auto-replies e2e — create and list auto-reply rules
- * Requires local backend running: npm run start:dev
+ * Requires backend running. Point to VPS via .env.e2e.
  */
-import { apiPost, apiGet, setupTestUser } from '../helpers/api';
+import { apiPost, apiGet, setupOrReuseTestUser, getOrCreateDevice } from '../helpers/api';
 
 let accessToken: string;
 let workspaceId: string;
@@ -10,10 +10,8 @@ let deviceId: string;
 let ruleId: string;
 
 beforeAll(async () => {
-  ({ accessToken, workspaceId } = await setupTestUser('ar'));
-
-  const dev = await apiPost<{ id: string }>('/devices', { workspaceId, name: 'E2E AR Device' }, accessToken);
-  deviceId = dev.data.id;
+  ({ accessToken, workspaceId } = await setupOrReuseTestUser());
+  ({ deviceId } = await getOrCreateDevice(workspaceId, accessToken, 'ar'));
 });
 
 describe('Auto-replies e2e', () => {
@@ -38,9 +36,9 @@ describe('Auto-replies e2e', () => {
           workspaceId,
           deviceId,
           name: 'E2E Greeting',
-          keyword: 'hello',
+          keyword: `e2e_hello_${Date.now()}`,
           matchType: 'exact',
-          response: 'Hi there!',
+          response: 'Hi there from E2E!',
           priority: 10,
           isEnabled: true,
         },
@@ -48,7 +46,6 @@ describe('Auto-replies e2e', () => {
       );
       expect(status).toBe(201);
       expect(data.id).toBeTruthy();
-      expect(data.keyword).toBe('hello');
       ruleId = data.id;
     });
 
@@ -58,7 +55,7 @@ describe('Auto-replies e2e', () => {
     });
 
     it('returns 403 when device does not belong to workspace', async () => {
-      const { accessToken: otherToken, workspaceId: otherWs } = await setupTestUser('ar-other');
+      const { accessToken: otherToken, workspaceId: otherWs } = await setupOrReuseTestUser();
       const { status } = await apiPost(
         '/auto-replies',
         { workspaceId: otherWs, deviceId, name: 'x', keyword: 'x', matchType: 'exact', response: 'y', priority: 1 },

@@ -67,3 +67,47 @@ export async function setupTestUser(suffix: string): Promise<{ accessToken: stri
 
   return { accessToken, workspaceId };
 }
+
+/**
+ * VPS-aware setup: if TEST_USER_EMAIL + TEST_USER_PASSWORD are set, log in and
+ * return the pre-configured workspace. Otherwise fall back to creating a fresh user.
+ *
+ * Set in .env.e2e:
+ *   TEST_USER_EMAIL=you@watether.com
+ *   TEST_USER_PASSWORD=yourpassword
+ *   TEST_WORKSPACE_ID=<uuid>
+ */
+export async function setupOrReuseTestUser(): Promise<{ accessToken: string; workspaceId: string; isVps: boolean }> {
+  const email = process.env.TEST_USER_EMAIL;
+  const password = process.env.TEST_USER_PASSWORD;
+  const workspaceId = process.env.TEST_WORKSPACE_ID;
+
+  if (email && password && workspaceId) {
+    const { data } = await apiPost<{ accessToken: string }>('/auth/login', { email, password });
+    return { accessToken: data.accessToken, workspaceId, isVps: true };
+  }
+
+  const fresh = await setupTestUser('vps');
+  return { ...fresh, isVps: false };
+}
+
+/**
+ * VPS-aware device: if TEST_DEVICE_ID is set, return it directly (it should be CONNECTED).
+ * Otherwise create a new device under the given workspaceId.
+ *
+ * Set in .env.e2e:
+ *   TEST_DEVICE_ID=<device-id>
+ */
+export async function getOrCreateDevice(
+  workspaceId: string,
+  accessToken: string,
+  label: string,
+): Promise<{ deviceId: string; isConnected: boolean }> {
+  const envDeviceId = process.env.TEST_DEVICE_ID;
+  if (envDeviceId) {
+    return { deviceId: envDeviceId, isConnected: true };
+  }
+
+  const { data } = await apiPost<{ id: string }>('/devices', { workspaceId, name: `E2E ${label} Device` }, accessToken);
+  return { deviceId: data.id, isConnected: false };
+}
