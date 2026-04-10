@@ -1,4 +1,3 @@
-import { createHmac } from 'crypto';
 
 export const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3003/api';
 
@@ -25,6 +24,15 @@ export async function apiDelete(path: string, token?: string): Promise<{ status:
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
   return { status: res.status };
+}
+
+export async function apiPatch<T>(path: string, body: unknown, token?: string): Promise<{ status: number; data: T }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
+  const text = await res.text();
+  const data = text ? (JSON.parse(text) as T) : ({} as T);
+  return { status: res.status, data };
 }
 
 /** POST raw body with HMAC signature (for webhook tests) */
