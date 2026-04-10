@@ -29,7 +29,7 @@ const faqs = [
     items: [
       {
         q: 'Is the Free plan really free forever?',
-        a: 'Yes. The Free plan is available indefinitely with 1 device and 1,000 messages per month. No credit card required.',
+        a: 'Yes. The Free plan is available indefinitely with 1 device and 500 messages per month. No credit card required.',
       },
       {
         q: 'How do I upgrade to a paid plan?',

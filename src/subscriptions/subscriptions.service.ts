@@ -190,7 +190,8 @@ export class SubscriptionsService {
       }
 
       case 'subscription_expired':
-      case 'subscription_cancelled': {
+      case 'subscription_cancelled':
+      case 'subscription_payment_refunded': {
         const sub = await this.prisma.subscription.findUnique({
           where: { lemonSqueezySubscriptionId: lsSubscriptionId },
         });

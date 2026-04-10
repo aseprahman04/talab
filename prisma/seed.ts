@@ -8,16 +8,16 @@ async function main() {
   await prisma.plan.upsert({
     where: { code: 'free' },
     update: {
-      monthlyMessageQuota: 1000,
+      monthlyMessageQuota: 500,
       hasAutoReply: false,
       hasWebhook: false,
       hasApi: false,
     },
     create: {
       code: 'free',
-      name: 'Gratis',
+      name: 'Free',
       maxDevices: 1,
-      monthlyMessageQuota: 1000,
+      monthlyMessageQuota: 500,
       maxMembers: 1,
       storageLimitMb: 100,
       price: 0,
@@ -30,7 +30,7 @@ async function main() {
   await prisma.plan.upsert({
     where: { code: 'bisnis' },
     update: {
-      monthlyMessageQuota: 25000,
+      monthlyMessageQuota: 0,
       price: 99000,
       hasAutoReply: true,
       hasWebhook: true,
@@ -40,9 +40,9 @@ async function main() {
     },
     create: {
       code: 'bisnis',
-      name: 'Bisnis',
+      name: 'Business',
       maxDevices: 5,
-      monthlyMessageQuota: 25000,
+      monthlyMessageQuota: 0,
       maxMembers: 5,
       storageLimitMb: 1000,
       price: 99000,
@@ -67,7 +67,7 @@ async function main() {
     },
     create: {
       code: 'tim',
-      name: 'Tim',
+      name: 'Team',
       maxDevices: 20,
       monthlyMessageQuota: 0,
       maxMembers: 20,
