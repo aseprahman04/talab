@@ -25,13 +25,18 @@ export class MessagesProcessor extends WorkerHost {
     if (!message) return;
     if (['SENT', 'DELIVERED', 'READ'].includes(message.status)) return;
 
-    // Enforce monthly message quota (Free plan = 500/month; quota=0 means unlimited)
+    // Enforce monthly workspace quota + per-device daily limit
     const subscription = await this.prisma.subscription.findUnique({
       where: { workspaceId: message.workspaceId },
-      include: { plan: { select: { monthlyMessageQuota: true } } },
+      include: { plan: { select: { monthlyMessageQuota: true, dailyDeviceLimit: true } } },
     });
-    const quota = subscription?.plan?.monthlyMessageQuota ?? 0;
-    if (quota > 0) {
+
+    const monthlyQuota = subscription?.plan?.monthlyMessageQuota ?? 0;
+    // dailyDeviceLimit=0 means unlimited; default 200 protects numbers from WA ban
+    const dailyLimit = subscription?.plan?.dailyDeviceLimit ?? 200;
+
+    // ── Monthly workspace quota ────────────────────────────────────────────────
+    if (monthlyQuota > 0) {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -43,59 +48,34 @@ export class MessagesProcessor extends WorkerHost {
           sentAt: { gte: startOfMonth },
         },
       });
-      if (sentThisMonth >= quota) {
-        const failedAt = new Date();
-        const errorMessage = `Monthly message quota exceeded (${quota}/month)`;
-        await this.prisma.message.update({
-          where: { id: message.id },
-          data: { status: 'FAILED', failedAt, errorMessage },
-        });
-        const meta = message.metadata as { broadcastRecipientId?: string } | null;
-        if (meta?.broadcastRecipientId) {
-          await this.updateBroadcastProgress(meta.broadcastRecipientId, 'FAILED', null, errorMessage);
-        }
-        await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
-          event: 'message.failed',
-          workspaceId: message.workspaceId,
+      if (sentThisMonth >= monthlyQuota) {
+        return this.failMessage(message, `Monthly message quota exceeded (${monthlyQuota}/month)`);
+      }
+    }
+
+    // ── Per-device daily limit (anti-ban) ─────────────────────────────────────
+    // Each WA number has a reputation score. Sending too many messages in a single
+    // day is the most reliable way to get a number banned. 200/day is conservative;
+    // well-warmed numbers can handle more, but we default safe.
+    if (dailyLimit > 0) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const sentToday = await this.prisma.message.count({
+        where: {
           deviceId: message.deviceId,
-          messageId: message.id,
-          target: message.recipient,
-          type: message.type,
-          status: 'FAILED',
-          error: errorMessage,
-          timestamp: failedAt.toISOString(),
-        });
-        this.realtime.emitToWorkspace(message.workspaceId, 'message.failed', { messageId: message.id });
-        return;
+          direction: 'OUTBOUND',
+          status: { in: ['SENT', 'DELIVERED', 'READ'] },
+          sentAt: { gte: startOfDay },
+        },
+      });
+      if (sentToday >= dailyLimit) {
+        return this.failMessage(message, `Device daily limit reached (${dailyLimit}/day) — message deferred to protect the number`);
       }
     }
 
     const device = await this.prisma.device.findUnique({ where: { id: message.deviceId } });
     if (!device || device.status !== 'CONNECTED') {
-      const failedAt = new Date();
-      await this.prisma.message.update({
-        where: { id: message.id },
-        data: {
-          status: 'FAILED',
-          failedAt,
-          errorMessage: !device ? 'Device not found' : `Device is ${device.status}`,
-        },
-      });
-
-      await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
-        event: 'message.failed',
-        workspaceId: message.workspaceId,
-        deviceId: message.deviceId,
-        messageId: message.id,
-        target: message.recipient,
-        type: message.type,
-        status: 'FAILED',
-        error: !device ? 'Device not found' : `Device is ${device.status}`,
-        timestamp: failedAt.toISOString(),
-      });
-
-      this.realtime.emitToWorkspace(message.workspaceId, 'message.failed', { messageId: message.id });
-      return;
+      return this.failMessage(message, !device ? 'Device not found' : `Device is ${device.status}`);
     }
 
     await this.prisma.message.update({ where: { id: message.id }, data: { status: 'PROCESSING' } });
@@ -110,28 +90,7 @@ export class MessagesProcessor extends WorkerHost {
         message.mediaUrl ?? undefined,
       );
     } catch (err) {
-      const failedAt = new Date();
-      await this.prisma.message.update({
-        where: { id: message.id },
-        data: { status: 'FAILED', failedAt, errorMessage: String(err) },
-      });
-      const meta = message.metadata as { broadcastRecipientId?: string } | null;
-      if (meta?.broadcastRecipientId) {
-        await this.updateBroadcastProgress(meta.broadcastRecipientId, 'FAILED', null, String(err));
-      }
-      await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
-        event: 'message.failed',
-        workspaceId: message.workspaceId,
-        deviceId: message.deviceId,
-        messageId: message.id,
-        target: message.recipient,
-        type: message.type,
-        status: 'FAILED',
-        error: String(err),
-        timestamp: failedAt.toISOString(),
-      });
-      this.realtime.emitToWorkspace(message.workspaceId, 'message.failed', { messageId: message.id });
-      return;
+      return this.failMessage(message, String(err));
     }
 
     const sentAt = new Date();
@@ -190,6 +149,34 @@ export class MessagesProcessor extends WorkerHost {
         data: { status: 'COMPLETED', completedAt: new Date() },
       });
     }
+  }
+
+  /** Centralised failure handler: marks message FAILED, updates broadcast, fires webhook. */
+  private async failMessage(
+    message: { id: string; workspaceId: string; deviceId: string; recipient: string | null; type: string; metadata: unknown },
+    errorMessage: string,
+  ): Promise<void> {
+    const failedAt = new Date();
+    await this.prisma.message.update({
+      where: { id: message.id },
+      data: { status: 'FAILED', failedAt, errorMessage },
+    });
+    const meta = message.metadata as { broadcastRecipientId?: string } | null;
+    if (meta?.broadcastRecipientId) {
+      await this.updateBroadcastProgress(meta.broadcastRecipientId, 'FAILED', null, errorMessage);
+    }
+    await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
+      event: 'message.failed',
+      workspaceId: message.workspaceId,
+      deviceId: message.deviceId,
+      messageId: message.id,
+      target: message.recipient,
+      type: message.type,
+      status: 'FAILED',
+      error: errorMessage,
+      timestamp: failedAt.toISOString(),
+    });
+    this.realtime.emitToWorkspace(message.workspaceId, 'message.failed', { messageId: message.id });
   }
 
   private async enqueueWebhookDeliveries(workspaceId: string, eventType: string, payload: Record<string, unknown>) {

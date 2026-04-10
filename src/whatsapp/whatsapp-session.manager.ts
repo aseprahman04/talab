@@ -24,9 +24,16 @@ export class WhatsAppSessionManager implements OnModuleInit {
       where: { status: 'CONNECTED' },
       select: { id: true },
     });
-    for (const device of connected) {
-      this.logger.log(`Restoring session for device ${device.id}`);
-      await this.connect(device.id).catch((err) =>
+
+    this.logger.log(`Restoring ${connected.length} device session(s) with 2 s stagger…`);
+
+    // Stagger reconnects: opening many WA WebSockets simultaneously spikes
+    // connections on WA servers and is a reliable trigger for account bans.
+    // 2 s apart means 100 devices = ~3 min to fully restore — acceptable on startup.
+    for (let i = 0; i < connected.length; i++) {
+      const device = connected[i];
+      if (i > 0) await new Promise((r) => setTimeout(r, 2000));
+      this.connect(device.id).catch((err) =>
         this.logger.error(`Failed to restore device ${device.id}: ${err}`),
       );
     }
@@ -94,7 +101,11 @@ export class WhatsAppSessionManager implements OnModuleInit {
         });
 
         // Fire auto-reply check
-        await this.queue.autoReplies.add(JOB_NAMES.AUTO_REPLY_PROCESS, { messageId: saved.id });
+        await this.queue.autoReplies.add(JOB_NAMES.AUTO_REPLY_PROCESS, { messageId: saved.id }, {
+          attempts: 1,
+          removeOnComplete: 500,
+          removeOnFail: 100,
+        });
       }
     });
 

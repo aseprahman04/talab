@@ -93,6 +93,12 @@ enum DemoRequestStatus {
   CLOSED
 }
 
+enum RepeatType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
 model User {
   id              String            @id @default(uuid())
   email           String            @unique
@@ -120,15 +126,16 @@ model Workspace {
   updatedAt    DateTime          @updatedAt
   owner        User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members      WorkspaceMember[]
-  devices      Device[]
-  contacts     Contact[]
-  contactLists ContactList[]
-  webhooks     Webhook[]
-  broadcasts   Broadcast[]
-  autoReplies  AutoReplyRule[]
-  messages     Message[]
-  subscription Subscription?
-  auditLogs    AuditLog[]
+  devices           Device[]
+  contacts          Contact[]
+  contactLists      ContactList[]
+  webhooks          Webhook[]
+  broadcasts        Broadcast[]
+  autoReplies       AutoReplyRule[]
+  messages          Message[]
+  scheduledMessages ScheduledMessage[]
+  subscription      Subscription?
+  auditLogs         AuditLog[]
 }
 
 model WorkspaceMember {
@@ -157,11 +164,12 @@ model Device {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   workspace      Workspace       @relation(fields: [workspaceId], references: [id])
-  tokens         DeviceToken[]
-  sessions       DeviceSession[]
-  messages       Message[]
-  broadcasts     Broadcast[]
-  autoReplies    AutoReplyRule[]
+  tokens            DeviceToken[]
+  sessions          DeviceSession[]
+  messages          Message[]
+  broadcasts        Broadcast[]
+  autoReplies       AutoReplyRule[]
+  scheduledMessages ScheduledMessage[]
 }
 
 model DeviceToken {
@@ -243,6 +251,7 @@ model Message {
   status            MessageStatus    @default(QUEUED)
   providerMessageId String?
   errorMessage      String?
+  scheduledAt       DateTime?
   queuedAt          DateTime?
   sentAt            DateTime?
   deliveredAt       DateTime?
@@ -327,7 +336,8 @@ model AutoReplyRule {
   name        String
   matchType   String
   keyword     String
-  response    String
+  response    String?
+  webhookUrl  String?
   priority    Int       @default(0)
   isEnabled   Boolean   @default(true)
   activeHours Json?
@@ -343,9 +353,13 @@ model Plan {
   name                   String
   maxDevices             Int
   monthlyMessageQuota    Int
+  dailyDeviceLimit       Int  @default(200)
   maxMembers             Int
   storageLimitMb         Int
   price                  Decimal        @db.Decimal(12, 2)
+  hasAutoReply           Boolean        @default(false)
+  hasWebhook             Boolean        @default(false)
+  hasApi                 Boolean        @default(false)
   lemonSqueezyVariantId  String?        @unique
   lemonSqueezyCheckoutUrl String?
   createdAt              DateTime       @default(now())
@@ -394,6 +408,32 @@ model AuditLog {
   createdAt   DateTime   @default(now())
   workspace   Workspace? @relation(fields: [workspaceId], references: [id])
   user        User?      @relation(fields: [userId], references: [id])
+}
+
+model ScheduledMessage {
+  id          String      @id @default(uuid())
+  workspaceId String
+  deviceId    String
+  name        String
+  type        MessageType @default(TEXT)
+  content     String?
+  mediaUrl    String?
+  recipient   String
+  repeatType  RepeatType
+  sendHour    Int
+  sendMinute  Int         @default(0)
+  dayOfWeek   Int?
+  dayOfMonth  Int?
+  isEnabled   Boolean     @default(true)
+  nextRunAt   DateTime?
+  lastRunAt   DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id])
+  device      Device      @relation(fields: [deviceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([isEnabled, nextRunAt])
 }
 
 model DemoRequest {
