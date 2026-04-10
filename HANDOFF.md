@@ -32,11 +32,14 @@
 - [x] Build clean + 83 unit tests passing
 - [ ] **TODO: Deploy ke VPS** — `ssh root@194.233.67.65 "cd /opt/watether && bash scripts/deploy.sh"`
 - [ ] **TODO: Run DB migration di VPS** — lihat seksi "Pending VPS Tasks"
+- [ ] **TODO: Verify single-worker deploy** — kirim test message, cek device masih connected
 - [ ] **TODO: E2E test setelah deploy** — `npx jest --config jest.e2e.config.ts`
+- [ ] **TODO (setelah stable):** Enable 4 shards di `docker-compose.prod.yml` (uncomment worker-1..3, ubah TOTAL_SHARDS=4)
 
-**Catatan Real-Time:** Worker punya Socket.IO server di port 3099 tapi frontend clients connect ke API port 3009.
-Worker emits (device status, message.sent) tidak reach frontend clients sampai `@socket.io/redis-adapter` dipasang.
-Frontend masih bisa poll status via REST. Ini trade-off disengaja untuk Phase 2 — Phase 2.5 fix ini.
+**Deploy strategy (aman):**
+1. Deploy dengan `TOTAL_SHARDS=1` (1 worker, config saat ini) — verifikasi Phase 2 + 2.5 jalan
+2. Setelah stable: uncomment worker-1..3, ubah TOTAL_SHARDS ke 4 → enable sharding
+3. Monitor log tiap worker: `docker logs -f watether_worker_0`
 
 ### Phase 2.5 — Socket.IO Redis Adapter ✅ DONE
 > Worker emits (message.sent, device.status.updated) sekarang reach frontend clients via Redis pub/sub.
@@ -186,6 +189,7 @@ src/
 <!-- Tambah catatan, keputusan, atau temuan di sini -->
 
 - 2026-04-10: Phase 1 selesai, semua commit pushed ke main. Phase 2 siap dimulai.
+- 2026-04-10: **Deploy fix:** Redis adapter sekarang punya fallback (tidak crash jika Redis lambat). `docker-compose.prod.yml` mulai dengan `TOTAL_SHARDS=1` — 1 worker dulu, aman untuk initial deploy. Worker-1..3 di-comment, aktifkan setelah verify Phase 2 stabil.
 - 2026-04-10: **Phase 2 + 2.5 + 3 + 4 selesai & pushed ke `origin/main`** (build clean, 83 tests pass).
   - Commit `6ca5a56` — Phase 2: worker process split (`src/worker.ts`, `WorkerModule`, `WorkerQueueModule`)
   - Commit `9a69245` — Phase 2.5 Redis adapter + Phase 3 sharding + Phase 4 multi-VPS config

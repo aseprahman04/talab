@@ -33,18 +33,36 @@ export class RedisIoAdapter extends IoAdapter {
     const pubClient = new Redis(opts);
     const subClient = pubClient.duplicate();
 
-    await Promise.all([
-      new Promise<void>((res, rej) => { pubClient.once('ready', res); pubClient.once('error', rej); }),
-      new Promise<void>((res, rej) => { subClient.once('ready', res); subClient.once('error', rej); }),
-    ]);
-
-    this.adapterConstructor = createAdapter(pubClient, subClient);
-    this.logger.log('Redis Socket.IO adapter connected');
+    try {
+      await Promise.all([
+        new Promise<void>((res, rej) => {
+          const t = setTimeout(() => rej(new Error('Redis pub timeout')), 5000);
+          pubClient.once('ready', () => { clearTimeout(t); res(); });
+          pubClient.once('error', rej);
+        }),
+        new Promise<void>((res, rej) => {
+          const t = setTimeout(() => rej(new Error('Redis sub timeout')), 5000);
+          subClient.once('ready', () => { clearTimeout(t); res(); });
+          subClient.once('error', rej);
+        }),
+      ]);
+      this.adapterConstructor = createAdapter(pubClient, subClient);
+      this.logger.log('Redis Socket.IO adapter connected');
+    } catch (err) {
+      // Non-fatal: fall back to in-process Socket.IO adapter.
+      // Worker emits won't reach API clients until Redis is available,
+      // but the process still starts and processes queue jobs.
+      this.logger.warn(`Redis Socket.IO adapter failed, falling back to in-process: ${String(err)}`);
+      pubClient.disconnect();
+      subClient.disconnect();
+    }
   }
 
   createIOServer(port: number, options?: ServerOptions) {
     const server = super.createIOServer(port, options);
-    server.adapter(this.adapterConstructor);
+    if (this.adapterConstructor) {
+      server.adapter(this.adapterConstructor);
+    }
     return server;
   }
 }
