@@ -12,7 +12,7 @@ export default function HomePage() {
     },
     {
       name: 'Property distribution agency',
-      quote: 'Ad leads flow straight into WhatsApp. No spreadsheets, no manual forwarding to the sales team.',
+      quote: 'Sending follow-up messages to prospects used to take half a day. Now the team queues everything in bulk and the messages go out automatically.',
     },
   ];
 
@@ -27,7 +27,7 @@ export default function HomePage() {
     },
     {
       question: 'Is this an official WhatsApp API?',
-      answer: 'Not yet. WATether is a gateway layer — queue, webhooks, device management, and dashboard are all ready. The WhatsApp session engine can be integrated based on your team\'s needs.',
+      answer: 'No. WATether uses an open-source WhatsApp session library (not the official Meta Business API). It works with your personal or business WhatsApp number. Be aware that bulk sending via unofficial sessions carries a risk of account restrictions by WhatsApp.',
     },
   ];
 
@@ -107,8 +107,8 @@ export default function HomePage() {
             <span className="eyebrow">WhatsApp gateway for businesses</span>
             <h1>Send messages, manage devices, and automate notifications from one console.</h1>
             <p>
-              WATether makes it easy for your team to manage WhatsApp message delivery — from broadcast to thousands
-              of contacts, keyword auto reply, to real-time webhooks into your internal systems.
+              WATether makes it easy for your team to manage WhatsApp message delivery — from scheduled broadcast
+              to your contact list, keyword auto reply, to real-time webhooks into your internal systems.
             </p>
             <div className="hero-actions">
               <Link className="button-primary" href="/console?mode=register">Start Free</Link>
@@ -133,7 +133,7 @@ export default function HomePage() {
               <ul>
                 <li>Order confirmations for marketplaces and online stores</li>
                 <li>Invoice notifications, installment reminders, and payment alerts</li>
-                <li>Lead follow-up from forms, ads, or CRM</li>
+                <li>Lead follow-up messages triggered via API</li>
               </ul>
             </article>
             <article className="signal-card contrast">
@@ -162,7 +162,7 @@ export default function HomePage() {
           </article>
           <article className="story-card glass-panel">
             <strong>Console ready to use today</strong>
-            <p>Sign up and immediately access the dashboard with device management, broadcast, webhooks, and auto reply — no multi-day setup.</p>
+            <p>Sign up and immediately access the dashboard with device management and scheduled broadcast — no multi-day setup. Auto reply and webhooks unlock on paid plans.</p>
           </article>
         </div>
       </section>
