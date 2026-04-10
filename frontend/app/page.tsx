@@ -19,7 +19,7 @@ export default function HomePage() {
   const faqs = [
     {
       question: 'Is the Free plan really free?',
-      answer: 'Yes, free with no credit card required. Great for testing message flows, webhooks, and the console before deciding to upgrade.',
+      answer: 'Yes, free with no credit card required. Great for testing message flows, broadcast, and the console before deciding to upgrade.',
     },
     {
       question: 'Can I sign up directly from here?',
@@ -38,8 +38,8 @@ export default function HomePage() {
       caption: 'Try it at no cost. 1 WA number, great for testing before going to production.',
       quota: '1 WhatsApp number',
       features: [
-        '1,000 messages/month',
-        'Personal & group send',
+        '500 messages/month',
+        'Send to personal contacts',
         'Scheduled broadcast',
         'Realtime console',
       ],
@@ -47,16 +47,15 @@ export default function HomePage() {
     },
     {
       name: 'Business',
-      price: '$9',
+      price: '$3',
       caption: 'For businesses that need several active WA numbers at once.',
       quota: '5 WhatsApp numbers',
       features: [
-        '25,000 messages/month',
-        'Personal & group send',
+        'Unlimited messages',
+        'Send to personal contacts',
         'Scheduled broadcast',
         'Keyword auto reply',
-        'Webhook auto reply (system integration)',
-        'Webhook + retry log',
+        'Webhook auto reply (call your own endpoint)',
         'Full API access',
         '5 team members',
       ],
@@ -64,20 +63,18 @@ export default function HomePage() {
     },
     {
       name: 'Team',
-      price: '$25',
+      price: '$10',
       caption: 'For CS teams, sales, or multi-branch operations with many active numbers.',
       quota: '20 WhatsApp numbers',
       features: [
         'Unlimited messages',
-        'Personal & group send',
+        'Send to personal contacts',
         'Scheduled broadcast',
         'Keyword auto reply',
-        'Webhook auto reply (system integration)',
-        'Webhook + retry log',
+        'Webhook auto reply (call your own endpoint)',
+        'Outbound webhooks + delivery log',
         'Full API access',
         '20 team members',
-        'Admin & staff roles',
-        'Audit log + priority support',
       ],
     },
   ];
