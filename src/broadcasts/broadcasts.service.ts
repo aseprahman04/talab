@@ -34,6 +34,15 @@ export class BroadcastsService {
     });
   }
 
+  async list(userId: string, workspaceId: string) {
+    await this.assertWorkspaceMembership(userId, workspaceId);
+    return this.prisma.broadcast.findMany({
+      where: { workspaceId },
+      orderBy: { createdAt: 'desc' },
+      include: { recipients: { select: { id: true, phoneNumber: true, status: true } } },
+    });
+  }
+
   async start(userId: string, id: string) {
     const broadcast = await this.prisma.broadcast.findUnique({ where: { id } });
     if (!broadcast) throw new NotFoundException('Broadcast not found');

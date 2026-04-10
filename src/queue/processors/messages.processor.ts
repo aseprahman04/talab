@@ -6,7 +6,11 @@ import { QueueService } from 'src/queue/queue.service';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
 import { WhatsAppSessionManager } from 'src/whatsapp/whatsapp-session.manager';
 
-@Processor('messages')
+// concurrency=3: allows up to 3 parallel WA sends per worker.
+// Broadcast recipients are already staggered with 3-8s delays, so at most
+// a handful of jobs are ready simultaneously — 3 slots is enough without
+// risk of flooding a single WA account.
+@Processor({ name: 'messages', concurrency: 3 })
 export class MessagesProcessor extends WorkerHost {
   constructor(
     private prisma: PrismaService,
@@ -20,6 +24,51 @@ export class MessagesProcessor extends WorkerHost {
     const message = await this.prisma.message.findUnique({ where: { id: job.data.messageId } });
     if (!message) return;
     if (['SENT', 'DELIVERED', 'READ'].includes(message.status)) return;
+
+    // Enforce monthly message quota (Free plan = 500/month; quota=0 means unlimited)
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { workspaceId: message.workspaceId },
+      include: { plan: { select: { monthlyMessageQuota: true } } },
+    });
+    const quota = subscription?.plan?.monthlyMessageQuota ?? 0;
+    if (quota > 0) {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const sentThisMonth = await this.prisma.message.count({
+        where: {
+          workspaceId: message.workspaceId,
+          direction: 'OUTBOUND',
+          status: { in: ['SENT', 'DELIVERED', 'READ'] },
+          sentAt: { gte: startOfMonth },
+        },
+      });
+      if (sentThisMonth >= quota) {
+        const failedAt = new Date();
+        const errorMessage = `Monthly message quota exceeded (${quota}/month)`;
+        await this.prisma.message.update({
+          where: { id: message.id },
+          data: { status: 'FAILED', failedAt, errorMessage },
+        });
+        const meta = message.metadata as { broadcastRecipientId?: string } | null;
+        if (meta?.broadcastRecipientId) {
+          await this.updateBroadcastProgress(meta.broadcastRecipientId, 'FAILED', null, errorMessage);
+        }
+        await this.enqueueWebhookDeliveries(message.workspaceId, 'message.failed', {
+          event: 'message.failed',
+          workspaceId: message.workspaceId,
+          deviceId: message.deviceId,
+          messageId: message.id,
+          target: message.recipient,
+          type: message.type,
+          status: 'FAILED',
+          error: errorMessage,
+          timestamp: failedAt.toISOString(),
+        });
+        this.realtime.emitToWorkspace(message.workspaceId, 'message.failed', { messageId: message.id });
+        return;
+      }
+    }
 
     const device = await this.prisma.device.findUnique({ where: { id: message.deviceId } });
     if (!device || device.status !== 'CONNECTED') {
