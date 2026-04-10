@@ -80,7 +80,8 @@ export type AutoReplyRule = {
   name: string;
   matchType: string;
   keyword: string;
-  response: string;
+  response?: string | null;
+  webhookUrl?: string | null;
   priority: number;
   isEnabled: boolean;
 };
@@ -95,6 +96,26 @@ export type Contact = {
   notes?: string | null;
   isBlacklisted: boolean;
   isOptOut: boolean;
+  createdAt: string;
+};
+
+export type ScheduledMessage = {
+  id: string;
+  workspaceId: string;
+  deviceId: string;
+  name: string;
+  type: string;
+  content?: string | null;
+  mediaUrl?: string | null;
+  recipient: string;
+  repeatType: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  sendHour: number;
+  sendMinute: number;
+  dayOfWeek?: number | null;
+  dayOfMonth?: number | null;
+  isEnabled: boolean;
+  nextRunAt?: string | null;
+  lastRunAt?: string | null;
   createdAt: string;
 };
 

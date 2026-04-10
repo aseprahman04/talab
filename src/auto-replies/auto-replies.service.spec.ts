@@ -12,6 +12,7 @@ const mockPrisma = {
   workspaceMember: { findUnique: jest.fn() },
   device: { findUnique: jest.fn() },
   autoReplyRule: { create: jest.fn(), findMany: jest.fn() },
+  subscription: { findUnique: jest.fn() },
 };
 
 const member = { id: 'member-1', workspaceId: WS_ID, userId: USER_ID };
@@ -36,6 +37,7 @@ describe('AutoRepliesService', () => {
     it('creates an auto-reply rule for a workspace member', async () => {
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
       mockPrisma.device.findUnique.mockResolvedValue(device);
+      mockPrisma.subscription.findUnique.mockResolvedValue({ plan: { hasAutoReply: true, hasWebhook: true, hasApi: true } });
       mockPrisma.autoReplyRule.create.mockResolvedValue(rule);
 
       const result = await service.create(USER_ID, {

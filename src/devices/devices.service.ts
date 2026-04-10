@@ -44,7 +44,8 @@ export class DevicesService {
   }
 
   async createToken(userId: string, deviceId: string, name: string) {
-    await this.getOwnedDeviceForUser(userId, deviceId);
+    const device = await this.getOwnedDeviceForUser(userId, deviceId);
+    await this.assertPlanFeature(device.workspaceId, 'hasApi');
     const plain = generatePlainToken();
     const token = await this.prisma.deviceToken.create({
       data: { deviceId, name, tokenHash: hashToken(plain) },
@@ -64,5 +65,15 @@ export class DevicesService {
     if (!device) throw new NotFoundException('Device not found');
     await this.assertWorkspaceMembership(userId, device.workspaceId);
     return device;
+  }
+
+  private async assertPlanFeature(workspaceId: string, feature: 'hasAutoReply' | 'hasWebhook' | 'hasApi') {
+    const sub = await this.prisma.subscription.findUnique({
+      where: { workspaceId },
+      include: { plan: { select: { hasAutoReply: true, hasWebhook: true, hasApi: true } } },
+    });
+    if (!sub?.plan[feature]) {
+      throw new ForbiddenException(`Your current plan does not include this feature. Please upgrade.`);
+    }
   }
 }

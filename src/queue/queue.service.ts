@@ -12,6 +12,7 @@ export class QueueService implements OnModuleInit {
     @InjectQueue('broadcasts') private broadcastsQueue: Queue,
     @InjectQueue('devices') private devicesQueue: Queue,
     @InjectQueue('auto-replies') private autoRepliesQueue: Queue,
+    @InjectQueue('scheduled-messages') private scheduledMessagesQueue: Queue,
   ) {}
 
   async onModuleInit() {
@@ -31,4 +32,5 @@ export class QueueService implements OnModuleInit {
   get broadcasts() { return this.broadcastsQueue; }
   get devices() { return this.devicesQueue; }
   get autoReplies() { return this.autoRepliesQueue; }
+  get scheduledMessages() { return this.scheduledMessagesQueue; }
 }

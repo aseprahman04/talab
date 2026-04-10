@@ -22,6 +22,7 @@ const mockPrisma = {
   device: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
   deviceToken: { create: jest.fn() },
   deviceSession: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+  subscription: { findUnique: jest.fn() },
 };
 
 const mockQueue = { devices: { add: jest.fn() } };
@@ -148,6 +149,7 @@ describe('DevicesService', () => {
     it('creates a device API token and returns the plain token', async () => {
       mockPrisma.device.findUnique.mockResolvedValue(device);
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
+      mockPrisma.subscription.findUnique.mockResolvedValue({ plan: { hasAutoReply: true, hasWebhook: true, hasApi: true } });
       mockPrisma.deviceToken.create.mockResolvedValue({
         id: TOKEN_ID,
         deviceId: DEVICE_ID,

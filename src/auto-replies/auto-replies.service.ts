@@ -9,6 +9,7 @@ export class AutoRepliesService {
   async create(userId: string, dto: CreateAutoReplyDto) {
     await this.assertWorkspaceMembership(userId, dto.workspaceId);
     await this.assertDeviceInWorkspace(dto.deviceId, dto.workspaceId);
+    await this.assertPlanFeature(dto.workspaceId, 'hasAutoReply');
     return this.prisma.autoReplyRule.create({ data: dto });
   }
 
@@ -29,6 +30,16 @@ export class AutoRepliesService {
     const device = await this.prisma.device.findUnique({ where: { id: deviceId } });
     if (!device || device.workspaceId !== workspaceId) {
       throw new ForbiddenException('Device does not belong to this workspace');
+    }
+  }
+
+  private async assertPlanFeature(workspaceId: string, feature: 'hasAutoReply' | 'hasWebhook' | 'hasApi') {
+    const sub = await this.prisma.subscription.findUnique({
+      where: { workspaceId },
+      include: { plan: { select: { hasAutoReply: true, hasWebhook: true, hasApi: true } } },
+    });
+    if (!sub?.plan[feature]) {
+      throw new ForbiddenException(`Your current plan does not include this feature. Please upgrade.`);
     }
   }
 }

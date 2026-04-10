@@ -11,6 +11,7 @@ export class WebhooksService {
 
   async create(userId: string, dto: CreateWebhookDto) {
     await this.assertWorkspaceMembership(userId, dto.workspaceId);
+    await this.assertPlanFeature(dto.workspaceId, 'hasWebhook');
     return this.prisma.webhook.create({ data: { ...dto, isActive: dto.isActive ?? true } });
   }
 
@@ -70,5 +71,15 @@ export class WebhooksService {
       where: { workspaceId_userId: { workspaceId, userId } },
     });
     if (!member) throw new ForbiddenException('You are not a member of this workspace');
+  }
+
+  private async assertPlanFeature(workspaceId: string, feature: 'hasAutoReply' | 'hasWebhook' | 'hasApi') {
+    const sub = await this.prisma.subscription.findUnique({
+      where: { workspaceId },
+      include: { plan: { select: { hasAutoReply: true, hasWebhook: true, hasApi: true } } },
+    });
+    if (!sub?.plan[feature]) {
+      throw new ForbiddenException(`Your current plan does not include this feature. Please upgrade.`);
+    }
   }
 }

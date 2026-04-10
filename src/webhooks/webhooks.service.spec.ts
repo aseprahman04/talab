@@ -13,6 +13,7 @@ const mockPrisma = {
   workspaceMember: { findUnique: jest.fn() },
   webhook: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn() },
   webhookDelivery: { create: jest.fn(), findMany: jest.fn() },
+  subscription: { findUnique: jest.fn() },
 };
 
 const mockQueue = { webhooks: { add: jest.fn() } };
@@ -39,6 +40,7 @@ describe('WebhooksService', () => {
   describe('create', () => {
     it('creates a webhook', async () => {
       mockPrisma.workspaceMember.findUnique.mockResolvedValue(member);
+      mockPrisma.subscription.findUnique.mockResolvedValue({ plan: { hasAutoReply: true, hasWebhook: true, hasApi: true } });
       mockPrisma.webhook.create.mockResolvedValue(webhook);
       const result = await service.create(USER_ID, {
         workspaceId: WS_ID, name: 'Main Hook', url: 'https://example.com/hook', secret: 'secret123',

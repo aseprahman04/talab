@@ -853,6 +853,11 @@ th {
   background: rgba(181, 58, 45, 0.12);
 }
 
+.status-info {
+  color: #1a4d7f;
+  background: rgba(45, 110, 181, 0.12);
+}
+
 .empty-copy,
 .empty-table {
   padding: 16px 0;

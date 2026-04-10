@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { AutoRepliesModule } from './auto-replies/auto-replies.module';
+import { ScheduledMessagesModule } from './scheduled-messages/scheduled-messages.module';
 import { BroadcastsModule } from './broadcasts/broadcasts.module';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { DemoRequestsModule } from './demo-requests/demo-requests.module';
@@ -56,6 +57,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     WebhooksModule,
     BroadcastsModule,
     AutoRepliesModule,
+    ScheduledMessagesModule,
     AuditLogsModule,
     ContactsModule,
     WhatsAppModule,

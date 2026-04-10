@@ -8,4 +8,5 @@ export const JOB_NAMES = {
   WEBHOOK_DELIVERY: 'webhook.delivery',
   BROADCAST_DISPATCH: 'broadcast.dispatch',
   BROADCAST_SEND: 'broadcast.send',
+  SCHEDULED_MESSAGES_TICK: 'scheduled-messages.tick',
 } as const;

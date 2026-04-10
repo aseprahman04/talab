@@ -12,6 +12,10 @@ export class MessagesService {
   async send(userId: string, dto: SendMessageDto) {
     await this.assertWorkspaceMembership(userId, dto.workspaceId);
     await this.assertDeviceInWorkspace(dto.deviceId, dto.workspaceId);
+
+    const scheduledAt = dto.scheduledAt ? new Date(dto.scheduledAt) : undefined;
+    const delay = scheduledAt && scheduledAt > new Date() ? scheduledAt.getTime() - Date.now() : undefined;
+
     const message = await this.prisma.message.create({
       data: {
         workspaceId: dto.workspaceId,
@@ -22,11 +26,13 @@ export class MessagesService {
         content: dto.message,
         mediaUrl: dto.mediaUrl,
         status: 'QUEUED',
+        scheduledAt: scheduledAt ?? null,
         queuedAt: new Date(),
       },
     });
 
     await this.queue.messages.add(JOB_NAMES.MESSAGE_SEND, { messageId: message.id }, {
+      delay,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
       removeOnComplete: 100,
@@ -34,7 +40,7 @@ export class MessagesService {
     });
 
     await this.audit.log({ workspaceId: dto.workspaceId, userId, action: 'message.enqueue', entityType: 'Message', entityId: message.id, payload: dto });
-    return { success: true, messageId: message.id, status: 'QUEUED' };
+    return { success: true, messageId: message.id, status: 'QUEUED', scheduledAt: scheduledAt?.toISOString() ?? null };
   }
 
   async list(userId: string, workspaceId: string) {

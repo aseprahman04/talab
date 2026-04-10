@@ -4,6 +4,7 @@ import { AutoRepliesProcessor } from './processors/auto-replies.processor';
 import { BroadcastsProcessor } from './processors/broadcasts.processor';
 import { DevicesProcessor } from './processors/devices.processor';
 import { MessagesProcessor } from './processors/messages.processor';
+import { ScheduledMessagesProcessor } from './processors/scheduled-messages.processor';
 import { WebhooksProcessor } from './processors/webhooks.processor';
 import { QueueService } from './queue.service';
 
@@ -16,9 +17,10 @@ import { QueueService } from './queue.service';
       { name: 'broadcasts' },
       { name: 'devices' },
       { name: 'auto-replies' },
+      { name: 'scheduled-messages' },
     ),
   ],
-  providers: [QueueService, MessagesProcessor, WebhooksProcessor, BroadcastsProcessor, AutoRepliesProcessor, DevicesProcessor],
+  providers: [QueueService, MessagesProcessor, WebhooksProcessor, BroadcastsProcessor, AutoRepliesProcessor, DevicesProcessor, ScheduledMessagesProcessor],
   exports: [QueueService],
 })
 export class QueueModule {}

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsUUID, Matches, MaxLength, IsUrl } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString, IsUUID, Matches, MaxLength, IsUrl } from 'class-validator';
 
 export enum MessageTypeEnum { TEXT='TEXT', IMAGE='IMAGE', DOCUMENT='DOCUMENT', AUDIO='AUDIO', VIDEO='VIDEO' }
 
@@ -21,4 +21,7 @@ export class SendMessageDto {
 
   @ApiPropertyOptional({ example: 'https://cdn.example.com/invoice.pdf' })
   @IsOptional() @IsUrl() mediaUrl?: string;
+
+  @ApiPropertyOptional({ example: '2026-04-10T09:00:00.000Z', description: 'ISO 8601 datetime — if set, message is queued but delayed until this time' })
+  @IsOptional() @IsDateString() scheduledAt?: string;
 }

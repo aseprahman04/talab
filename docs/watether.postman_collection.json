@@ -395,7 +395,7 @@
       "name": "Auto Replies",
       "item": [
         {
-          "name": "Create Auto Reply Rule",
+          "name": "Create Auto Reply Rule (Static Response)",
           "request": {
             "method": "POST",
             "header": [
@@ -406,7 +406,24 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"name\": \"Cek Status Order\",\n  \"matchType\": \"contains\",\n  \"keyword\": \"cek pesanan\",\n  \"response\": \"Halo! Silakan kirim nomor order kamu ya.\",\n  \"priority\": 10,\n  \"isEnabled\": true\n}"
-            }
+            },
+            "description": "Balas dengan teks statis. Gunakan `response` untuk balasan langsung tanpa integrasi eksternal."
+          }
+        },
+        {
+          "name": "Create Auto Reply Rule (Webhook / Dynamic Response)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auto-replies", "host": ["{{baseUrl}}"], "path": ["auto-replies"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"name\": \"Topup Saldo\",\n  \"matchType\": \"exact\",\n  \"keyword\": \"topup\",\n  \"webhookUrl\": \"https://esekolah.com/api/wa/handler\",\n  \"priority\": 20,\n  \"isEnabled\": true\n}"
+            },
+            "description": "Saat keyword cocok, WATether POST ke `webhookUrl` kamu dengan body:\n```json\n{\n  \"sender\": \"628123456789\",\n  \"keyword\": \"topup\",\n  \"message\": \"topup\",\n  \"workspaceId\": \"...\",\n  \"deviceId\": \"...\"\n}\n```\nEndpoint kamu harus mengembalikan:\n```json\n{ \"reply\": \"Halo Bu Sari! Topup via: https://pay.esekolah.com/...\" }\n```\nJika endpoint tidak merespons dalam 10 detik atau tidak ada field `reply`, balasan diabaikan.\n\n**Catatan:** Sertakan `webhookUrl` ATAU `response`, tidak keduanya."
           }
         },
         {
