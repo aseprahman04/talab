@@ -2,81 +2,81 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Kebijakan Pengembalian Dana — WATether',
-  description: 'Kebijakan refund dan pengembalian dana untuk langganan WATether.',
+  title: 'Refund Policy — WATether',
+  description: 'Refund policy for WATether subscriptions.',
 };
 
 export default function RefundPolicyPage() {
   return (
     <div className="legal-page">
       <header className="legal-header">
-        <Link href="/" className="back-link">← Kembali ke beranda</Link>
-        <h1>Kebijakan Pengembalian Dana</h1>
-        <p className="legal-meta">Terakhir diperbarui: 30 Maret 2026</p>
+        <Link href="/" className="back-link">← Back to home</Link>
+        <h1>Refund Policy</h1>
+        <p className="legal-meta">Last updated: March 30, 2026</p>
       </header>
 
       <main className="legal-body">
         <section>
-          <h2>1. Uji Coba Gratis</h2>
-          <p>Semua pengguna baru mendapatkan akses ke paket Gratis tanpa batas waktu, tanpa perlu kartu kredit. Kami menyarankan untuk mencoba Layanan terlebih dahulu sebelum berlangganan berbayar.</p>
+          <h2>1. Free Trial</h2>
+          <p>All new users get access to the Free plan indefinitely, with no credit card required. We recommend trying the Service before subscribing to a paid plan.</p>
         </section>
 
         <section>
-          <h2>2. Kebijakan Pengembalian Dana</h2>
-          <p>WATether menawarkan kebijakan pengembalian dana <strong>7 hari</strong> untuk semua paket berbayar baru. Syarat berlaku:</p>
+          <h2>2. Refund Policy</h2>
+          <p>WATether offers a <strong>7-day</strong> refund policy for all new paid plan subscriptions. Conditions apply:</p>
           <ul>
-            <li>Permintaan diajukan dalam 7 hari kalender sejak tanggal pembayaran pertama</li>
-            <li>Permintaan disampaikan melalui email ke <a href="mailto:support@watether.com">support@watether.com</a></li>
-            <li>Belum pernah mengajukan refund sebelumnya untuk akun yang sama</li>
+            <li>Request submitted within 7 calendar days of the first payment date</li>
+            <li>Request sent via email to <a href="mailto:support@watether.com">support@watether.com</a></li>
+            <li>No prior refund has been requested for the same account</li>
           </ul>
         </section>
 
         <section>
-          <h2>3. Perpanjangan Langganan</h2>
-          <p>Perpanjangan otomatis <strong>tidak dapat dikembalikan</strong> kecuali terjadi gangguan layanan signifikan (downtime &gt;24 jam berturut-turut) yang terdokumentasi dalam periode tersebut.</p>
+          <h2>3. Subscription Renewals</h2>
+          <p>Automatic renewals are <strong>non-refundable</strong> unless a significant service disruption (downtime &gt;24 consecutive hours) is documented during that period.</p>
         </section>
 
         <section>
-          <h2>4. Pengecualian</h2>
-          <p>Pengembalian dana <strong>tidak berlaku</strong> untuk:</p>
+          <h2>4. Exclusions</h2>
+          <p>Refunds <strong>do not apply</strong> to:</p>
           <ul>
-            <li>Akun yang terbukti melanggar Syarat &amp; Ketentuan</li>
-            <li>Permintaan setelah 7 hari sejak pembayaran</li>
-            <li>Alasan pembatasan nomor WhatsApp (risiko yang telah diungkapkan di Syarat &amp; Ketentuan)</li>
+            <li>Accounts found to be in violation of the Terms of Service</li>
+            <li>Requests made more than 7 days after payment</li>
+            <li>WhatsApp number restrictions (a risk disclosed in the Terms of Service)</li>
           </ul>
         </section>
 
         <section>
-          <h2>5. Proses Pengembalian Dana</h2>
-          <p>Setelah permintaan disetujui:</p>
+          <h2>5. Refund Process</h2>
+          <p>Once a request is approved:</p>
           <ul>
-            <li>Dana dikembalikan ke metode pembayaran asal dalam <strong>5–10 hari kerja</strong></li>
-            <li>Akses ke fitur berbayar dihentikan segera setelah refund diproses</li>
+            <li>Funds are returned to the original payment method within <strong>5–10 business days</strong></li>
+            <li>Access to paid features is revoked immediately once the refund is processed</li>
           </ul>
         </section>
 
         <section>
-          <h2>6. Pembatalan Langganan</h2>
-          <p>Kamu dapat membatalkan langganan kapan saja melalui halaman Billing di console atau menghubungi support. Akses tetap aktif hingga akhir periode yang telah dibayar. Pembatalan tidak menghasilkan pengembalian dana untuk sisa periode.</p>
+          <h2>6. Subscription Cancellation</h2>
+          <p>You may cancel your subscription at any time via the Billing page in the console or by contacting support. Access remains active until the end of the paid period. Cancellation does not produce a refund for the remaining period.</p>
         </section>
 
         <section>
-          <h2>7. Cara Mengajukan Refund</h2>
-          <p>Kirim email ke <a href="mailto:support@watether.com">support@watether.com</a> dengan subjek <strong>"Refund Request — [email akun]"</strong> dan sertakan:</p>
+          <h2>7. How to Request a Refund</h2>
+          <p>Send an email to <a href="mailto:support@watether.com">support@watether.com</a> with the subject <strong>&quot;Refund Request — [account email]&quot;</strong> and include:</p>
           <ul>
-            <li>Email akun WATether</li>
-            <li>Nomor order LemonSqueezy</li>
-            <li>Alasan permintaan refund</li>
+            <li>WATether account email</li>
+            <li>LemonSqueezy order number</li>
+            <li>Reason for the refund request</li>
           </ul>
-          <p>Kami akan merespons dalam 1 hari kerja.</p>
+          <p>We will respond within 1 business day.</p>
         </section>
       </main>
 
       <footer className="legal-footer">
-        <Link href="/syarat-ketentuan">Syarat &amp; Ketentuan</Link>
-        <Link href="/kebijakan-privasi">Kebijakan Privasi</Link>
+        <Link href="/terms">Terms of Service</Link>
+        <Link href="/privacy-policy">Privacy Policy</Link>
         <Link href="/faq">FAQ</Link>
-        <Link href="/">Beranda</Link>
+        <Link href="/">Home</Link>
       </footer>
 
       <style>{`

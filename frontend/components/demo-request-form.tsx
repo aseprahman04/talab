@@ -17,7 +17,7 @@ const initialState: DemoFormState = {
   email: '',
   phoneNumber: '',
   companyName: '',
-  desiredPlan: 'UMKM Pro',
+  desiredPlan: 'Business',
   useCase: '',
 };
 
@@ -42,13 +42,13 @@ export function DemoRequestForm() {
 
       setStatus({
         tone: 'success',
-        text: 'Request demo terkirim. Tim kami akan follow-up dalam jam kerja WIB.',
+        text: 'Demo request submitted. Our team will follow up within business hours.',
       });
       setForm(initialState);
     } catch (error) {
       setStatus({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'Gagal mengirim request demo.',
+        text: error instanceof Error ? error.message : 'Failed to submit demo request.',
       });
     } finally {
       setIsSubmitting(false);
@@ -58,36 +58,36 @@ export function DemoRequestForm() {
   return (
     <form className="demo-form" onSubmit={handleSubmit}>
       <label className="field-block">
-        <span>Nama</span>
-        <input value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="Nama PIC" required />
+        <span>Name</span>
+        <input value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="Point of contact name" required />
       </label>
       <label className="field-block">
         <span>Email</span>
-        <input type="email" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} placeholder="pic@company.co.id" required />
+        <input type="email" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} placeholder="you@company.com" required />
       </label>
       <label className="field-block">
-        <span>Nomor WhatsApp</span>
+        <span>WhatsApp number</span>
         <input value={form.phoneNumber} onChange={(event) => setForm((prev) => ({ ...prev, phoneNumber: event.target.value }))} placeholder="62812xxxxxx" />
       </label>
       <label className="field-block">
-        <span>Perusahaan</span>
-        <input value={form.companyName} onChange={(event) => setForm((prev) => ({ ...prev, companyName: event.target.value }))} placeholder="PT Contoh Nusantara" />
+        <span>Company</span>
+        <input value={form.companyName} onChange={(event) => setForm((prev) => ({ ...prev, companyName: event.target.value }))} placeholder="Acme Corp" />
       </label>
       <label className="field-block">
-        <span>Paket target</span>
+        <span>Target plan</span>
         <select value={form.desiredPlan} onChange={(event) => setForm((prev) => ({ ...prev, desiredPlan: event.target.value }))}>
-          <option value="Coba Dulu">Coba Dulu</option>
-          <option value="UMKM Pro">UMKM Pro</option>
-          <option value="Growth Team">Growth Team</option>
+          <option value="Free">Free</option>
+          <option value="Business">Business</option>
+          <option value="Team">Team</option>
         </select>
       </label>
       <label className="field-block span-2">
-        <span>Use case utama</span>
-        <textarea rows={4} value={form.useCase} onChange={(event) => setForm((prev) => ({ ...prev, useCase: event.target.value }))} placeholder="Contoh: reminder cicilan + notifikasi follow-up sales" />
+        <span>Main use case</span>
+        <textarea rows={4} value={form.useCase} onChange={(event) => setForm((prev) => ({ ...prev, useCase: event.target.value }))} placeholder="e.g. payment reminders + sales follow-up notifications" />
       </label>
       <div className="span-2 button-row">
         <button className="button-primary" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Mengirim...' : 'Kirim request demo'}
+          {isSubmitting ? 'Submitting...' : 'Submit demo request'}
         </button>
       </div>
       {status.text ? <p className={status.tone === 'success' ? 'form-note success' : 'form-note error'}>{status.text}</p> : null}

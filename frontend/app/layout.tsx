@@ -15,7 +15,7 @@ const bodyFont = IBM_Plex_Sans({
 
 export const metadata: Metadata = {
   title: 'WATether',
-  description: 'WhatsApp gateway dengan landing publik dan dashboard operasional untuk pasar Indonesia.',
+  description: 'WhatsApp gateway with a public landing page and operational dashboard for businesses.',
   icons: {
     icon: '/icon.svg',
     apple: '/icon.svg',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
+    <html lang="en">
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>{children}</body>
     </html>
   );

@@ -3,83 +3,83 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'FAQ — WATether',
-  description: 'Pertanyaan yang sering diajukan tentang WATether.',
+  description: 'Frequently asked questions about WATether.',
 };
 
 const faqs = [
   {
-    category: 'Umum',
+    category: 'General',
     items: [
       {
-        q: 'Apa itu WATether?',
-        a: 'WATether adalah platform gateway WhatsApp untuk bisnis. Kamu bisa menghubungkan nomor WhatsApp, mengirim pesan melalui API, membuat broadcast, mengatur auto-reply, dan memantau semua aktivitas dari satu dashboard.',
+        q: 'What is WATether?',
+        a: 'WATether is a WhatsApp gateway platform for businesses. You can connect WhatsApp numbers, send messages via API, create broadcasts, set up auto-replies, and monitor all activity from a single dashboard.',
       },
       {
-        q: 'Apakah WATether produk resmi WhatsApp?',
-        a: 'Tidak. WATether adalah solusi pihak ketiga yang berjalan di atas WhatsApp Web. Penggunaan nomor melalui pihak ketiga berpotensi menyebabkan pembatasan oleh WhatsApp. Untuk solusi enterprise dengan jaminan, pertimbangkan WhatsApp Business API resmi.',
+        q: 'Is WATether an official WhatsApp product?',
+        a: 'No. WATether is a third-party solution that runs on top of WhatsApp Web. Using numbers through third-party tools may result in restrictions by WhatsApp. For an enterprise solution with guarantees, consider the official WhatsApp Business API.',
       },
       {
-        q: 'Siapa yang cocok menggunakan WATether?',
-        a: 'Tim CS, sales, dan operasional bisnis menengah yang butuh otomasi notifikasi WhatsApp, broadcast ke daftar kontak, webhook ke sistem internal, dan manajemen multi-device dari satu console.',
+        q: 'Who is WATether for?',
+        a: 'CS teams, sales, and mid-size business operations that need WhatsApp notification automation, broadcast to contact lists, webhooks to internal systems, and multi-device management from one console.',
       },
     ],
   },
   {
-    category: 'Akun & Langganan',
+    category: 'Account & Subscription',
     items: [
       {
-        q: 'Apakah paket Gratis benar-benar gratis selamanya?',
-        a: 'Ya. Paket Gratis tersedia tanpa batas waktu dengan 1 device dan 500 pesan per bulan. Tidak perlu kartu kredit.',
+        q: 'Is the Free plan really free forever?',
+        a: 'Yes. The Free plan is available indefinitely with 1 device and 1,000 messages per month. No credit card required.',
       },
       {
-        q: 'Bagaimana cara upgrade ke paket berbayar?',
-        a: 'Masuk ke console, pilih workspace, lalu buka menu Billing. Klik "Upgrade sekarang" dan kamu akan diarahkan ke halaman checkout LemonSqueezy.',
+        q: 'How do I upgrade to a paid plan?',
+        a: 'Go to the console, select your workspace, then open the Billing menu. Click "Upgrade now" and you\'ll be directed to the LemonSqueezy checkout page.',
       },
       {
-        q: 'Bisa bayar dengan metode apa?',
-        a: 'Pembayaran diproses oleh LemonSqueezy dan mendukung kartu kredit/debit internasional (Visa, Mastercard, American Express) serta beberapa metode lokal.',
+        q: 'What payment methods are accepted?',
+        a: 'Payments are processed by LemonSqueezy and support major international credit/debit cards (Visa, Mastercard, American Express) and several local payment methods.',
       },
       {
-        q: 'Bisakah saya membatalkan langganan kapan saja?',
-        a: 'Ya. Batalkan kapan saja dari halaman Billing. Akses tetap aktif hingga akhir periode yang sudah dibayar, dan tidak ada biaya pembatalan.',
+        q: 'Can I cancel my subscription at any time?',
+        a: 'Yes. Cancel anytime from the Billing page. Access remains active until the end of the paid period, and there are no cancellation fees.',
       },
     ],
   },
   {
-    category: 'Teknis',
+    category: 'Technical',
     items: [
       {
-        q: 'Berapa banyak device yang bisa saya hubungkan?',
-        a: 'Paket Gratis: 1 device. Paket Bisnis: 5 device. Paket Tim: 20 device. Setiap device terhubung via QR code scan dari aplikasi WhatsApp di HP.',
+        q: 'How many devices can I connect?',
+        a: 'Free plan: 1 device. Business plan: 5 devices. Team plan: 20 devices. Each device connects via QR code scan from the WhatsApp app on your phone.',
       },
       {
-        q: 'Bagaimana cara menghubungkan nomor WhatsApp?',
-        a: 'Di console, buka menu Devices → klik "Pair WhatsApp" → scan QR code yang muncul menggunakan WhatsApp di HP kamu (Setelan → Perangkat Tertaut → Tautkan Perangkat).',
+        q: 'How do I connect a WhatsApp number?',
+        a: 'In the console, open the Devices menu → click "Pair WhatsApp" → scan the QR code that appears using WhatsApp on your phone (Settings → Linked Devices → Link a Device).',
       },
       {
-        q: 'Apakah ada API untuk integrasi ke sistem saya?',
-        a: 'Ya. WATether menyediakan REST API lengkap. Dokumentasi tersedia di menu API Docs di console setelah login. Kamu bisa generate token API per device.',
+        q: 'Is there an API for integrating with my system?',
+        a: 'Yes. WATether provides a full REST API. Documentation is available in the API Docs menu in the console after logging in. You can generate API tokens per device.',
       },
       {
-        q: 'Apa itu webhook dan bagaimana cara pakainya?',
-        a: 'Webhook mengirimkan notifikasi HTTP ke URL kamu setiap ada event (pesan masuk, status pengiriman, dll). Tambahkan webhook di menu Webhooks dan masukkan URL endpoint server kamu.',
+        q: 'What is a webhook and how do I use it?',
+        a: 'Webhooks send HTTP notifications to your URL on every event (incoming message, delivery status, etc.). Add a webhook in the Webhooks menu and enter your server endpoint URL.',
       },
       {
-        q: 'Apakah data saya aman?',
-        a: 'Ya. Semua koneksi menggunakan HTTPS/TLS. Session menggunakan HTTP-only cookie. Password di-hash dengan Argon2. Lihat Kebijakan Privasi untuk detail lengkap.',
+        q: 'Is my data secure?',
+        a: 'Yes. All connections use HTTPS/TLS. Sessions use HTTP-only cookies. Passwords are hashed with Argon2. See the Privacy Policy for full details.',
       },
     ],
   },
   {
-    category: 'Dukungan',
+    category: 'Support',
     items: [
       {
-        q: 'Bagaimana cara menghubungi support?',
-        a: 'Kirim email ke support@watether.com. Kami merespons dalam 1 hari kerja.',
+        q: 'How do I contact support?',
+        a: 'Send an email to support@watether.com. We respond within 1 business day.',
       },
       {
-        q: 'Apakah ada kebijakan refund?',
-        a: 'Ya, tersedia refund 7 hari untuk pembayaran pertama. Lihat halaman Refund Policy untuk syarat lengkap.',
+        q: 'Is there a refund policy?',
+        a: 'Yes, a 7-day refund is available for first-time payments. See the Refund Policy page for full terms.',
       },
     ],
   },
@@ -89,9 +89,9 @@ export default function FaqPage() {
   return (
     <div className="legal-page">
       <header className="legal-header">
-        <Link href="/" className="back-link">← Kembali ke beranda</Link>
-        <h1>Pertanyaan Umum (FAQ)</h1>
-        <p className="legal-meta">Tidak menemukan jawaban? Hubungi <a href="mailto:support@watether.com">support@watether.com</a></p>
+        <Link href="/" className="back-link">← Back to home</Link>
+        <h1>Frequently Asked Questions</h1>
+        <p className="legal-meta">Can&apos;t find your answer? Contact <a href="mailto:support@watether.com">support@watether.com</a></p>
       </header>
 
       <main className="legal-body">
@@ -111,10 +111,10 @@ export default function FaqPage() {
       </main>
 
       <footer className="legal-footer">
-        <Link href="/syarat-ketentuan">Syarat &amp; Ketentuan</Link>
-        <Link href="/kebijakan-privasi">Kebijakan Privasi</Link>
+        <Link href="/terms">Terms of Service</Link>
+        <Link href="/privacy-policy">Privacy Policy</Link>
         <Link href="/refund-policy">Refund Policy</Link>
-        <Link href="/">Beranda</Link>
+        <Link href="/">Home</Link>
       </footer>
 
       <style>{`

@@ -3,63 +3,89 @@ import Link from 'next/link';
 export default function HomePage() {
   const testimonials = [
     {
-      name: 'Toko retail omni-channel',
-      quote: 'Tim CS kami langsung bisa pakai tanpa perlu training panjang. Device, broadcast, dan auto reply semuanya ada di satu console.',
+      name: 'Omni-channel retail store',
+      quote: 'Our CS team could use it right away with no lengthy training. Devices, broadcasts, and auto replies are all in one console.',
     },
     {
-      name: 'Tim collection regional',
-      quote: 'Reminder terjadwal dan log webhook kami butuhkan dari hari pertama. WATether punya keduanya, plus pemisahan workspace per cabang.',
+      name: 'Regional collection team',
+      quote: 'Scheduled reminders and webhook logs were something we needed from day one. WATether has both, plus workspace separation per branch.',
     },
     {
-      name: 'Agen distribusi properti',
-      quote: 'Follow-up lead dari iklan langsung masuk ke WhatsApp. Tidak perlu spreadsheet, tidak perlu forward manual ke tim sales.',
+      name: 'Property distribution agency',
+      quote: 'Ad leads flow straight into WhatsApp. No spreadsheets, no manual forwarding to the sales team.',
     },
   ];
 
   const faqs = [
     {
-      question: 'Apakah paket Coba Dulu benar-benar gratis?',
-      answer: 'Ya, gratis tanpa kartu kredit. Cocok untuk coba alur kirim pesan, webhook, dan console sebelum memutuskan upgrade.',
+      question: 'Is the Free plan really free?',
+      answer: 'Yes, free with no credit card required. Great for testing message flows, webhooks, and the console before deciding to upgrade.',
     },
     {
-      question: 'Apakah bisa langsung daftar dari sini?',
-      answer: 'Bisa. Klik tombol "Mulai Gratis" dan kamu langsung masuk ke halaman register console tanpa perlu sales call dulu.',
+      question: 'Can I sign up directly from here?',
+      answer: 'Yes. Click "Start Free" and you\'ll be taken straight to the console registration page — no sales call needed.',
     },
     {
-      question: 'Apakah ini sudah official WhatsApp API?',
-      answer: 'Belum. WATether adalah gateway layer — queue, webhook, device management, dan dashboard sudah siap. Engine sesi WhatsApp bisa diintegrasikan sesuai kebutuhan tim kamu.',
+      question: 'Is this an official WhatsApp API?',
+      answer: 'Not yet. WATether is a gateway layer — queue, webhooks, device management, and dashboard are all ready. The WhatsApp session engine can be integrated based on your team\'s needs.',
     },
   ];
 
   const plans = [
     {
-      name: 'Gratis',
-      price: 'Rp0',
-      caption: 'Coba dulu tanpa bayar. 1 nomor WA, cocok untuk testing sebelum produksi.',
-      quota: '1 nomor WhatsApp',
-      features: ['500 pesan per hari', 'Webhook dasar', 'Console realtime', 'Auto reply keyword'],
+      name: 'Free',
+      price: '$0',
+      caption: 'Try it at no cost. 1 WA number, great for testing before going to production.',
+      quota: '1 WhatsApp number',
+      features: [
+        '1,000 messages/month',
+        'Personal & group send',
+        'Scheduled broadcast',
+        'Realtime console',
+      ],
+      missing: ['Auto reply', 'Webhook & API', 'Multiple members'],
     },
     {
-      name: 'Bisnis',
-      price: 'Rp49.000',
-      caption: 'Untuk bisnis yang butuh beberapa nomor WA aktif sekaligus.',
-      quota: '5 nomor WhatsApp',
-      features: ['Pesan tidak dibatasi*', 'Auto reply keyword', 'Broadcast terjadwal', 'Webhook + retry log'],
+      name: 'Business',
+      price: '$9',
+      caption: 'For businesses that need several active WA numbers at once.',
+      quota: '5 WhatsApp numbers',
+      features: [
+        '25,000 messages/month',
+        'Personal & group send',
+        'Scheduled broadcast',
+        'Keyword auto reply',
+        'Webhook auto reply (system integration)',
+        'Webhook + retry log',
+        'Full API access',
+        '5 team members',
+      ],
       featured: true,
     },
     {
-      name: 'Tim',
-      price: 'Rp149.000',
-      caption: 'Untuk tim CS, sales, atau multi-cabang dengan banyak nomor aktif.',
-      quota: '20 nomor WhatsApp',
-      features: ['Pesan tidak dibatasi*', 'Multi-workspace', 'Role admin dan staff', 'Audit log + support WIB'],
+      name: 'Team',
+      price: '$25',
+      caption: 'For CS teams, sales, or multi-branch operations with many active numbers.',
+      quota: '20 WhatsApp numbers',
+      features: [
+        'Unlimited messages',
+        'Personal & group send',
+        'Scheduled broadcast',
+        'Keyword auto reply',
+        'Webhook auto reply (system integration)',
+        'Webhook + retry log',
+        'Full API access',
+        '20 team members',
+        'Admin & staff roles',
+        'Audit log + priority support',
+      ],
     },
   ];
 
   const highlights = [
-    'Kirim pesan ke banyak kontak sekaligus lewat broadcast terjadwal.',
-    'Auto reply otomatis saat ada pesan masuk — tanpa perlu operator standby.',
-    'Webhook real-time ke sistem kamu saat pesan terkirim, gagal, atau diterima.',
+    'Send messages to many contacts at once via scheduled broadcast.',
+    'Auto reply when messages arrive — no operator needed on standby.',
+    'Real-time webhook to your system when messages are sent, failed, or received.',
   ];
 
   return (
@@ -70,51 +96,51 @@ export default function HomePage() {
             <span className="brand-mark">WA</span>
             <div>
               <strong>WATether</strong>
-              <small>WhatsApp gateway untuk operasional Indonesia</small>
+              <small>WhatsApp gateway for business operations</small>
             </div>
           </Link>
           <div className="button-row">
-            <Link className="button-ghost" href="/#paket">Lihat Paket</Link>
-            <Link className="button-primary" href="/console?mode=login">Masuk Console</Link>
+            <Link className="button-ghost" href="/#pricing">See Pricing</Link>
+            <Link className="button-primary" href="/console?mode=login">Open Console</Link>
           </div>
         </div>
 
         <div className="marketing-grid glass-panel">
           <div className="marketing-copy">
-            <span className="eyebrow">WhatsApp gateway untuk bisnis Indonesia</span>
-            <h1>Kirim pesan, kelola device, dan otomasi notifikasi dari satu console.</h1>
+            <span className="eyebrow">WhatsApp gateway for businesses</span>
+            <h1>Send messages, manage devices, and automate notifications from one console.</h1>
             <p>
-              WATether memudahkan tim kamu mengelola pengiriman pesan WhatsApp — dari broadcast ke ribuan kontak,
-              auto reply keyword, hingga webhook real-time ke sistem internal.
+              WATether makes it easy for your team to manage WhatsApp message delivery — from broadcast to thousands
+              of contacts, keyword auto reply, to real-time webhooks into your internal systems.
             </p>
             <div className="hero-actions">
-              <Link className="button-primary" href="/console?mode=register">Mulai Gratis</Link>
+              <Link className="button-primary" href="/console?mode=register">Start Free</Link>
               <a className="button-ghost" href="#demo-form">Request demo</a>
-              <a className="button-secondary" href="#fitur">Lihat fitur</a>
+              <a className="button-secondary" href="#features">See features</a>
             </div>
             <div className="helper-strip">
-              <span>Gratis, tanpa kartu kredit</span>
-              <span>Setup dalam hitungan menit</span>
-              <span>Tidak perlu sales call</span>
+              <span>Free, no credit card</span>
+              <span>Set up in minutes</span>
+              <span>No sales call needed</span>
             </div>
             <div className="marketing-proof">
-              <div><strong>Multi-workspace</strong><span>Pisahkan tim, device, dan log per workspace</span></div>
-              <div><strong>Queue &amp; retry</strong><span>Pesan gagal otomatis dicoba ulang</span></div>
-              <div><strong>Realtime</strong><span>Status device dan pesan tampil langsung</span></div>
+              <div><strong>Multi-workspace</strong><span>Separate teams, devices, and logs per workspace</span></div>
+              <div><strong>Queue &amp; retry</strong><span>Failed messages are retried automatically</span></div>
+              <div><strong>Realtime</strong><span>Device and message status shown instantly</span></div>
             </div>
           </div>
 
           <div className="marketing-card-stack">
             <article className="signal-card">
-              <span className="eyebrow alt">Cocok untuk</span>
+              <span className="eyebrow alt">Built for</span>
               <ul>
-                <li>Konfirmasi order marketplace dan toko online</li>
-                <li>Notifikasi invoice, cicilan, dan reminder pembayaran</li>
-                <li>Follow-up lead dari form, iklan, atau CRM</li>
+                <li>Order confirmations for marketplaces and online stores</li>
+                <li>Invoice notifications, installment reminders, and payment alerts</li>
+                <li>Lead follow-up from forms, ads, or CRM</li>
               </ul>
             </article>
             <article className="signal-card contrast">
-              <span className="eyebrow alt">Yang sudah tersedia</span>
+              <span className="eyebrow alt">Already available</span>
               <ul>
                 {highlights.map((item) => <li key={item}>{item}</li>)}
               </ul>
@@ -123,55 +149,56 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="story-strip" id="fitur">
+      <section className="story-strip" id="features">
         <div className="section-heading">
-          <h3>Kenapa tim Indonesia pilih WATether</h3>
-          <p>Dibangun untuk alur kerja yang memang umum di sini — bukan gateway generik yang perlu banyak konfigurasi manual.</p>
+          <h3>Why teams choose WATether</h3>
+          <p>Built for workflows that are common — not a generic gateway that needs extensive manual configuration.</p>
         </div>
         <div className="story-grid">
           <article className="story-card glass-panel">
-            <strong>Mulai kecil, scale bertahap</strong>
-            <p>Coba dengan volume kecil, validasi alur operasional tim, lalu upgrade saat device dan kuota perlu ditambah.</p>
+            <strong>Start small, scale gradually</strong>
+            <p>Try with small volume, validate team operations, then upgrade when devices and quota need to grow.</p>
           </article>
           <article className="story-card glass-panel">
-            <strong>Bahasa dan use case lokal</strong>
-            <p>Copy, paket, dan fitur dirancang untuk UMKM, tim CS, reminder pembayaran, dan workflow bisnis Indonesia.</p>
+            <strong>Practical use cases</strong>
+            <p>Plans and features designed for SMEs, CS teams, payment reminders, and everyday business workflows.</p>
           </article>
           <article className="story-card glass-panel">
-            <strong>Console siap pakai hari ini</strong>
-            <p>Daftar dan langsung akses dashboard dengan device management, broadcast, webhook, dan auto reply — tanpa setup berhari-hari.</p>
+            <strong>Console ready to use today</strong>
+            <p>Sign up and immediately access the dashboard with device management, broadcast, webhooks, and auto reply — no multi-day setup.</p>
           </article>
         </div>
       </section>
 
-      <section className="pricing-stage" id="paket">
+      <section className="pricing-stage" id="pricing">
         <div className="section-heading pricing-head">
-          <h3>Harga per nomor WhatsApp, bukan per pesan</h3>
-          <p>Bayar sesuai jumlah nomor WA yang kamu pakai. Mulai gratis, upgrade kapan saja tanpa kontrak.</p>
+          <h3>Priced per WhatsApp number, not per message</h3>
+          <p>Pay based on how many WA numbers you use. Start free, upgrade anytime with no contract.</p>
         </div>
         <div className="pricing-grid">
           {plans.map((plan) => (
             <article key={plan.name} className={plan.featured ? 'pricing-card featured glass-panel' : 'pricing-card glass-panel'}>
               <div>
                 <span className="eyebrow alt">{plan.name}</span>
-                <h2>{plan.price}<small>/bulan</small></h2>
+                <h2>{plan.price}<small>/month</small></h2>
                 <p>{plan.caption}</p>
               </div>
               <div className="quota-pill">{plan.quota}</div>
               <ul>
                 {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
+                {'missing' in plan && (plan.missing as string[]).map((feature) => <li key={feature} style={{ color: 'var(--muted)', textDecoration: 'line-through' }}>{feature}</li>)}
               </ul>
-              <Link className={plan.featured ? 'button-primary' : 'button-secondary'} href={`/console?mode=register&plan=${encodeURIComponent(plan.name)}`}>Mulai dari sini</Link>
+              <Link className={plan.featured ? 'button-primary' : 'button-secondary'} href={`/console?mode=register&plan=${encodeURIComponent(plan.name)}`}>Get started</Link>
             </article>
           ))}
         </div>
-        <p style={{marginTop: '12px', fontSize: '13px', color: 'var(--muted)'}}>* Fair use policy berlaku. Tidak untuk spam massal.</p>
+        <p style={{marginTop: '12px', fontSize: '13px', color: 'var(--muted)'}}>* Fair use policy applies. Not for mass spam.</p>
       </section>
 
       <section className="trust-stage">
         <div className="section-heading pricing-head">
-          <h3>Dipakai untuk operasional nyata</h3>
-          <p>Dari toko online sampai tim collection — WATether digunakan untuk alur kerja yang berulang setiap hari.</p>
+          <h3>Used in real operations</h3>
+          <p>From online stores to collection teams — WATether is used for workflows that happen every single day.</p>
         </div>
         <div className="story-grid">
           {testimonials.map((item) => (
@@ -183,18 +210,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="demo-stage" id="mulai">
+      <section className="demo-stage" id="start">
         <div className="glass-panel demo-form-wrap disclaimer-band">
-          <span className="eyebrow">Penting dibaca sebelum mulai</span>
-          <p>WATether adalah platform gateway — bukan produk resmi Meta atau WhatsApp Inc. Penggunaan nomor WhatsApp pribadi atau bisnis untuk pengiriman massal berpotensi terkena pembatasan atau pemblokiran oleh WhatsApp. Segala risiko ban, pembatasan fitur, atau penonaktifan nomor sepenuhnya di luar tanggung jawab WATether. Gunakan dengan bijak sesuai kebijakan WhatsApp.</p>
-          <Link className="button-primary" href="/console?mode=register">Saya mengerti, mulai gratis</Link>
+          <span className="eyebrow">Important — please read before you start</span>
+          <p>WATether is a gateway platform — not an official product of Meta or WhatsApp Inc. Using personal or business WhatsApp numbers for bulk sending may result in restrictions or bans by WhatsApp. Any risk of account bans, feature restrictions, or number deactivation is entirely outside WATether&apos;s responsibility. Use responsibly and in accordance with WhatsApp&apos;s policies.</p>
+          <Link className="button-primary" href="/console?mode=register">I understand, start free</Link>
         </div>
       </section>
 
       <section className="faq-stage">
         <div className="section-heading pricing-head">
-          <h3>Pertanyaan yang sering masuk</h3>
-          <p>Kalau ada yang belum terjawab di sini, langsung request demo dan kami jelaskan lebih detail.</p>
+          <h3>Frequently asked questions</h3>
+          <p>If anything is still unclear, feel free to reach out and we&apos;ll explain in more detail.</p>
         </div>
         <div className="faq-list">
           {faqs.map((item) => (
@@ -208,24 +235,24 @@ export default function HomePage() {
 
       <section className="closing-band glass-panel">
         <div>
-          <span className="eyebrow">Siap mulai?</span>
-          <h2>Daftar gratis, masuk console, dan kirim pesan pertama hari ini.</h2>
-          <p>Tidak perlu kartu kredit. Tidak perlu sales call. Langsung coba sendiri.</p>
+          <span className="eyebrow">Ready to start?</span>
+          <h2>Sign up free, open the console, and send your first message today.</h2>
+          <p>No credit card. No sales call. Try it yourself right now.</p>
         </div>
         <div className="button-row">
-          <Link className="button-primary" href="/console?mode=register">Mulai Gratis</Link>
-          <a className="button-ghost" href="#paket">Lihat paket</a>
+          <Link className="button-primary" href="/console?mode=register">Start Free</Link>
+          <a className="button-ghost" href="#pricing">See pricing</a>
         </div>
       </section>
 
       <footer className="site-footer">
-        <p>© {new Date().getFullYear()} WATether. Semua hak dilindungi.</p>
+        <p>© {new Date().getFullYear()} WATether. All rights reserved.</p>
         <nav className="footer-links">
-          <Link href="/syarat-ketentuan">Syarat &amp; Ketentuan</Link>
-          <Link href="/kebijakan-privasi">Kebijakan Privasi</Link>
+          <Link href="/terms">Terms of Service</Link>
+          <Link href="/privacy-policy">Privacy Policy</Link>
           <Link href="/refund-policy">Refund Policy</Link>
           <Link href="/faq">FAQ</Link>
-          <a href="mailto:support@watether.com">Kontak</a>
+          <a href="mailto:support@watether.com">Contact</a>
         </nav>
       </footer>
     </main>
