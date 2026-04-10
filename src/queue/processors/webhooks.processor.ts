@@ -7,7 +7,7 @@ import { JOB_NAMES } from 'src/queue/jobs/job-names';
 // concurrency=10: webhook deliveries are outbound HTTP calls — fully I/O-bound
 // and independent of each other. High concurrency keeps delivery latency low
 // even when a single message triggers deliveries to many registered endpoints.
-@Processor({ name: 'webhooks', concurrency: 10 })
+@Processor('webhooks', { concurrency: 10 })
 export class WebhooksProcessor extends WorkerHost {
   constructor(private prisma: PrismaService) { super(); }
 

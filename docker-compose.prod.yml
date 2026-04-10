@@ -10,12 +10,31 @@ services:
       NODE_ENV: production
       PORT: 3009
       GOOGLE_CALLBACK_URL: https://watheter.com/api/auth/google/callback
+    command: ["sh", "-c", "npx prisma@5 db push --accept-data-loss && node dist/src/main.js"]
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3009/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(()=>process.exit(0)).catch(()=>process.exit(1))\""]
       interval: 20s
       timeout: 10s
       retries: 5
       start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  worker:
+    image: watether-backend:latest
+    container_name: watether_worker
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - /opt/watether/.env.production
+    environment:
+      NODE_ENV: production
+      WORKER_PORT: 3099
+    # Worker starts after backend so db push has already run
+    command: ["sh", "-c", "sleep 15 && node dist/src/worker.js"]
     logging:
       driver: json-file
       options:

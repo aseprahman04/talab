@@ -14,6 +14,6 @@ export class RealtimeGateway implements OnGatewayConnection {
   }
 
   emitToWorkspace(workspaceId: string, event: string, payload: unknown) {
-    this.server.to(`workspace:${workspaceId}`).emit(event, payload);
+    this.server?.to(`workspace:${workspaceId}`).emit(event, payload);
   }
 }

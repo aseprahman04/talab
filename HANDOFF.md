@@ -18,19 +18,40 @@
 - [x] Unit tests: 83 passing
 - [x] E2E tests against VPS (messages, broadcasts, auto-replies, contacts, scheduled-messages, webhooks)
 
-### Phase 2 — Dedicated Device Worker Process 🔜 NEXT
+### Phase 2 — Dedicated Device Worker Process ✅ DONE (deploy pending)
 > **Target:** pisah `WhatsAppSessionManager` ke proses Node.js terpisah supaya restart API tidak disconnect semua device.
 
-- [ ] Buat `src/worker.ts` — entrypoint baru (`NestFactory.createApplicationContext`)
-- [ ] Buat `src/worker.module.ts` — import DatabaseModule, QueueModule, WhatsAppModule, RealtimeModule
-- [ ] Update `src/app.module.ts` — hapus WhatsAppModule (API tidak perlu WA sessions)
-- [ ] Buat `src/queue/worker-queue.module.ts` — register semua processors (consumers)
-- [ ] Update `src/queue/queue.module.ts` — hanya producers + BullModule.registerQueue
-- [ ] Update `docker-compose.prod.yml` — tambah service `worker` (`node dist/src/worker.js`)
-- [ ] Update `scripts/deploy.sh` — tambah step restart worker container
-- [ ] Test lokal: 2 terminal, API + Worker jalan terpisah
-- [ ] E2E test ke VPS setelah deploy: `npx jest --config jest.e2e.config.ts`
-- [ ] Run pending DB migration di VPS (lihat seksi "Pending VPS Tasks" di bawah)
+- [x] Buat `src/worker.ts` — entrypoint baru (`NestFactory.create` on port 3099)
+- [x] Buat `src/worker.module.ts` — import PrismaModule, QueueModule, WorkerQueueModule, WhatsAppModule, RealtimeModule
+- [x] Update `src/app.module.ts` — hapus WhatsAppModule (API tidak perlu WA sessions)
+- [x] Buat `src/queue/worker-queue.module.ts` — register semua processors (consumers)
+- [x] Update `src/queue/queue.module.ts` — hanya producers + BullModule.registerQueue
+- [x] Update `docker-compose.prod.yml` — tambah service `worker` (`node dist/src/worker.js`)
+- [x] Fix `@Processor` concurrency syntax — `@Processor('queue', { concurrency: N })` (was object-form, TypeScript rejected it)
+- [x] Run `prisma generate` — regenerate client setelah tambah `dailyDeviceLimit` column
+- [x] Build clean + 83 unit tests passing
+- [ ] **TODO: Deploy ke VPS** — `ssh root@194.233.67.65 "cd /opt/watether && bash scripts/deploy.sh"`
+- [ ] **TODO: Run DB migration di VPS** — lihat seksi "Pending VPS Tasks"
+- [ ] **TODO: E2E test setelah deploy** — `npx jest --config jest.e2e.config.ts`
+
+**Catatan Real-Time:** Worker punya Socket.IO server di port 3099 tapi frontend clients connect ke API port 3009.
+Worker emits (device status, message.sent) tidak reach frontend clients sampai `@socket.io/redis-adapter` dipasang.
+Frontend masih bisa poll status via REST. Ini trade-off disengaja untuk Phase 2 — Phase 2.5 fix ini.
+
+### Phase 2.5 — Socket.IO Redis Adapter (real-time dari worker ke frontend) 📋 PLANNED
+> Worker emits sekarang no-op karena frontend clients connect ke API's Socket.IO, bukan worker's.
+
+- [ ] `npm install @socket.io/redis-adapter` (di backend)
+- [ ] Konfigurasi adapter di `main.ts` dan `worker.ts`:
+  ```typescript
+  import { createAdapter } from '@socket.io/redis-adapter';
+  import { createClient } from 'redis';
+  const pubClient = createClient({ url: redisUrl });
+  const subClient = pubClient.duplicate();
+  await Promise.all([pubClient.connect(), subClient.connect()]);
+  app.getHttpAdapter().getInstance().adapter(createAdapter(pubClient, subClient));
+  ```
+- [ ] Test: trigger message send dari worker → status update muncul di frontend tanpa refresh
 
 ### Phase 3 — Shard Device Workers 📋 PLANNED
 > Satu worker ~500 device. 40.000 device = ~80 worker shards.
@@ -157,4 +178,10 @@ src/
 <!-- Tambah catatan, keputusan, atau temuan di sini -->
 
 - 2026-04-10: Phase 1 selesai, semua commit pushed ke main. Phase 2 siap dimulai.
+- 2026-04-10: Phase 2 selesai secara lokal (build clean, 83 tests pass). Belum di-deploy ke VPS.
+  - `src/worker.ts` + `src/worker.module.ts` + `src/queue/worker-queue.module.ts` dibuat
+  - `AppModule` tidak lagi import `WhatsAppModule`
+  - `QueueModule` tidak lagi register processors (hanya producers)
+  - `docker-compose.prod.yml` sudah punya service `worker` (port 3099, sleep 15s lalu start)
+  - Real-time dari worker ke frontend belum jalan (perlu Redis adapter — Phase 2.5)
 - Jangan push langsung ke main — commit dulu, minta approval user, baru push.

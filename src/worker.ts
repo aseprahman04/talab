@@ -1,8 +1,20 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { WorkerModule } from './worker.module';
+
+const logger = new Logger('WATether Worker');
 
 async function bootstrap() {
-  await NestFactory.createApplicationContext(AppModule);
-  console.log('WATether worker context started');
+  // Use create() (not createApplicationContext) so RealtimeGateway has an
+  // HTTP server to bind its Socket.IO instance to.
+  const port = Number(process.env.WORKER_PORT ?? 3099);
+  const app = await NestFactory.create(WorkerModule, { logger: ['log', 'warn', 'error'] });
+  app.enableShutdownHooks();
+  await app.listen(port);
+  logger.log(`Started on port ${port} — listening for BullMQ jobs`);
 }
-bootstrap();
+
+bootstrap().catch((err: unknown) => {
+  logger.error(`Fatal startup error: ${String(err)}`);
+  process.exit(1);
+});

@@ -19,7 +19,6 @@ import { MessagesModule } from './messages/messages.module';
 import { QueueModule } from './queue/queue.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 
 @Module({
@@ -60,7 +59,6 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     ScheduledMessagesModule,
     AuditLogsModule,
     ContactsModule,
-    WhatsAppModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

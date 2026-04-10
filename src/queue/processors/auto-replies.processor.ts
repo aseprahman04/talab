@@ -7,7 +7,7 @@ import { QueueService } from '../queue.service';
 // concurrency=5: multiple devices can receive inbound messages simultaneously.
 // Each auto-reply job is independent (different device/sender), so parallel
 // processing is safe and keeps response latency low across all devices.
-@Processor({ name: 'auto-replies', concurrency: 5 })
+@Processor('auto-replies', { concurrency: 5 })
 export class AutoRepliesProcessor extends WorkerHost {
   private readonly logger = new Logger(AutoRepliesProcessor.name);
 

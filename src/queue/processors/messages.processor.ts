@@ -10,7 +10,7 @@ import { WhatsAppSessionManager } from 'src/whatsapp/whatsapp-session.manager';
 // Broadcast recipients are already staggered with 3-8s delays, so at most
 // a handful of jobs are ready simultaneously — 3 slots is enough without
 // risk of flooding a single WA account.
-@Processor({ name: 'messages', concurrency: 3 })
+@Processor('messages', { concurrency: 3 })
 export class MessagesProcessor extends WorkerHost {
   constructor(
     private prisma: PrismaService,
