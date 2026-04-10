@@ -186,11 +186,11 @@ src/
 <!-- Tambah catatan, keputusan, atau temuan di sini -->
 
 - 2026-04-10: Phase 1 selesai, semua commit pushed ke main. Phase 2 siap dimulai.
-- 2026-04-10: Phase 2.5 + Phase 3 + Phase 4 selesai secara lokal (build clean, 83 tests pass). Belum di-deploy ke VPS.
-- 2026-04-10: Phase 2 selesai secara lokal (build clean, 83 tests pass). Belum di-deploy ke VPS.
-  - `src/worker.ts` + `src/worker.module.ts` + `src/queue/worker-queue.module.ts` dibuat
-  - `AppModule` tidak lagi import `WhatsAppModule`
-  - `QueueModule` tidak lagi register processors (hanya producers)
-  - `docker-compose.prod.yml` sudah punya service `worker` (port 3099, sleep 15s lalu start)
-  - Real-time dari worker ke frontend belum jalan (perlu Redis adapter — Phase 2.5)
+- 2026-04-10: **Phase 2 + 2.5 + 3 + 4 selesai & pushed ke `origin/main`** (build clean, 83 tests pass).
+  - Commit `6ca5a56` — Phase 2: worker process split (`src/worker.ts`, `WorkerModule`, `WorkerQueueModule`)
+  - Commit `9a69245` — Phase 2.5 Redis adapter + Phase 3 sharding + Phase 4 multi-VPS config
+  - **Belum di-deploy ke VPS** — lihat seksi "Pending VPS Tasks"
+  - Real-time cross-process sudah jalan via `RedisIoAdapter` (ioredis pub/sub)
+  - 4 worker shards siap di `docker-compose.prod.yml` (TOTAL_SHARDS=4, ports 3100-3103)
+  - `docker-compose.scale.yml` tersedia untuk VPS tambahan
 - Jangan push langsung ke main — commit dulu, minta approval user, baru push.
