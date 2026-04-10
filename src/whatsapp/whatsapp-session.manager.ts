@@ -28,7 +28,7 @@ export class WhatsAppSessionManager implements OnModuleInit {
     });
 
     // Only restore devices that belong to this shard
-    const mine = all.filter(d => shardForDevice(d.id, totalShards) === shardId);
+    const mine = all.filter((d: { id: string }) => shardForDevice(d.id, totalShards) === shardId);
 
     this.logger.log(
       `Restoring ${mine.length}/${all.length} device session(s) ` +
