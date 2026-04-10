@@ -7,6 +7,7 @@ import { RealtimeGateway } from 'src/realtime/realtime.gateway';
 import { QueueService } from 'src/queue/queue.service';
 import { JOB_NAMES } from 'src/queue/jobs/job-names';
 import { usePrismaAuthState } from './whatsapp-auth-store';
+import { readShardConfig, shardForDevice } from 'src/common/utils/shard';
 
 @Injectable()
 export class WhatsAppSessionManager implements OnModuleInit {
@@ -20,18 +21,25 @@ export class WhatsAppSessionManager implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const connected = await this.prisma.device.findMany({
+    const { shardId, totalShards } = readShardConfig();
+    const all = await this.prisma.device.findMany({
       where: { status: 'CONNECTED' },
       select: { id: true },
     });
 
-    this.logger.log(`Restoring ${connected.length} device session(s) with 2 s stagger…`);
+    // Only restore devices that belong to this shard
+    const mine = all.filter(d => shardForDevice(d.id, totalShards) === shardId);
+
+    this.logger.log(
+      `Restoring ${mine.length}/${all.length} device session(s) ` +
+      `(shard ${shardId}/${totalShards}) with 2 s stagger…`,
+    );
 
     // Stagger reconnects: opening many WA WebSockets simultaneously spikes
     // connections on WA servers and is a reliable trigger for account bans.
-    // 2 s apart means 100 devices = ~3 min to fully restore — acceptable on startup.
-    for (let i = 0; i < connected.length; i++) {
-      const device = connected[i];
+    // 2 s apart means 500 devices/shard = ~17 min to fully restore — acceptable.
+    for (let i = 0; i < mine.length; i++) {
+      const device = mine[i];
       if (i > 0) await new Promise((r) => setTimeout(r, 2000));
       this.connect(device.id).catch((err) =>
         this.logger.error(`Failed to restore device ${device.id}: ${err}`),

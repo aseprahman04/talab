@@ -5,6 +5,7 @@ import { JOB_NAMES } from 'src/queue/jobs/job-names';
 import { QueueService } from 'src/queue/queue.service';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
 import { WhatsAppSessionManager } from 'src/whatsapp/whatsapp-session.manager';
+import { readShardConfig, shardForDevice } from 'src/common/utils/shard';
 
 // concurrency=3: allows up to 3 parallel WA sends per worker.
 // Broadcast recipients are already staggered with 3-8s delays, so at most
@@ -12,18 +13,32 @@ import { WhatsAppSessionManager } from 'src/whatsapp/whatsapp-session.manager';
 // risk of flooding a single WA account.
 @Processor('messages', { concurrency: 3 })
 export class MessagesProcessor extends WorkerHost {
+  private readonly shardId: number;
+  private readonly totalShards: number;
+
   constructor(
     private prisma: PrismaService,
     private queue: QueueService,
     private realtime: RealtimeGateway,
     private sessionManager: WhatsAppSessionManager,
-  ) { super(); }
+  ) {
+    super();
+    const cfg = readShardConfig();
+    this.shardId = cfg.shardId;
+    this.totalShards = cfg.totalShards;
+  }
 
-  async process(job: Job<{ messageId: string }>): Promise<void> {
+  async process(job: Job<{ messageId: string }>, token?: string): Promise<void> {
     if (job.name !== JOB_NAMES.MESSAGE_SEND) return;
     const message = await this.prisma.message.findUnique({ where: { id: job.data.messageId } });
     if (!message) return;
     if (['SENT', 'DELIVERED', 'READ'].includes(message.status)) return;
+
+    // Shard guard: only this shard's worker handles this device's sessions
+    if (shardForDevice(message.deviceId, this.totalShards) !== this.shardId) {
+      await job.moveToDelayed(Date.now() + 300, token);
+      return;
+    }
 
     // Enforce monthly workspace quota + per-device daily limit
     const subscription = await this.prisma.subscription.findUnique({

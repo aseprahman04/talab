@@ -33,6 +33,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^10.4.9",
     "@prisma/client": "^5.20.0",
+    "@socket.io/redis-adapter": "^8.3.0",
     "@types/cookie-parser": "^1.4.10",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "argon2": "^0.41.1",

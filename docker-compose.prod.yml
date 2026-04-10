@@ -23,17 +23,81 @@ services:
         max-size: "20m"
         max-file: "5"
 
-  worker:
+  # ── Device Worker Shards ──────────────────────────────────────────────────────
+  # Scale: set TOTAL_SHARDS=N and add worker-1..N-1 services.
+  # Each shard owns ~(total_devices / N) WA sessions.
+  # At 500 devices/shard, 4 shards covers 2 000 devices on one VPS.
+  # For more devices: add shards, or add VPS nodes (see docker-compose.scale.yml).
+
+  worker-0:
     image: watether-backend:latest
-    container_name: watether_worker
+    container_name: watether_worker_0
     restart: unless-stopped
     network_mode: host
     env_file:
       - /opt/watether/.env.production
     environment:
       NODE_ENV: production
-      WORKER_PORT: 3099
-    # Worker starts after backend so db push has already run
+      WORKER_PORT: 3100
+      SHARD_ID: "0"
+      TOTAL_SHARDS: "4"
+    command: ["sh", "-c", "sleep 15 && node dist/src/worker.js"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  worker-1:
+    image: watether-backend:latest
+    container_name: watether_worker_1
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - /opt/watether/.env.production
+    environment:
+      NODE_ENV: production
+      WORKER_PORT: 3101
+      SHARD_ID: "1"
+      TOTAL_SHARDS: "4"
+    command: ["sh", "-c", "sleep 15 && node dist/src/worker.js"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  worker-2:
+    image: watether-backend:latest
+    container_name: watether_worker_2
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - /opt/watether/.env.production
+    environment:
+      NODE_ENV: production
+      WORKER_PORT: 3102
+      SHARD_ID: "2"
+      TOTAL_SHARDS: "4"
+    command: ["sh", "-c", "sleep 15 && node dist/src/worker.js"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  worker-3:
+    image: watether-backend:latest
+    container_name: watether_worker_3
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - /opt/watether/.env.production
+    environment:
+      NODE_ENV: production
+      WORKER_PORT: 3103
+      SHARD_ID: "3"
+      TOTAL_SHARDS: "4"
     command: ["sh", "-c", "sleep 15 && node dist/src/worker.js"]
     logging:
       driver: json-file

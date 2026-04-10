@@ -38,34 +38,42 @@
 Worker emits (device status, message.sent) tidak reach frontend clients sampai `@socket.io/redis-adapter` dipasang.
 Frontend masih bisa poll status via REST. Ini trade-off disengaja untuk Phase 2 — Phase 2.5 fix ini.
 
-### Phase 2.5 — Socket.IO Redis Adapter (real-time dari worker ke frontend) 📋 PLANNED
-> Worker emits sekarang no-op karena frontend clients connect ke API's Socket.IO, bukan worker's.
+### Phase 2.5 — Socket.IO Redis Adapter ✅ DONE
+> Worker emits (message.sent, device.status.updated) sekarang reach frontend clients via Redis pub/sub.
 
-- [ ] `npm install @socket.io/redis-adapter` (di backend)
-- [ ] Konfigurasi adapter di `main.ts` dan `worker.ts`:
-  ```typescript
-  import { createAdapter } from '@socket.io/redis-adapter';
-  import { createClient } from 'redis';
-  const pubClient = createClient({ url: redisUrl });
-  const subClient = pubClient.duplicate();
-  await Promise.all([pubClient.connect(), subClient.connect()]);
-  app.getHttpAdapter().getInstance().adapter(createAdapter(pubClient, subClient));
-  ```
-- [ ] Test: trigger message send dari worker → status update muncul di frontend tanpa refresh
+- [x] `npm install @socket.io/redis-adapter`
+- [x] `src/realtime/redis-io.adapter.ts` — custom IoAdapter using ioredis
+- [x] `src/main.ts` — API uses `RedisIoAdapter` (wires pub/sub on startup)
+- [x] `src/worker.ts` — Worker uses `RedisIoAdapter` (emits cross-process to API clients)
 
-### Phase 3 — Shard Device Workers 📋 PLANNED
-> Satu worker ~500 device. 40.000 device = ~80 worker shards.
+### Phase 3 — Shard Device Workers ✅ DONE
+> 4 shards × ~500 devices = 2 000 concurrent WA sessions on one VPS.
 
-- [ ] Worker baca env `SHARD_ID`, `TOTAL_SHARDS`
-- [ ] `WhatsAppSessionManager.onModuleInit` filter device by shard (`deviceId % TOTAL_SHARDS === SHARD_ID`)
-- [ ] `MessagesProcessor` skip job jika device bukan di shard ini
-- [ ] Redis shard registry: `SET device:{id}:shard worker-N EX 60` (heartbeat)
-- [ ] `docker-compose.prod.yml` scale: `worker-0`, `worker-1`, dst
+- [x] `src/common/utils/shard.ts` — `shardForDevice(deviceId, totalShards)` — djb2 hash, works for UUID + string IDs
+- [x] `WhatsAppSessionManager.onModuleInit` — only restores devices for this shard
+- [x] `MessagesProcessor` — shard guard: `job.moveToDelayed(+300ms)` if wrong shard
+- [x] `DevicesProcessor` — shard guard: `job.moveToDelayed(+300ms)` if wrong shard
+- [x] `ScheduledMessagesProcessor` — per-shard tick jobId + shard filter on query
+- [x] `docker-compose.prod.yml` — 4 worker shards (worker-0..3, ports 3100-3103, `TOTAL_SHARDS=4`)
+- [x] Default: `TOTAL_SHARDS=1` → single-worker mode, no sharding overhead
 
-### Phase 4 — Multi-VPS Horizontal Scale 📋 PLANNED
-- [ ] Tambah VPS, update `TOTAL_SHARDS` di env
-- [ ] Load balancer (Nginx / Cloudflare) di depan API nodes
-- [ ] Shared Redis + Postgres tetap single source of truth
+### Phase 4 — Multi-VPS Horizontal Scale ✅ DONE (config ready)
+> Scale beyond 1 VPS by running more worker shards on additional machines.
+
+- [x] `docker-compose.scale.yml` — template for VPS-2, VPS-3, etc. (worker-only nodes)
+- [x] Pattern: increase `TOTAL_SHARDS`, assign each VPS a block of `SHARD_ID` values
+- [ ] **TODO (when needed):** set up load balancer (Nginx / Cloudflare) in front of API nodes
+- [ ] **TODO (when needed):** run `docker-compose.scale.yml` on additional VPS nodes
+
+**Capacity reference:**
+
+| Shards | Workers | Devices | VPS needed |
+|--------|---------|---------|------------|
+| 1 | 1 | ~500 | 1 |
+| 4 | 4 | ~2 000 | 1 |
+| 8 | 8 | ~4 000 | 1–2 |
+| 40 | 40 | ~20 000 | 4–5 |
+| 80 | 80 | ~40 000 | 8–10 |
 
 ---
 
@@ -178,6 +186,7 @@ src/
 <!-- Tambah catatan, keputusan, atau temuan di sini -->
 
 - 2026-04-10: Phase 1 selesai, semua commit pushed ke main. Phase 2 siap dimulai.
+- 2026-04-10: Phase 2.5 + Phase 3 + Phase 4 selesai secara lokal (build clean, 83 tests pass). Belum di-deploy ke VPS.
 - 2026-04-10: Phase 2 selesai secara lokal (build clean, 83 tests pass). Belum di-deploy ke VPS.
   - `src/worker.ts` + `src/worker.module.ts` + `src/queue/worker-queue.module.ts` dibuat
   - `AppModule` tidak lagi import `WhatsAppModule`
