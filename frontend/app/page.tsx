@@ -33,6 +33,7 @@ export default function HomePage() {
 
   const plans = [
     {
+      code: 'free',
       name: 'Free',
       price: '$0',
       caption: 'Try it at no cost. 1 WA number, great for testing before going to production.',
@@ -46,6 +47,7 @@ export default function HomePage() {
       missing: ['Auto reply', 'Webhook & API', 'Multiple members'],
     },
     {
+      code: 'bisnis',
       name: 'Business',
       price: '$3',
       caption: 'For businesses that need several active WA numbers at once.',
@@ -62,6 +64,7 @@ export default function HomePage() {
       featured: true,
     },
     {
+      code: 'tim',
       name: 'Team',
       price: '$10',
       caption: 'For CS teams, sales, or multi-branch operations with many active numbers.',
@@ -112,7 +115,7 @@ export default function HomePage() {
             </p>
             <div className="hero-actions">
               <Link className="button-primary" href="/console?mode=register">Start Free</Link>
-              <a className="button-ghost" href="#demo-form">Request demo</a>
+              <a className="button-ghost" href="mailto:support@watether.com?subject=Demo%20Request">Request demo</a>
               <a className="button-secondary" href="#features">See features</a>
             </div>
             <div className="helper-strip">
@@ -185,7 +188,7 @@ export default function HomePage() {
                 {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
                 {'missing' in plan && (plan.missing as string[]).map((feature) => <li key={feature} style={{ color: 'var(--muted)', textDecoration: 'line-through' }}>{feature}</li>)}
               </ul>
-              <Link className={plan.featured ? 'button-primary' : 'button-secondary'} href={`/console?mode=register&plan=${encodeURIComponent(plan.name)}`}>Get started</Link>
+              <Link className={plan.featured ? 'button-primary' : 'button-secondary'} href={`/console?mode=register&plan=${encodeURIComponent(plan.code)}`}>Get started</Link>
             </article>
           ))}
         </div>
