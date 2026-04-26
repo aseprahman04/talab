@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -13,7 +14,7 @@ const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  maxAge: 30 * 24 * 60 * 60 * 1000,
   path: '/',
 };
 
@@ -25,6 +26,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @Throttle({ long: { ttl: 3600000, limit: 5 } })
   @ApiOperation({ summary: 'Register a new account with email & password' })
   @ApiResponse({ status: 201, description: 'Returns accessToken + refreshToken; also sets session cookie' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
@@ -40,6 +42,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(200)
+  @Throttle({ medium: { ttl: 900000, limit: 10 } })
   @ApiOperation({ summary: 'Login with email & password' })
   @ApiResponse({ status: 200, description: 'Returns accessToken + refreshToken; also sets session cookie' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
@@ -50,6 +53,17 @@ export class AuthController {
     });
     res.cookie(SESSION_COOKIE, result.sessionToken, COOKIE_OPTS);
     return { accessToken: result.accessToken, refreshToken: result.refreshToken };
+  }
+
+  @Public()
+  @Post('refresh')
+  @HttpCode(200)
+  @Throttle({ medium: { ttl: 60000, limit: 20 } })
+  @ApiOperation({ summary: 'Exchange refresh token for new access + refresh token pair' })
+  @ApiResponse({ status: 200, description: 'Returns new accessToken + refreshToken' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  async refresh(@Body() body: { refreshToken: string }) {
+    return this.authService.refreshTokens(body.refreshToken);
   }
 
   @Post('logout')

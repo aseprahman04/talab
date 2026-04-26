@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { AutoRepliesModule } from './auto-replies/auto-replies.module';
@@ -44,6 +45,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
       { name: 'long', ttl: 60000, limit: 200 },
     ]),
     PrismaModule,
+    MailModule,
     DemoRequestsModule,
     SubscriptionsModule,
     QueueModule,

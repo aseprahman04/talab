@@ -198,3 +198,4 @@ src/
   - 4 worker shards siap di `docker-compose.prod.yml` (TOTAL_SHARDS=4, ports 3100-3103)
   - `docker-compose.scale.yml` tersedia untuk VPS tambahan
 - Jangan push langsung ke main — commit dulu, minta approval user, baru push.
+- 2026-04-26: **Landing page conversion rewrite** — audit via 10-dimension framework, friction HIGH → implementasi semua critical + high-impact fixes di `frontend/app/page.tsx`. Detail: headline outcome-led, disclaimer section dihapus (pindah ke FAQ), pain band + how-it-works section ditambah, FAQ expand 3→6, reorder FAQ sebelum testimonials, testimonials + angka spesifik, ROI framing di pricing, "Most popular" badge di featured plan. CSS tidak berubah.

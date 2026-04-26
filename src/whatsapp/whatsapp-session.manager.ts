@@ -117,6 +117,41 @@ export class WhatsAppSessionManager implements OnModuleInit {
       }
     });
 
+    // Track outbound delivery receipts: SENT → DELIVERED → READ
+    sock.ev.on('messages.update', async (updates) => {
+      for (const { key, update } of updates) {
+        if (!key.fromMe) continue;
+        const jid = key.remoteJid ?? '';
+        if (!jid.endsWith('@s.whatsapp.net')) continue;
+        if (!key.id || update.status == null) continue;
+
+        // Baileys status: 3=DELIVERY_ACK, 4=READ, 5=PLAYED (treat as READ)
+        let newStatus: 'DELIVERED' | 'READ' | null = null;
+        if (update.status === 3) newStatus = 'DELIVERED';
+        if (update.status === 4 || update.status === 5) newStatus = 'READ';
+        if (!newStatus) continue;
+
+        const message = await this.prisma.message.findFirst({
+          where: { providerMessageId: key.id, workspaceId: device.workspaceId },
+        });
+        if (!message) continue;
+
+        // Only advance status (never go backwards: SENT → DELIVERED → READ)
+        const order: Record<string, number> = { SENT: 1, DELIVERED: 2, READ: 3 };
+        if ((order[message.status] ?? 0) >= order[newStatus]) continue;
+
+        await this.prisma.message.update({
+          where: { id: message.id },
+          data: { status: newStatus },
+        });
+
+        this.realtime.emitToWorkspace(device.workspaceId, 'message.status.updated', {
+          messageId: message.id,
+          status: newStatus,
+        });
+      }
+    });
+
     // Sync phone contacts → Leads when WA sends the initial contact list
     sock.ev.on('messaging-history.set', async ({ contacts }) => {
       const rows = (contacts as WAContact[])
@@ -203,6 +238,14 @@ export class WhatsAppSessionManager implements OnModuleInit {
           this.realtime.emitToWorkspace(device.workspaceId, 'device.status.updated', {
             deviceId,
             status: 'DISCONNECTED',
+          });
+          await this.dispatchWebhooks(device.workspaceId, 'device.disconnected', {
+            event: 'device.disconnected',
+            workspaceId: device.workspaceId,
+            deviceId,
+            status: 'DISCONNECTED',
+            reason,
+            timestamp: new Date().toISOString(),
           });
         } else if (isActiveSocket) {
           // Only schedule reconnect for the active socket, not replaced ones

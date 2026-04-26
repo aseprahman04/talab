@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { AuditLogsService } from 'src/audit-logs/audit-logs.service';
+import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { DemoRequestsService } from './demo-requests.service';
 
@@ -10,6 +11,7 @@ const mockPrisma = {
 };
 
 const mockAudit = { log: jest.fn().mockResolvedValue(undefined) };
+const mockMail = { send: jest.fn().mockResolvedValue(undefined) };
 
 const demoRequestDto = {
   name: 'Budi Santoso',
@@ -36,6 +38,7 @@ describe('DemoRequestsService', () => {
         DemoRequestsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AuditLogsService, useValue: mockAudit },
+        { provide: MailService, useValue: mockMail },
       ],
     }).compile();
     service = module.get(DemoRequestsService);

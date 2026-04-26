@@ -7,9 +7,14 @@ import { WorkspacesService } from './workspaces.service';
 const USER_ID = '00000000-0000-0000-0000-000000000001';
 const WS_ID = '00000000-0000-0000-0000-000000000002';
 
+const PLAN_ID = '00000000-0000-0000-0000-000000000099';
+const freePlan = { id: PLAN_ID, code: 'free' };
+
 const mockPrisma = {
   workspace: { findUnique: jest.fn(), create: jest.fn() },
   workspaceMember: { findMany: jest.fn() },
+  plan: { findUnique: jest.fn().mockResolvedValue(freePlan) },
+  subscription: { create: jest.fn().mockResolvedValue({}) },
 };
 const mockAudit = { log: jest.fn().mockResolvedValue(undefined) };
 

@@ -53,8 +53,8 @@ export class MessagesProcessor extends WorkerHost {
     // ── Monthly workspace quota ────────────────────────────────────────────────
     if (monthlyQuota > 0) {
       const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
+      startOfMonth.setUTCDate(1);
+      startOfMonth.setUTCHours(0, 0, 0, 0);
       const sentThisMonth = await this.prisma.message.count({
         where: {
           workspaceId: message.workspaceId,

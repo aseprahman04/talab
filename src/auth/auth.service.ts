@@ -117,6 +117,33 @@ export class AuthService {
     return this.sessionService.listSessions(userId);
   }
 
+  async refreshTokens(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+    let payload: { sub: string; email: string };
+    try {
+      payload = await this.jwt.verifyAsync(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET || 'change_me_refresh',
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const [newAccessToken, newRefreshToken] = await Promise.all([
+      this.jwt.signAsync(
+        { sub: user.id, email: user.email },
+        { secret: process.env.JWT_ACCESS_SECRET || 'change_me_access', expiresIn: process.env.JWT_ACCESS_TTL || '15m' },
+      ),
+      this.jwt.signAsync(
+        { sub: user.id, email: user.email },
+        { secret: process.env.JWT_REFRESH_SECRET || 'change_me_refresh', expiresIn: process.env.JWT_REFRESH_TTL || '30d' },
+      ),
+    ]);
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
+
   async issueAccessToken(userId: string, email: string): Promise<string> {
     return this.jwt.signAsync(
       { sub: userId, email },
