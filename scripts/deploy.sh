@@ -19,6 +19,8 @@ npm ci --legacy-peer-deps
 NEXT_PUBLIC_API_BASE_URL=https://watheter.com/api npm run build
 
 mkdir -p $APP_DIR/frontend/.next/standalone/frontend/.next
+# Replace static assets (delete first to avoid stale files from prev build)
+rm -rf $APP_DIR/frontend/.next/standalone/frontend/.next/static
 cp -r $APP_DIR/frontend/.next/static $APP_DIR/frontend/.next/standalone/frontend/.next/static
 cp -r $APP_DIR/frontend/public $APP_DIR/frontend/.next/standalone/frontend/public 2>/dev/null || true
 
@@ -27,6 +29,8 @@ echo "[deploy] restarting frontend..."
 cd $APP_DIR
 pm2 startOrRestart $APP_DIR/ecosystem.config.js --update-env
 pm2 save
+# Force reload to ensure all cluster instances run new code
+pm2 reload watether-frontend --update-env || true
 
 # ── Nginx: ensure SSL cert exists (self-signed, works with Cloudflare Full mode)
 mkdir -p /etc/ssl/watether
