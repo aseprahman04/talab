@@ -36,7 +36,7 @@ export default function HomePage() {
             <p>{tr.hero.subtext}</p>
             <div className="hero-actions">
               <Link className="button-primary" href="/console?mode=register">{tr.hero.ctaPrimary}</Link>
-              <Link className="button-secondary" href="#how-it-works">{tr.hero.ctaHow}</Link>
+              <Link className="button-ghost" href="#how-it-works">{tr.hero.ctaHow}</Link>
             </div>
             <div className="helper-strip">
               <span>{tr.hero.pill1}</span>

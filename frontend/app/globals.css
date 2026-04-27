@@ -9,9 +9,9 @@
   --border: rgba(14, 32, 24, 0.13);
   --accent: #1aab88;
   --accent-hover: #158f72;
-  --accent-2: #f07a3a;
-  --accent-3: #f5c842;
-  --danger: #c0392b;
+  --accent-2: #0f8c6e;
+  --accent-3: rgba(255,255,255,0.12);
+  --danger: #e05a4a;
   --shadow: 0 20px 60px rgba(14, 32, 24, 0.10);
   color-scheme: light;
 }
@@ -27,8 +27,8 @@
   --border: rgba(40, 180, 130, 0.13);
   --accent: #22d4a4;
   --accent-hover: #1cbf94;
-  --accent-2: #f07a3a;
-  --accent-3: #f5c842;
+  --accent-2: #1cbf94;
+  --accent-3: rgba(255,255,255,0.10);
   --danger: #e05a4a;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.50);
   color-scheme: dark;
@@ -48,9 +48,9 @@ body {
   color: var(--ink);
   font-family: var(--font-body), sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(239, 127, 69, 0.32), transparent 28%),
-    radial-gradient(circle at 85% 10%, rgba(18, 110, 98, 0.28), transparent 24%),
-    linear-gradient(135deg, #fbf4ea 0%, #f1ece3 38%, #ebe6dc 100%);
+    radial-gradient(circle at top left, rgba(26, 171, 136, 0.10), transparent 40%),
+    radial-gradient(circle at 90% 15%, rgba(26, 171, 136, 0.07), transparent 35%),
+    linear-gradient(135deg, #f0faf6 0%, #e8f6f0 50%, #e2f2ec 100%);
   transition: background 0.25s ease, color 0.2s ease;
 }
 
@@ -112,8 +112,20 @@ code {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: 12px;
+  height: 64px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(16px);
+}
+
+.marketing-nav .button-row {
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .brand-lockup {
@@ -145,8 +157,8 @@ code {
   border-radius: 18px;
   font-weight: 700;
   color: white;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 16px 28px rgba(18, 110, 98, 0.24);
+  background: var(--accent);
+  box-shadow: 0 8px 20px rgba(26, 171, 136, 0.28);
 }
 
 .marketing-grid {
@@ -238,13 +250,13 @@ code {
 }
 
 .signal-card.contrast {
-  color: #fff9ef;
-  background: linear-gradient(160deg, #173845, #215d55 58%, #e57b45 140%);
+  color: #ffffff;
+  background: linear-gradient(160deg, #0e3428, #1a6650);
 }
 
 .signal-card.contrast li,
 .signal-card.contrast p {
-  color: rgba(255, 249, 239, 0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .signal-card.contrast .eyebrow {
@@ -261,7 +273,7 @@ code {
 }
 
 .eyebrow.alt {
-  color: var(--accent-2);
+  color: var(--accent);
   background: rgba(239, 127, 69, 0.12);
 }
 
@@ -328,7 +340,7 @@ code {
   display: grid;
   gap: 16px;
   max-width: 720px;
-  border-left: 3px solid var(--accent-2);
+  border-left: 3px solid var(--accent);
 }
 
 .disclaimer-band p {
@@ -620,20 +632,22 @@ code {
 
 .button-primary {
   color: white;
-  background: linear-gradient(135deg, var(--accent), #0d564d);
-  box-shadow: 0 12px 24px rgba(18, 110, 98, 0.22);
+  background: var(--accent);
+  box-shadow: 0 8px 20px rgba(26, 171, 136, 0.28);
 }
 
 .button-secondary,
 .mini-button.accent {
-  color: var(--ink);
-  background: linear-gradient(135deg, var(--accent-3), #f29b5f);
+  color: var(--accent);
+  background: transparent;
+  border: 2px solid var(--accent);
 }
 
 .button-ghost,
 .mini-button {
   color: var(--ink);
-  background: rgba(24, 34, 47, 0.06);
+  background: transparent;
+  border: 1px solid var(--border);
 }
 
 .button-ghost.danger {
@@ -1042,12 +1056,20 @@ th {
   font-family: var(--font-arabic), var(--font-body), sans-serif;
 }
 
-[dir="rtl"] .marketing-nav,
-[dir="rtl"] .button-row,
+/* RTL: reverse row direction for flex items */
 [dir="rtl"] .hero-actions,
 [dir="rtl"] .helper-strip,
 [dir="rtl"] .rail-brand,
 [dir="rtl"] .footer-links {
+  flex-direction: row-reverse;
+}
+
+/* Nav + button-row: keep row but use space-between naturally in RTL */
+[dir="rtl"] .marketing-nav {
+  flex-direction: row;
+}
+
+[dir="rtl"] .marketing-nav .button-row {
   flex-direction: row-reverse;
 }
 

@@ -43,8 +43,9 @@ export const metadata: Metadata = {
     alternateLocale: 'en_US',
   },
   icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
+    icon: '/logo_dark_square.png',
+    apple: '/logo_dark_square.png',
+    shortcut: '/logo_dark_square.png',
   },
   alternates: {
     languages: {
