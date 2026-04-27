@@ -284,7 +284,7 @@ code {
 }
 
 .pricing-card.featured ul li::before {
-  color: rgba(255,255,255,0.9);
+  color: var(--accent);
 }
 
 .eyebrow.alt {
@@ -413,20 +413,38 @@ code {
 
 .pricing-card.featured {
   position: relative;
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.70);
+  color: var(--ink);
 }
 
-.pricing-card.featured h2,
+.pricing-card.featured h2 {
+  color: var(--ink);
+}
+
 .pricing-card.featured p,
 .pricing-card.featured li,
 .pricing-card.featured small {
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--muted);
 }
 
 .pricing-card.featured .eyebrow {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--accent);
+}
+
+[data-theme="dark"] .pricing-card.featured {
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #e8f0e9;
+}
+
+[data-theme="dark"] .pricing-card.featured h2,
+[data-theme="dark"] .pricing-card.featured li {
+  color: #e8f0e9;
+}
+
+[data-theme="dark"] .pricing-card.featured p,
+[data-theme="dark"] .pricing-card.featured small {
+  color: rgba(232, 240, 233, 0.70);
 }
 
 .quota-pill {
@@ -443,9 +461,14 @@ code {
 }
 
 .pricing-card.featured .quota-pill {
-  background: rgba(255, 255, 255, 0.20);
-  border-color: rgba(255, 255, 255, 0.40);
-  color: #fff;
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+[data-theme="dark"] .pricing-card.featured .quota-pill {
+  border-color: rgba(255, 255, 255, 0.50);
+  color: rgba(255, 255, 255, 0.80);
 }
 
 .faq-list {
@@ -664,33 +687,51 @@ code {
   line-height: 1;
 }
 
-.button-primary:hover,
 .button-secondary:hover,
-.button-ghost:hover,
-.mini-button:hover,
+.mini-button.accent:hover,
 .workspace-item:hover,
 .pill:hover {
-  opacity: 0.88;
+  opacity: 0.80;
 }
 
 .button-primary {
-  color: white;
+  color: var(--accent);
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  box-shadow: none;
+}
+
+.button-primary:hover {
   background: var(--accent);
-  box-shadow: 0 2px 8px rgba(26, 171, 136, 0.20);
+  color: #fff;
+  opacity: 1 !important;
 }
 
 .button-secondary,
 .mini-button.accent {
   color: var(--accent);
   background: transparent;
-  border: 2px solid var(--accent);
+  border: 1.5px solid var(--accent);
 }
 
 .button-ghost,
 .mini-button {
   color: var(--ink);
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
+}
+
+[data-theme="dark"] .button-ghost,
+[data-theme="dark"] .mini-button {
+  color: rgba(255,255,255,0.75);
+  border-color: rgba(255,255,255,0.25);
+}
+
+[data-theme="dark"] .button-ghost:hover,
+[data-theme="dark"] .mini-button:hover {
+  border-color: rgba(255,255,255,0.55);
+  color: #fff;
+  opacity: 1 !important;
 }
 
 .button-ghost.danger {
@@ -1338,21 +1379,17 @@ th {
 .reading-time { color: var(--muted); font-size: 13px; }
 
 /* ── Featured pricing card button ── */
-.pricing-card.featured .button-primary,
-.pricing-card.featured .button-secondary {
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--accent);
-  border: none;
-  box-shadow: none;
-}
-
-.pricing-card.featured .button-primary:hover,
-.pricing-card.featured .button-secondary:hover {
-  background: #fff;
-  opacity: 1;
-}
-
-/* ── Dark mode featured card ── */
-[data-theme="dark"] .pricing-card.featured {
+.pricing-card.featured .button-primary {
   background: var(--accent);
+  color: #fff;
+  border: none;
+}
+
+.pricing-card.featured .button-primary:hover {
+  opacity: 0.88;
+}
+
+/* ── featured checkmark color ── */
+[data-theme="dark"] .pricing-card.featured ul li::before {
+  color: var(--accent);
 }
