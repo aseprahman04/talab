@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx jest:*)",
+      "Bash(ssh -o ConnectTimeout=8 -o BatchMode=yes root@watheter.com \"docker exec epondok-postgres psql -U epondok -d watether -c \\\\\"SELECT u.email, u.name, w.id as workspace_id, w.name as workspace_name FROM \\\\\\\\\\\\\"User\\\\\\\\\\\\\" u JOIN \\\\\\\\\\\\\"WorkspaceMember\\\\\\\\\\\\\" wm ON wm.\\\\\\\\\\\\\"userId\\\\\\\\\\\\\" = u.id JOIN \\\\\\\\\\\\\"Workspace\\\\\\\\\\\\\" w ON w.id = wm.\\\\\\\\\\\\\"workspaceId\\\\\\\\\\\\\" WHERE u.email ILIKE '%asep%' OR u.name ILIKE '%asep%' OR u.name ILIKE '%nurhakim%';\\\\\"\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"docker exec epondok-postgres psql -U epondok -d watether -c \\\\\"SELECT u.id as user_id, u.email, u.name, w.id as workspace_id, w.name as workspace_name FROM \\\\\\\\\\\\\"User\\\\\\\\\\\\\" u JOIN \\\\\\\\\\\\\"WorkspaceMember\\\\\\\\\\\\\" wm ON wm.\\\\\\\\\\\\\"userId\\\\\\\\\\\\\" = u.id JOIN \\\\\\\\\\\\\"Workspace\\\\\\\\\\\\\" w ON w.id = wm.\\\\\\\\\\\\\"workspaceId\\\\\\\\\\\\\" WHERE u.name ILIKE '%asep%' OR u.name ILIKE '%nurhakim%';\\\\\"\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"docker exec epondok-postgres psql -U epondok -d watether -c \\\\\"SELECT id, name, status, \\\\\\\\\\\\\"workspaceId\\\\\\\\\\\\\" FROM \\\\\\\\\\\\\"Device\\\\\\\\\\\\\" WHERE \\\\\\\\\\\\\"workspaceId\\\\\\\\\\\\\" IN \\('21118f7f-ba00-4a5e-a4b1-808c96e71a6f','44e9f467-04e8-49dd-8f2e-484cfaae2a69'\\);\\\\\"\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"pm2 list --no-color 2>&1 | grep -E 'watether|watheter|backend|api|name|status'\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"pm2 list --no-color 2>&1\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"docker ps --format 'table {{.Names}}\\\\t{{.Status}}\\\\t{{.Ports}}' 2>&1\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"cat /etc/nginx/sites-available/watether 2>/dev/null || cat /opt/watether/nginx/watheter.conf 2>/dev/null\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"ss -tlnp | grep -E '3003|3009' 2>&1\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"curl -s http://127.0.0.1:3009/api/health 2>&1 | head -20\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"grep -r '3009\\\\|watether\\\\|watheter' /etc/nginx/sites-enabled/ /etc/nginx/sites-available/ 2>/dev/null | grep -v '.conf:#'\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"ls -la /etc/nginx/sites-enabled/ 2>&1\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"curl -s https://watheter.com/api/health 2>&1 | head -5\")",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes root@194.233.67.65 \"docker exec epondok-postgres psql -U epondok -d watether -c \\\\\"SELECT \\\\\\\\\\\\\"passwordHash\\\\\\\\\\\\\" FROM \\\\\\\\\\\\\"User\\\\\\\\\\\\\" WHERE email='aseprahmanurhakim04@gmail.com';\\\\\"\")",
+      "Bash(mkdir -p prisma/migrations/20260410000001_add_daily_device_limit)",
+      "Bash(cat)",
+      "Bash(node -e \"const p = require\\('./node_modules/@nestjs/bullmq/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const t = require\\('./node_modules/@nestjs/bullmq/dist/decorators/processor.decorator'\\); console.log\\(t.toString\\(\\).substring\\(0, 500\\)\\)\")",
+      "Bash(node -e \"const {WorkerOptions} = require\\('bullmq'\\); \")",
+      "Bash(node -e \"const t = require\\('./node_modules/bullmq'\\); console.log\\(Object.keys\\(t\\).join\\(','\\)\\)\")",
+      "Bash(node -e \"require\\('@socket.io/redis-adapter'\\); console.log\\('ok'\\)\")",
+      "Bash(gh run:*)",
+      "Bash(cat .env.example)",
+      "Bash(cat .env.sample)"
+    ]
+  }
+}

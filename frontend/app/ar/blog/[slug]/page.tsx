@@ -128,7 +128,7 @@ export default async function BlogPost({ params }: Props) {
         <nav className="footer-links">
           <Link href="/">الرئيسية</Link>
           <Link href="/ar/blog">المدونة</Link>
-          <a href="mailto:support@talab.app">الدعم الفني</a>
+          <a href="mailto:support@talab.asia">الدعم الفني</a>
         </nav>
       </footer>
     </main>

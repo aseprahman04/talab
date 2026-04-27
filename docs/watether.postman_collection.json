@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "WATether API",
-    "description": "WhatsApp gateway control plane — full API collection.\n\n**Setup:**\n1. Set `baseUrl` to your backend (default: `http://localhost:3003/api`)\n2. Call **Auth / Login** or **Auth / Register** — test scripts auto-save `accessToken` and `workspaceId`\n3. All protected requests use `{{accessToken}}` via Bearer auth\n\n**Production:** set `baseUrl` to `https://watheter.com/api`\n\n**Seed values (local dev):**\n- `deviceId`: `seed-device-01`\n- `apiToken`: `wt_seeddemo000000000000000000000000000000000000000001`",
+    "description": "WhatsApp gateway control plane — full API collection.\n\n**Setup:**\n1. Set `baseUrl` to your backend (default: `http://localhost:3003/api`)\n2. Call **Auth / Login** or **Auth / Register** — test scripts auto-save `accessToken` and `workspaceId`\n3. All protected requests use `{{accessToken}}` via Bearer auth\n\n**Production:** set `baseUrl` to `https://talab.asia/api`\n\n**Seed values (local dev):**\n- `deviceId`: `seed-device-01`\n- `apiToken`: `wt_seeddemo000000000000000000000000000000000000000001`",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

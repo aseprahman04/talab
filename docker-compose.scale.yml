@@ -31,7 +31,7 @@ services:
       - /opt/watether/.env.production
     environment:
       NODE_ENV: production
-      WORKER_PORT: 3100
+      WORKER_PORT: 3022
       SHARD_ID: "${FIRST_SHARD:-2}"
       TOTAL_SHARDS: "${TOTAL_SHARDS:-8}"
     command: ["sh", "-c", "node dist/src/worker.js"]
@@ -50,7 +50,7 @@ services:
       - /opt/watether/.env.production
     environment:
       NODE_ENV: production
-      WORKER_PORT: 3101
+      WORKER_PORT: 3023
       SHARD_ID: "${SECOND_SHARD:-3}"
       TOTAL_SHARDS: "${TOTAL_SHARDS:-8}"
     command: ["sh", "-c", "node dist/src/worker.js"]

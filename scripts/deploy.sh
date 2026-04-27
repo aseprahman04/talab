@@ -16,7 +16,7 @@ docker image prune -f
 echo "[deploy] building frontend..."
 cd $APP_DIR/frontend
 npm ci --legacy-peer-deps
-NEXT_PUBLIC_API_BASE_URL=https://talab.app/api npm run build
+NEXT_PUBLIC_API_BASE_URL=https://talab.asia/api npm run build
 
 mkdir -p $APP_DIR/frontend/.next/standalone/frontend/.next
 # Replace static assets (delete first to avoid stale files from prev build)
@@ -39,7 +39,7 @@ if [ ! -f /etc/ssl/talab/origin.pem ]; then
   openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
     -keyout /etc/ssl/talab/origin.key \
     -out /etc/ssl/talab/origin.pem \
-    -subj "/CN=talab.app"
+    -subj "/CN=talab.asia"
 fi
 
 # ── Nginx: update config & reload ────────────────────────────────────────────

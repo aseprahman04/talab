@@ -76,7 +76,7 @@ export default function BlogIndex() {
           <Link href="/">الرئيسية</Link>
           <Link href="/terms">الشروط والأحكام</Link>
           <Link href="/privacy-policy">سياسة الخصوصية</Link>
-          <a href="mailto:support@talab.app">الدعم الفني</a>
+          <a href="mailto:support@talab.asia">الدعم الفني</a>
         </nav>
       </footer>
     </main>

@@ -8,11 +8,11 @@ services:
       - /opt/talab/.env.production
     environment:
       NODE_ENV: production
-      PORT: 3009
-      GOOGLE_CALLBACK_URL: https://talab.app/api/auth/google/callback
+      PORT: 3020
+      GOOGLE_CALLBACK_URL: https://talab.asia/api/auth/google/callback
     command: ["sh", "-c", "npx prisma@5 db push --accept-data-loss && node dist/src/main.js"]
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3009/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(()=>process.exit(0)).catch(()=>process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3020/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(()=>process.exit(0)).catch(()=>process.exit(1))\""]
       interval: 20s
       timeout: 10s
       retries: 5
@@ -47,7 +47,7 @@ services:
       - /opt/talab/.env.production
     environment:
       NODE_ENV: production
-      WORKER_PORT: 3100
+      WORKER_PORT: 3022
       SHARD_ID: "0"
       TOTAL_SHARDS: "1"
     command: ["sh", "-c", "sleep 15 && node dist/src/worker.js"]
@@ -66,16 +66,16 @@ services:
   #   env_file: [/opt/talab/.env.production]
   #   environment:
   #     NODE_ENV: production
-  #     WORKER_PORT: 3101
+  #     WORKER_PORT: 3023
   #     SHARD_ID: "1"
   #     TOTAL_SHARDS: "4"
   #   command: ["sh", "-c", "sleep 15 && node dist/src/worker.js"]
   #   logging: { driver: json-file, options: { max-size: "20m", max-file: "5" } }
   #
   # worker-2:
-  #   ... (SHARD_ID: "2", WORKER_PORT: 3102)
+  #   ... (SHARD_ID: "2", WORKER_PORT: 3024)
   #
   # worker-3:
-  #   ... (SHARD_ID: "3", WORKER_PORT: 3103)
+  #   ... (SHARD_ID: "3", WORKER_PORT: 3025)
   # ─────────────────────────────────────────────────────────────────────────────
   # NOTE: when enabling shards 1-3, also change worker-0 TOTAL_SHARDS to "4"

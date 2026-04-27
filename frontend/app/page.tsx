@@ -213,7 +213,7 @@ export default function HomePage() {
           <Link href="/refund-policy">{tr.footer.refund}</Link>
           <Link href="/faq">{tr.footer.faq}</Link>
           <Link href={`/${lang}/blog`}>{tr.footer.blog}</Link>
-          <a href="mailto:support@talab.app">{tr.footer.support}</a>
+          <a href="mailto:support@talab.asia">{tr.footer.support}</a>
         </nav>
       </footer>
     </main>
