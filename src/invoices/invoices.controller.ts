@@ -1,10 +1,9 @@
 import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { WorkspaceGuard } from '../workspaces/workspace.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard, WorkspaceGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('workspaces/:workspaceId/invoices')
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}

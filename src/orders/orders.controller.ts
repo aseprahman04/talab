@@ -2,10 +2,9 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@n
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { WorkspaceGuard } from '../workspaces/workspace.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard, WorkspaceGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('workspaces/:workspaceId/orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { OcrService } from '../ocr/ocr.service';
+import { PrismaService } from 'src/database/prisma/prisma.service';
+import { OcrService } from 'src/ocr/ocr.service';
 import { CreatePaymentProofDto } from './dto/create-payment-proof.dto';
 
 @Injectable()
@@ -15,7 +15,6 @@ export class PaymentProofsService {
     if (!invoice) throw new NotFoundException('Invoice not found');
     if (invoice.workspaceId !== workspaceId) throw new ForbiddenException();
 
-    // Run OCR
     const ocrResult = await this.ocr.extractPaymentData(dto.imageUrl);
     const matchStatus = this.ocr.matchAmount(ocrResult.amount, Number(invoice.totalAmount));
 
@@ -31,7 +30,6 @@ export class PaymentProofsService {
       },
     });
 
-    // Auto-update invoice status
     const invoiceStatus =
       matchStatus === 'MATCHED' ? 'AUTO_MATCHED' :
       matchStatus === 'MISMATCH' ? 'NEEDS_REVIEW' :
@@ -50,25 +48,27 @@ export class PaymentProofsService {
   }
 
   async approve(workspaceId: string, proofId: string) {
-    const proof = await this.prisma.paymentProof.findUnique({ where: { id: proofId }, include: { invoice: true } });
+    const proof = await this.prisma.paymentProof.findUnique({
+      where: { id: proofId }, include: { invoice: true },
+    });
     if (!proof) throw new NotFoundException();
     if (proof.invoice.workspaceId !== workspaceId) throw new ForbiddenException();
 
     await this.prisma.paymentProof.update({ where: { id: proofId }, data: { status: 'APPROVED', reviewedAt: new Date() } });
     await this.prisma.invoice.update({ where: { id: proof.invoiceId }, data: { status: 'PAID' } });
     await this.prisma.order.update({ where: { id: proof.invoice.orderId }, data: { status: 'PAID' } });
-
     return { approved: true };
   }
 
   async reject(workspaceId: string, proofId: string) {
-    const proof = await this.prisma.paymentProof.findUnique({ where: { id: proofId }, include: { invoice: true } });
+    const proof = await this.prisma.paymentProof.findUnique({
+      where: { id: proofId }, include: { invoice: true },
+    });
     if (!proof) throw new NotFoundException();
     if (proof.invoice.workspaceId !== workspaceId) throw new ForbiddenException();
 
     await this.prisma.paymentProof.update({ where: { id: proofId }, data: { status: 'REJECTED', reviewedAt: new Date() } });
     await this.prisma.invoice.update({ where: { id: proof.invoiceId }, data: { status: 'NEEDS_REVIEW' } });
-
     return { rejected: true };
   }
 }

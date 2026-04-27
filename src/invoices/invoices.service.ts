@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from 'src/database/prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 @Injectable()
@@ -40,7 +40,10 @@ export class InvoicesService {
   async findAll(workspaceId: string) {
     return this.prisma.invoice.findMany({
       where: { workspaceId },
-      include: { order: { select: { contactName: true, contactPhone: true, status: true } }, paymentProofs: { select: { id: true, status: true } } },
+      include: {
+        order: { select: { contactName: true, contactPhone: true, status: true } },
+        paymentProofs: { select: { id: true, status: true } },
+      },
       orderBy: { issuedAt: 'desc' },
     });
   }

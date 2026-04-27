@@ -1,10 +1,9 @@
 import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { PaymentProofsService } from './payment-proofs.service';
 import { CreatePaymentProofDto } from './dto/create-payment-proof.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { WorkspaceGuard } from '../workspaces/workspace.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard, WorkspaceGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('workspaces/:workspaceId/payment-proofs')
 export class PaymentProofsController {
   constructor(private readonly service: PaymentProofsService) {}

@@ -28,7 +28,7 @@ export class MailService {
 
     try {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM ?? 'WATether <noreply@watheter.com>',
+        from: process.env.SMTP_FROM ?? 'Talab <hello@talab.asia>',
         to: opts.to,
         subject: opts.subject,
         text: opts.text,
