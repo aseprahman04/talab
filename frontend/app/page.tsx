@@ -157,6 +157,9 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ marginTop: '12px', fontSize: '13px', color: 'var(--muted)' }}>{tr.pricing.footnote}</p>
+        <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--muted)', opacity: 0.75, maxWidth: '640px', margin: '8px auto 0', textAlign: 'center' }}>
+          {(tr.pricing as { disclaimer?: string }).disclaimer}
+        </p>
       </section>
 
       {/* ── FAQ ── */}

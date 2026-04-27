@@ -7,78 +7,29 @@ async function main() {
   // ── Plans ──────────────────────────────────────────────────────────────────
   await prisma.plan.upsert({
     where: { code: 'free' },
-    update: {
-      monthlyMessageQuota: 500,
-      hasAutoReply: false,
-      hasWebhook: false,
-      hasApi: false,
-    },
-    create: {
-      code: 'free',
-      name: 'Free',
-      maxDevices: 1,
-      monthlyMessageQuota: 500,
-      maxMembers: 1,
-      storageLimitMb: 100,
-      price: 0,
-      hasAutoReply: false,
-      hasWebhook: false,
-      hasApi: false,
-    },
+    update: { name: 'Free', maxDevices: 2, monthlyMessageQuota: 500, dailyDeviceLimit: 50, maxMembers: 1, storageLimitMb: 100, price: 0, hasAutoReply: false, hasWebhook: false, hasApi: false },
+    create: { code: 'free', name: 'Free', maxDevices: 2, monthlyMessageQuota: 500, dailyDeviceLimit: 50, maxMembers: 1, storageLimitMb: 100, price: 0, hasAutoReply: false, hasWebhook: false, hasApi: false },
   });
 
+  // Early Bird — $29/mo. Set lemonSqueezyVariantId + lemonSqueezyCheckoutUrl after creating in LS dashboard.
   await prisma.plan.upsert({
-    where: { code: 'bisnis' },
-    update: {
-      monthlyMessageQuota: 0,
-      price: 99000,
-      hasAutoReply: true,
-      hasWebhook: true,
-      hasApi: true,
-      lemonSqueezyVariantId: '1469498',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/74a09a0b-6f4c-44c0-aa07-237b09221d42',
-    },
-    create: {
-      code: 'bisnis',
-      name: 'Business',
-      maxDevices: 5,
-      monthlyMessageQuota: 0,
-      maxMembers: 5,
-      storageLimitMb: 1000,
-      price: 99000,
-      hasAutoReply: true,
-      hasWebhook: true,
-      hasApi: true,
-      lemonSqueezyVariantId: '1469498',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/74a09a0b-6f4c-44c0-aa07-237b09221d42',
-    },
+    where: { code: 'early' },
+    update: { name: 'Early', maxDevices: 3, monthlyMessageQuota: 0, dailyDeviceLimit: 200, maxMembers: 3, storageLimitMb: 500, price: 29, hasAutoReply: true, hasWebhook: false, hasApi: false },
+    create: { code: 'early', name: 'Early', maxDevices: 3, monthlyMessageQuota: 0, dailyDeviceLimit: 200, maxMembers: 3, storageLimitMb: 500, price: 29, hasAutoReply: true, hasWebhook: false, hasApi: false },
   });
 
+  // Standard — $49/mo.
   await prisma.plan.upsert({
-    where: { code: 'tim' },
-    update: {
-      monthlyMessageQuota: 0,
-      price: 249000,
-      hasAutoReply: true,
-      hasWebhook: true,
-      hasApi: true,
-      lemonSqueezyVariantId: '1469512',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/88ef51c2-7c58-417f-b8bc-53b5886c4800',
-    },
-    create: {
-      code: 'tim',
-      name: 'Team',
-      maxDevices: 20,
-      monthlyMessageQuota: 0,
-      maxMembers: 20,
-      storageLimitMb: 5000,
-      price: 249000,
-      hasAutoReply: true,
-      hasWebhook: true,
-      hasApi: true,
-      lemonSqueezyVariantId: '1469512',
-      lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/88ef51c2-7c58-417f-b8bc-53b5886c4800',
-    },
+    where: { code: 'standard' },
+    update: { name: 'Standard', maxDevices: 5, monthlyMessageQuota: 0, dailyDeviceLimit: 500, maxMembers: 5, storageLimitMb: 1000, price: 49, hasAutoReply: true, hasWebhook: true, hasApi: false },
+    create: { code: 'standard', name: 'Standard', maxDevices: 5, monthlyMessageQuota: 0, dailyDeviceLimit: 500, maxMembers: 5, storageLimitMb: 1000, price: 49, hasAutoReply: true, hasWebhook: true, hasApi: false },
+  });
+
+  // Pro — $79/mo, all features. lemonSqueezyVariantId '1580719' from existing LS product.
+  await prisma.plan.upsert({
+    where: { code: 'pro' },
+    update: { name: 'Pro', maxDevices: 10, monthlyMessageQuota: 0, dailyDeviceLimit: 1000, maxMembers: 10, storageLimitMb: 2000, price: 79, hasAutoReply: true, hasWebhook: true, hasApi: true, lemonSqueezyVariantId: '1580719', lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/90a92f63-5197-46fb-8005-45c3fa220ecf' },
+    create: { code: 'pro', name: 'Pro', maxDevices: 10, monthlyMessageQuota: 0, dailyDeviceLimit: 1000, maxMembers: 10, storageLimitMb: 2000, price: 79, hasAutoReply: true, hasWebhook: true, hasApi: true, lemonSqueezyVariantId: '1580719', lemonSqueezyCheckoutUrl: 'https://badassdevs.lemonsqueezy.com/checkout/buy/90a92f63-5197-46fb-8005-45c3fa220ecf' },
   });
 
   // ── Super admin user ───────────────────────────────────────────────────────
@@ -115,14 +66,14 @@ async function main() {
     },
   });
 
-  // ── Subscription — Tim plan, active, no expiry ────────────────────────────
-  const planTim = await prisma.plan.findUniqueOrThrow({ where: { code: 'tim' } });
+  // ── Subscription — Pro plan, active, no expiry ───────────────────────────
+  const planPro = await prisma.plan.findUniqueOrThrow({ where: { code: 'pro' } });
   await prisma.subscription.upsert({
     where: { workspaceId: workspace.id },
-    update: { planId: planTim.id, status: 'ACTIVE', endedAt: null },
+    update: { planId: planPro.id, status: 'ACTIVE', endedAt: null },
     create: {
       workspaceId: workspace.id,
-      planId: planTim.id,
+      planId: planPro.id,
       status: 'ACTIVE',
       startedAt: new Date(),
       endedAt: null,

@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 
 interface LsCheckoutResponse {
@@ -73,7 +74,7 @@ export class SubscriptionsService {
 
     // Try to create a dynamic checkout via API (injects custom_data for webhook auto-provisioning)
     try {
-      const frontendUrl = process.env.FRONTEND_URL || 'https://watheter.com';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://talab.asia';
       const checkoutPayload = {
         data: {
           type: 'checkouts',
@@ -111,7 +112,7 @@ export class SubscriptionsService {
       if (!plan.lemonSqueezyCheckoutUrl) {
         throw new BadRequestException(`No checkout URL configured for plan '${planCode}'`);
       }
-      const fallbackFrontendUrl = process.env.FRONTEND_URL || 'https://watheter.com';
+      const fallbackFrontendUrl = process.env.FRONTEND_URL || 'https://talab.asia';
       const params = new URLSearchParams({
         'checkout[custom][workspaceId]': workspaceId,
         'checkout[custom][planCode]': planCode,
@@ -240,6 +241,40 @@ export class SubscriptionsService {
         return 'EXPIRED';
       default:
         return 'TRIAL';
+    }
+  }
+
+  // Runs daily at 02:00 — downgrades expired subscriptions to the free plan.
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  async downgradeExpiredSubscriptions(): Promise<void> {
+    const freePlan = await this.prisma.plan.findUnique({ where: { code: 'free' } });
+    if (!freePlan) {
+      this.logger.warn('Free plan not found — skipping expiry downgrade');
+      return;
+    }
+
+    const expired = await this.prisma.subscription.findMany({
+      where: {
+        status: { in: ['CANCELED', 'EXPIRED', 'PAST_DUE'] },
+        planId: { not: freePlan.id },
+      },
+      include: { plan: true },
+    });
+
+    for (const sub of expired) {
+      await this.prisma.subscription.update({
+        where: { id: sub.id },
+        data: { planId: freePlan.id, status: 'ACTIVE' },
+      });
+      await this.prisma.workspace.update({
+        where: { id: sub.workspaceId },
+        data: { status: 'ACTIVE' },
+      });
+      this.logger.log(`Downgraded workspace ${sub.workspaceId} from ${sub.plan.code} → free`);
+    }
+
+    if (expired.length > 0) {
+      this.logger.log(`Downgraded ${expired.length} expired subscription(s) to free plan`);
     }
   }
 
