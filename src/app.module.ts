@@ -21,6 +21,10 @@ import { QueueModule } from './queue/queue.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { OrdersModule } from './orders/orders.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { PaymentProofsModule } from './payment-proofs/payment-proofs.module';
+import { OcrModule } from './ocr/ocr.module';
 
 @Module({
   imports: [
@@ -61,6 +65,10 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     ScheduledMessagesModule,
     AuditLogsModule,
     ContactsModule,
+    OcrModule,
+    OrdersModule,
+    InvoicesModule,
+    PaymentProofsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

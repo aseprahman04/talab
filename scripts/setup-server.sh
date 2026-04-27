@@ -3,7 +3,7 @@
 # Usage: bash setup-server.sh
 set -e
 
-APP_DIR=/opt/watether
+APP_DIR=/opt/talab
 LOG_DIR=/var/log/watether
 
 echo "=== WATether server setup ==="
@@ -13,7 +13,7 @@ mkdir -p $APP_DIR $LOG_DIR /etc/ssl/watether
 
 # ── Clone repo ────────────────────────────────────────────────────────────────
 if [ ! -d "$APP_DIR/.git" ]; then
-  git clone https://github.com/aseprahman04/watheter.git $APP_DIR
+  git clone https://github.com/aseprahman04/talab.git $APP_DIR
 else
   echo "Repo already cloned."
 fi
@@ -24,8 +24,8 @@ docker exec epondok-postgres psql -U epondok -c "CREATE DATABASE watether;" 2>/d
   || echo "Database already exists, skipping."
 
 # ── Nginx config ──────────────────────────────────────────────────────────────
-cp $APP_DIR/nginx/watheter.conf /etc/nginx/sites-available/watether
-ln -sf /etc/nginx/sites-available/watether /etc/nginx/sites-enabled/watether
+cp $APP_DIR/nginx/talab.conf /etc/nginx/sites-available/talab
+ln -sf /etc/nginx/sites-available/talab /etc/nginx/sites-enabled/watether
 nginx -t && systemctl reload nginx
 
 echo ""

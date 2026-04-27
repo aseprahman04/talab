@@ -1,15 +1,15 @@
 services:
   backend:
-    image: watether-backend:latest
-    container_name: watether_backend
+    image: talab-backend:latest
+    container_name: talab_backend
     restart: unless-stopped
     network_mode: host
     env_file:
-      - /opt/watether/.env.production
+      - /opt/talab/.env.production
     environment:
       NODE_ENV: production
       PORT: 3009
-      GOOGLE_CALLBACK_URL: https://watheter.com/api/auth/google/callback
+      GOOGLE_CALLBACK_URL: https://talab.app/api/auth/google/callback
     command: ["sh", "-c", "npx prisma@5 db push --accept-data-loss && node dist/src/main.js"]
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3009/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(()=>process.exit(0)).catch(()=>process.exit(1))\""]
@@ -39,12 +39,12 @@ services:
   #    and SHARD_ID=1,2,3 respectively
 
   worker-0:
-    image: watether-backend:latest
-    container_name: watether_worker_0
+    image: talab-backend:latest
+    container_name: talab_worker_0
     restart: unless-stopped
     network_mode: host
     env_file:
-      - /opt/watether/.env.production
+      - /opt/talab/.env.production
     environment:
       NODE_ENV: production
       WORKER_PORT: 3100
@@ -59,11 +59,11 @@ services:
 
   # ── Uncomment below when ready to scale to 4 shards (2 000 devices) ──────────
   # worker-1:
-  #   image: watether-backend:latest
-  #   container_name: watether_worker_1
+  #   image: talab-backend:latest
+  #   container_name: talab_worker_1
   #   restart: unless-stopped
   #   network_mode: host
-  #   env_file: [/opt/watether/.env.production]
+  #   env_file: [/opt/talab/.env.production]
   #   environment:
   #     NODE_ENV: production
   #     WORKER_PORT: 3101

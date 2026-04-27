@@ -2,8 +2,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — WATether',
-  description: 'Privacy policy and data protection for WATether users.',
+  title: 'Privacy Policy — Talab',
+  description: 'Privacy policy and data protection for Talab users.',
 };
 
 export default function PrivacyPage() {
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <main className="legal-body">
         <section>
           <h2>1. Data We Collect</h2>
-          <p>We collect the following data when you use WATether:</p>
+          <p>We collect the following data when you use Talab:</p>
           <ul>
             <li><strong>Account data:</strong> Name, email address, and (optionally) a Google account for login</li>
             <li><strong>Workspace data:</strong> Workspace name, device configuration, and integration settings</li>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
             <li>Request deletion of your account and associated data</li>
             <li>Export your data in a machine-readable format</li>
           </ul>
-          <p>To exercise these rights, contact <a href="mailto:support@watether.com">support@watether.com</a>.</p>
+          <p>To exercise these rights, contact <a href="mailto:support@talab.app">support@talab.app</a>.</p>
         </section>
 
         <section>
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2>9. Contact</h2>
-          <p>Privacy questions: <a href="mailto:support@watether.com">support@watether.com</a></p>
+          <p>Privacy questions: <a href="mailto:support@talab.app">support@talab.app</a></p>
         </section>
       </main>
 

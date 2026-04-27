@@ -2,8 +2,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — WATether',
-  description: 'Terms and conditions for using the WATether service.',
+  title: 'Terms of Service — Talab',
+  description: 'Terms and conditions for using the Talab service.',
 };
 
 export default function TermsPage() {
@@ -18,12 +18,12 @@ export default function TermsPage() {
       <main className="legal-body">
         <section>
           <h2>1. Acceptance of Terms</h2>
-          <p>By accessing or using the WATether service (&quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.</p>
+          <p>By accessing or using the Talab service (&quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.</p>
         </section>
 
         <section>
           <h2>2. Service Description</h2>
-          <p>WATether is a WhatsApp gateway platform that provides a device management interface, message delivery, webhooks, broadcast, and auto-reply for business purposes. WATether is not an official product of Meta Platforms, Inc. or WhatsApp LLC.</p>
+          <p>Talab is a WhatsApp gateway platform that provides a device management interface, message delivery, webhooks, broadcast, and auto-reply for business purposes. Talab is not an official product of Meta Platforms, Inc. or WhatsApp LLC.</p>
         </section>
 
         <section>
@@ -54,7 +54,7 @@ export default function TermsPage() {
 
         <section>
           <h2>6. WhatsApp Number Risk</h2>
-          <p>Using WhatsApp numbers through third-party tools may result in restrictions, blocks, or permanent bans by WhatsApp. All such risks are entirely the user&apos;s responsibility. WATether is not liable for any number restrictions arising from use of the Service.</p>
+          <p>Using WhatsApp numbers through third-party tools may result in restrictions, blocks, or permanent bans by WhatsApp. All such risks are entirely the user&apos;s responsibility. Talab is not liable for any number restrictions arising from use of the Service.</p>
         </section>
 
         <section>
@@ -69,7 +69,7 @@ export default function TermsPage() {
 
         <section>
           <h2>9. Limitation of Liability</h2>
-          <p>The Service is provided &quot;as is&quot;. WATether does not guarantee 100% uptime without interruption. To the extent permitted by applicable law, WATether is not liable for indirect, incidental, or consequential damages.</p>
+          <p>The Service is provided &quot;as is&quot;. Talab does not guarantee 100% uptime without interruption. To the extent permitted by applicable law, Talab is not liable for indirect, incidental, or consequential damages.</p>
         </section>
 
         <section>
@@ -84,7 +84,7 @@ export default function TermsPage() {
 
         <section>
           <h2>12. Contact</h2>
-          <p>Questions about these Terms of Service: <a href="mailto:support@watether.com">support@watether.com</a></p>
+          <p>Questions about these Terms of Service: <a href="mailto:support@talab.app">support@talab.app</a></p>
         </section>
       </main>
 

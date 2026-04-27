@@ -1,289 +1,424 @@
-export type Lang = 'id' | 'en';
+export type Lang = 'ar' | 'en';
 
 const translations = {
-  id: {
-    // Nav
+  ar: {
+    dir: 'rtl' as const,
     nav: {
-      seePricing: 'Lihat Paket',
-      enterConsole: 'Masuk Console',
+      pricing: 'الأسعار',
+      login: 'تسجيل الدخول',
+      tryFree: 'جرّب مجاناً',
+      blog: 'المدونة',
     },
-
-    // Landing hero
     hero: {
-      eyebrow: 'WhatsApp gateway untuk bisnis Indonesia',
-      headline: 'Kirim pesan, kelola device, dan otomasi notifikasi dari satu console.',
+      eyebrow: 'نظام الطلبات والفواتير للبيع عبر واتساب',
+      headline: 'بع على واتساب بشكل احترافي.',
       subtext:
-        'WATether memudahkan tim kamu mengelola pengiriman pesan WhatsApp — dari broadcast ke ribuan kontak, auto reply keyword, hingga webhook real-time ke sistem internal.',
-      ctaPrimary: 'Mulai Gratis',
-      ctaDemo: 'Request demo',
-      ctaFeatures: 'Lihat fitur',
-      pill1: 'Gratis, tanpa kartu kredit',
-      pill2: 'Setup dalam hitungan menit',
-      pill3: 'Tidak perlu sales call',
-      proof1Title: 'Multi-workspace',
-      proof1Desc: 'Pisahkan tim, device, dan log per workspace',
-      proof2Title: 'Queue & retry',
-      proof2Desc: 'Pesan gagal otomatis dicoba ulang',
-      proof3Title: 'Realtime',
-      proof3Desc: 'Status device dan pesan tampil langsung',
+        'طلب يحوّل محادثات واتساب إلى طلبات، فواتير، وتأكيد دفع تلقائي — كل شيء في مكان واحد، بدون فوضى.',
+      ctaPrimary: 'ابدأ مجاناً',
+      ctaHow: 'شوف كيف يشتغل',
+      pill1: 'مجاني بدون بطاقة بنكية',
+      pill2: 'جاهز في أقل من ١٠ دقائق',
+      pill3: 'بدون اتصال مبيعات',
+      proof1Title: 'تسجيل الطلبات',
+      proof1Desc: 'سجّل كل طلب من المحادثة مباشرة',
+      proof2Title: 'فاتورة فورية',
+      proof2Desc: 'أنشئ فاتورة PDF وأرسلها بضغطة واحدة',
+      proof3Title: 'تأكيد الدفع',
+      proof3Desc: 'رفع إثبات الدفع + مطابقة تلقائية بالذكاء الاصطناعي',
     },
-
-    // Signal cards
     signalCards: {
-      useCaseTitle: 'Cocok untuk',
+      useCaseTitle: 'مناسب لـ',
       useCases: [
-        'Konfirmasi order marketplace dan toko online',
-        'Notifikasi invoice, cicilan, dan reminder pembayaran',
-        'Follow-up lead dari form, iklan, atau CRM',
+        'البائعين الصغار والمتاجر عبر واتساب',
+        'من يبيع ملابس، عطور، أكل، أو أي منتج عبر الشات',
+        'كل بائع يتعب من الفوضى ومتابعة الطلبات يدوياً',
       ],
-      featuresTitle: 'Yang sudah tersedia',
+      featuresTitle: 'الميزات المتاحة الآن',
       features: [
-        'Kirim pesan ke banyak kontak sekaligus lewat broadcast terjadwal.',
-        'Auto reply otomatis saat ada pesan masuk — tanpa perlu operator standby.',
-        'Webhook real-time ke sistem kamu saat pesan terkirim, gagal, atau diterima.',
+        'سجّل طلب العميل مباشرة من المحادثة وتتبّع حالته.',
+        'أنشئ فاتورة بشعارك وأرسلها عبر واتساب خلال ثوانٍ.',
+        'اقبل إثبات الدفع واتركه للنظام يتحقق منه تلقائياً.',
       ],
     },
-
-    // Why section
-    why: {
-      heading: 'Kenapa tim Indonesia pilih WATether',
-      subtext:
-        'Dibangun untuk alur kerja yang memang umum di sini — bukan gateway generik yang perlu banyak konfigurasi manual.',
-      card1Title: 'Mulai kecil, scale bertahap',
-      card1Desc:
-        'Coba dengan volume kecil, validasi alur operasional tim, lalu upgrade saat device dan kuota perlu ditambah.',
-      card2Title: 'Bahasa dan use case lokal',
-      card2Desc:
-        'Paket dan fitur dirancang untuk UMKM, tim CS, reminder pembayaran, dan workflow bisnis Indonesia.',
-      card3Title: 'Console siap pakai hari ini',
-      card3Desc:
-        'Daftar dan langsung akses dashboard dengan device management, broadcast, webhook, dan auto reply.',
-    },
-
-    // Pricing
-    pricing: {
-      heading: 'Harga per nomor WhatsApp, bukan per pesan',
-      subtext:
-        'Bayar sesuai jumlah nomor WA yang kamu pakai. Mulai gratis, upgrade kapan saja tanpa kontrak.',
-      ctaCard: 'Mulai dari sini',
-      footnote: '* Fair use policy berlaku. Tidak untuk spam massal.',
-    },
-
-    // Testimonials
-    trust: {
-      heading: 'Dipakai untuk operasional nyata',
-      subtext:
-        'Dari toko online sampai tim collection — WATether digunakan untuk alur kerja yang berulang setiap hari.',
-    },
-
-    // Disclaimer
-    disclaimer: {
-      eyebrow: 'Penting dibaca sebelum mulai',
-      body: 'WATether adalah platform gateway — bukan produk resmi Meta atau WhatsApp Inc. Penggunaan nomor WhatsApp pribadi atau bisnis untuk pengiriman massal berpotensi terkena pembatasan atau pemblokiran oleh WhatsApp. Segala risiko ban, pembatasan fitur, atau penonaktifan nomor sepenuhnya di luar tanggung jawab WATether. Gunakan dengan bijak sesuai kebijakan WhatsApp.',
-      cta: 'Saya mengerti, mulai gratis',
-    },
-
-    // FAQ
-    faq: {
-      heading: 'Pertanyaan yang sering masuk',
-      subtext:
-        'Kalau ada yang belum terjawab di sini, langsung hubungi kami.',
+    steps: {
+      heading: 'جاهز في أقل من ١٠ دقائق',
+      sub: 'بدون مطوّر، بدون تعقيد. ربط، إعداد، بيع.',
       items: [
         {
-          q: 'Apakah paket Gratis benar-benar gratis?',
-          a: 'Ya, gratis tanpa kartu kredit. Cocok untuk coba alur kirim pesan, webhook, dan console sebelum memutuskan upgrade.',
+          n: '١',
+          title: 'اربط رقم واتساب',
+          desc: 'امسح رمز QR من لوحة التحكم. رقمك يصبح جاهزاً في أقل من دقيقتين.',
         },
         {
-          q: 'Apakah bisa langsung daftar dari sini?',
-          a: 'Bisa. Klik tombol "Mulai Gratis" dan kamu langsung masuk ke halaman register console tanpa perlu sales call dulu.',
+          n: '٢',
+          title: 'سجّل الطلب وأرسل الفاتورة',
+          desc: 'أنشئ طلباً من المحادثة، وأرسل فاتورة PDF احترافية للعميل مباشرة عبر واتساب.',
         },
         {
-          q: 'Apakah ini sudah official WhatsApp API?',
-          a: 'Belum. WATether adalah gateway layer — queue, webhook, device management, dan dashboard sudah siap. Engine sesi WhatsApp bisa diintegrasikan sesuai kebutuhan tim kamu.',
+          n: '٣',
+          title: 'تأكيد الدفع تلقائياً',
+          desc: 'العميل يرسل إثبات الدفع، والنظام يتحقق منه ويطابقه مع الفاتورة بالذكاء الاصطناعي.',
         },
       ],
     },
-
-    // Closing
-    closing: {
-      eyebrow: 'Siap mulai?',
-      headline: 'Daftar gratis, masuk console, dan kirim pesan pertama hari ini.',
-      subtext: 'Tidak perlu kartu kredit. Tidak perlu sales call. Langsung coba sendiri.',
-      ctaPrimary: 'Mulai Gratis',
-      ctaSecondary: 'Lihat paket',
+    why: {
+      heading: 'ليش البائعين يختارون طلب',
+      sub: 'مبني خصيصاً لمن يبيع عبر واتساب — مش أداة معقدة تحتاج أسابيع للإعداد.',
+      card1Title: 'ما تفقد طلباً واحداً',
+      card1Desc:
+        'كل طلب مسجّل بالاسم والمبلغ والحالة. ودّع الفوضى والملاحظات اليدوية.',
+      card2Title: 'فاتورة احترافية في ثوانٍ',
+      card2Desc:
+        'فاتورة بشعارك وبياناتك، ترسلها مباشرة من واتساب — بدون Excel وبدون تصميم.',
+      card3Title: 'تأكيد الدفع بدون جهد',
+      card3Desc:
+        'العميل يرسل صورة الحوالة أو لقطة الشاشة، والنظام يستخرج المبلغ ويطابقه تلقائياً.',
     },
-
-    // Console auth
-    auth: {
-      eyebrow: 'WATether Console',
-      headline: 'Kelola nomor WhatsApp, kirim pesan, dan otomasi notifikasi bisnis kamu.',
-      subtext: 'Broadcast, auto reply, webhook, dan log pesan — semua dalam satu dashboard.',
-      metric1Label: 'Nomor WA',
-      metric1Value: 'Per workspace',
-      metric2Label: 'Fitur',
-      metric2Value: 'Broadcast · Auto Reply · Webhook',
-      metric3Label: 'Paket',
-      metric3Value: 'Gratis untuk mulai',
-      registerTitle: 'Mulai gratis sekarang',
-      registerDesc: 'Buat akun, hubungkan nomor WhatsApp pertama kamu, dan mulai kirim pesan dalam hitungan menit.',
-      loginTitle: 'Masuk ke console',
-      loginDesc: 'Lanjutkan pengelolaan device dan workspace kamu.',
-      nameLabel: 'Nama',
-      namePlaceholder: 'Nama lengkap',
-      emailLabel: 'Email',
-      emailPlaceholder: 'kamu@email.com',
-      passLabel: 'Password',
-      passPlaceholder: 'Min. 8 karakter',
-      submitRegister: 'Buat Akun Gratis',
-      submitLogin: 'Masuk',
-      loading: 'Memproses...',
-      switchToRegister: 'Belum punya akun? Daftar gratis',
-      switchToLogin: 'Sudah punya akun? Masuk',
+    painPoints: {
+      heading: 'إذا هذا يشبه وضعك، طلب صُمِّم لأجلك',
+      items: [
+        {
+          title: 'تضيّع الطلبات بين الرسائل',
+          desc: 'عميل يطلب، أنت تنسى، أو ما لقيت المحادثة القديمة. ما في نظام يتتبع الطلبات.',
+        },
+        {
+          title: 'تكتب الفاتورة يدوياً كل مرة',
+          desc: 'صورة من التصميم أو ملف Excel لكل عميل. يستغرق وقتاً ويعطي انطباعاً غير احترافي.',
+        },
+        {
+          title: 'ما تعرف إذا دفع العميل أو لا',
+          desc: 'ترجع تسأل العميل، تراجع الحوالات يدوياً، وتضيّع وقتك في متابعة كل طلب.',
+        },
+      ],
+    },
+    pricing: {
+      heading: 'الأسعار واضحة ومباشرة',
+      sub: 'ابدأ مجاناً، وترقّى متى ما احتجت. بدون عقود، إلغاء في أي وقت.',
+      ctaCard: 'ابدأ من هنا',
+      footnote: '* سياسة الاستخدام العادل سارية. ليس للرسائل الإعلانية المزعجة.',
+      plans: [
+        {
+          code: 'free',
+          name: 'مجاني',
+          price: '$0',
+          caption: 'جرّبه بدون تكلفة. رقم واتساب واحد، مناسب للتجربة.',
+          quota: 'رقم واتساب واحد',
+          features: [
+            '٥٠ طلب شهرياً',
+            'إنشاء الفواتير',
+            'رفع إثبات الدفع',
+            '١٠ عمليات OCR شهرياً',
+          ],
+          missing: ['برندينج الفاتورة', 'OCR غير محدود', 'أعضاء متعددون'],
+        },
+        {
+          code: 'pro',
+          name: 'احترافي',
+          price: '$9',
+          caption: 'للبائعين النشطين الذين يحتاجون طلبات وفواتير غير محدودة.',
+          quota: 'رقم واتساب واحد',
+          features: [
+            'طلبات غير محدودة',
+            'فاتورة بشعارك وبياناتك',
+            '٣٠٠ عملية OCR شهرياً',
+            '٣ أعضاء في الفريق',
+            'تصدير بيانات المبيعات',
+          ],
+          featured: true,
+        },
+        {
+          code: 'team',
+          name: 'فريق',
+          price: '$19',
+          caption: 'لفرق المبيعات أو المتاجر متعددة الأرقام.',
+          quota: '٣ أرقام واتساب',
+          features: [
+            'طلبات غير محدودة',
+            'فاتورة بشعارك وبياناتك',
+            'OCR غير محدود',
+            '١٠ أعضاء في الفريق',
+            'تقارير مالية شهرية',
+            'إضافات OCR متاحة',
+          ],
+        },
+      ],
+    },
+    faq: {
+      heading: 'أسئلة شائعة',
+      sub: 'لو ما وجدت إجابتك، راسلنا مباشرة.',
+      items: [
+        {
+          q: 'هل الخطة المجانية مجانية فعلاً؟',
+          a: 'نعم، مجانية تماماً بدون بطاقة بنكية. مناسبة لتجربة النظام قبل الترقية.',
+        },
+        {
+          q: 'كيف يعمل تأكيد الدفع التلقائي؟',
+          a: 'العميل يرسل صورة إثبات الدفع (حوالة أو لقطة شاشة). النظام يستخرج المبلغ والتاريخ ورقم المرجع بالذكاء الاصطناعي، ويطابقه مع الفاتورة. إذا تطابق، يُغلق الطلب تلقائياً أو يُرفع للمراجعة.',
+        },
+        {
+          q: 'هل يعمل مع أي رقم واتساب؟',
+          a: 'نعم، يعمل مع أي رقم واتساب عبر ربط بسيط بمسح رمز QR. لا يحتاج واتساب للأعمال الرسمي.',
+        },
+        {
+          q: 'هل بياناتي وبيانات عملائي آمنة؟',
+          a: 'بياناتك تبقى في حسابك فقط. لا نشاركها ولا نبيعها. يمكنك تصدير أو حذف بياناتك في أي وقت.',
+        },
+        {
+          q: 'هل أستطيع الإلغاء في أي وقت؟',
+          a: 'نعم. لا عقود. يمكنك الإلغاء من لوحة التحكم في أي وقت — تظل تستخدم الخدمة حتى نهاية فترة الفاتورة.',
+        },
+        {
+          q: 'هل يمكنني التسجيل مباشرة من هنا؟',
+          a: 'نعم. اضغط "ابدأ مجاناً" وستنتقل مباشرة لصفحة التسجيل بدون اتصال مبيعات.',
+        },
+      ],
+    },
+    testimonials: {
+      heading: 'قصص بائعين يستخدمون طلب',
+      sub: 'من متاجر الملابس لفرق المبيعات — بائعون استبدلوا الفوضى بنظام.',
+      items: [
+        {
+          name: 'متجر عطور، الرياض',
+          quote: 'قبل طلب كنت أنسى طلبات كثيرة. الحين كل طلب مسجّل وأرسل الفاتورة بضغطة واحدة. وفّر عليّ ساعة يومياً.',
+        },
+        {
+          name: 'بائعة ملابس نسائية، دبي',
+          quote: 'عملائي يرسلون إثبات الدفع والنظام يتحقق منه تلقائياً. ما صرت أراجع الحوالات يدوياً بعد اليوم.',
+        },
+        {
+          name: 'متجر منتجات غذائية، الكويت',
+          quote: 'الفاتورة الاحترافية غيّرت انطباع عملائي. يقولون يشبه متجر حقيقي. وهذا صح.',
+        },
+      ],
+    },
+    closing: {
+      eyebrow: 'جاهز تبدأ؟',
+      headline: 'سجّل مجاناً، اربط رقمك، وسجّل أول طلب اليوم.',
+      sub: 'بدون بطاقة بنكية. بدون اتصال مبيعات. بدون عقود.',
+      ctaPrimary: 'ابدأ مجاناً',
+      ctaSecondary: 'شوف الأسعار',
+    },
+    footer: {
+      rights: 'جميع الحقوق محفوظة',
+      terms: 'الشروط والأحكام',
+      privacy: 'سياسة الخصوصية',
+      refund: 'سياسة الاسترداد',
+      faq: 'الأسئلة الشائعة',
+      support: 'الدعم الفني',
+      blog: 'المدونة',
     },
   },
 
   en: {
-    // Nav
+    dir: 'ltr' as const,
     nav: {
-      seePricing: 'See Pricing',
-      enterConsole: 'Open Console',
+      pricing: 'Pricing',
+      login: 'Log In',
+      tryFree: 'Try Free',
+      blog: 'Blog',
     },
-
-    // Landing hero
     hero: {
-      eyebrow: 'WhatsApp gateway for Indonesian businesses',
-      headline: 'Send messages, manage devices, and automate notifications from one console.',
+      eyebrow: 'WhatsApp order, invoice & payment system',
+      headline: 'Sell on WhatsApp professionally.',
       subtext:
-        'WATether makes it easy for your team to manage WhatsApp message delivery — from broadcast to thousands of contacts, keyword auto reply, to real-time webhooks into your internal systems.',
+        'Talab turns WhatsApp chats into orders, invoices, and verified payments — everything in one place, no more chaos.',
       ctaPrimary: 'Start Free',
-      ctaDemo: 'Request demo',
-      ctaFeatures: 'See features',
+      ctaHow: 'See how it works',
       pill1: 'Free, no credit card',
-      pill2: 'Set up in minutes',
-      pill3: 'No sales call needed',
-      proof1Title: 'Multi-workspace',
-      proof1Desc: 'Separate teams, devices, and logs per workspace',
-      proof2Title: 'Queue & retry',
-      proof2Desc: 'Failed messages are retried automatically',
-      proof3Title: 'Realtime',
-      proof3Desc: 'Device and message status shown instantly',
+      pill2: 'Ready in under 10 minutes',
+      pill3: 'No sales call',
+      proof1Title: 'Order capture',
+      proof1Desc: 'Log every order directly from the chat',
+      proof2Title: 'Instant invoice',
+      proof2Desc: 'Generate a PDF invoice and send it in one click',
+      proof3Title: 'Payment verification',
+      proof3Desc: 'Upload payment proof + AI auto-matching',
     },
-
-    // Signal cards
     signalCards: {
       useCaseTitle: 'Built for',
       useCases: [
-        'Order confirmations for marketplaces and online stores',
-        'Invoice notifications, installment reminders, and payment alerts',
-        'Lead follow-up from forms, ads, or CRM',
+        'Small sellers and WhatsApp stores',
+        'Anyone selling clothes, perfume, food, or any product via chat',
+        'Every seller tired of chaos and manually tracking orders',
       ],
-      featuresTitle: 'Already available',
+      featuresTitle: 'Available now',
       features: [
-        'Send messages to many contacts at once via scheduled broadcast.',
-        'Auto reply when messages arrive — no operator needed on standby.',
-        'Real-time webhook to your system when messages are sent, failed, or received.',
+        'Log a customer order directly from the chat and track its status.',
+        'Create a branded invoice and send it via WhatsApp in seconds.',
+        'Accept payment proof and let the system verify it automatically.',
       ],
     },
-
-    // Why section
-    why: {
-      heading: 'Why teams choose WATether',
-      subtext:
-        'Built for workflows that are common here — not a generic gateway that needs extensive manual configuration.',
-      card1Title: 'Start small, scale gradually',
-      card1Desc:
-        'Try with small volume, validate team operations, then upgrade when devices and quota need to grow.',
-      card2Title: 'Local language and use cases',
-      card2Desc:
-        'Plans and features are designed for SMEs, CS teams, payment reminders, and Indonesian business workflows.',
-      card3Title: 'Console ready to use today',
-      card3Desc:
-        'Sign up and immediately access the dashboard with device management, broadcast, webhooks, and auto reply.',
-    },
-
-    // Pricing
-    pricing: {
-      heading: 'Priced per WhatsApp number, not per message',
-      subtext:
-        'Pay based on how many WA numbers you use. Start free, upgrade anytime with no contract.',
-      ctaCard: 'Get started',
-      footnote: '* Fair use policy applies. Not for mass spam.',
-    },
-
-    // Testimonials
-    trust: {
-      heading: 'Used in real operations',
-      subtext:
-        'From online stores to collection teams — WATether is used for workflows that happen every single day.',
-    },
-
-    // Disclaimer
-    disclaimer: {
-      eyebrow: 'Important — please read before you start',
-      body: 'WATether is a gateway platform — not an official product of Meta or WhatsApp Inc. Using personal or business WhatsApp numbers for bulk sending may result in restrictions or bans by WhatsApp. Any risk of account bans, feature restrictions, or number deactivation is entirely outside WATether\'s responsibility. Use responsibly and in accordance with WhatsApp\'s policies.',
-      cta: 'I understand, start free',
-    },
-
-    // FAQ
-    faq: {
-      heading: 'Frequently asked questions',
-      subtext: 'If anything is still unclear, feel free to reach out.',
+    steps: {
+      heading: 'Ready in under 10 minutes',
+      sub: 'No developer needed, no complexity. Connect, set up, sell.',
       items: [
         {
-          q: 'Is the Free plan really free?',
-          a: 'Yes, free with no credit card required. Perfect for testing message flows, webhooks, and the console before deciding to upgrade.',
+          n: '1',
+          title: 'Connect your WhatsApp number',
+          desc: 'Scan a QR code from the dashboard. Your number is live in under 2 minutes.',
+        },
+        {
+          n: '2',
+          title: 'Log the order and send the invoice',
+          desc: 'Create an order from the chat and send a professional PDF invoice directly via WhatsApp.',
+        },
+        {
+          n: '3',
+          title: 'Auto-verify payment',
+          desc: 'Customer sends payment proof. The system extracts the amount and matches it to the invoice automatically.',
+        },
+      ],
+    },
+    why: {
+      heading: 'Why sellers choose Talab',
+      sub: 'Built specifically for WhatsApp sellers — not a complex tool that takes weeks to set up.',
+      card1Title: 'Never lose an order',
+      card1Desc:
+        'Every order logged with name, amount, and status. Say goodbye to chaos and manual notes.',
+      card2Title: 'Professional invoice in seconds',
+      card2Desc:
+        'An invoice with your logo and details, sent directly from WhatsApp — no Excel, no design work.',
+      card3Title: 'Payment verification without effort',
+      card3Desc:
+        'Customer sends a screenshot of the transfer. The system extracts the amount and matches it automatically.',
+    },
+    painPoints: {
+      heading: 'If this sounds familiar, Talab was built for you',
+      items: [
+        {
+          title: 'Orders lost in messages',
+          desc: "A customer orders, you forget, or you can't find the old conversation. No system to track orders.",
+        },
+        {
+          title: 'Writing invoices manually every time',
+          desc: 'A design screenshot or an Excel file for every customer. It takes time and gives an unprofessional impression.',
+        },
+        {
+          title: "Not knowing if the customer paid",
+          desc: 'You go back and ask the customer, manually check transfers, and waste time following up on every order.',
+        },
+      ],
+    },
+    pricing: {
+      heading: 'Clear, straightforward pricing',
+      sub: 'Start free, upgrade when you need it. No contracts, cancel anytime.',
+      ctaCard: 'Get started',
+      footnote: '* Fair use policy applies. Not for mass spam.',
+      plans: [
+        {
+          code: 'free',
+          name: 'Free',
+          price: '$0',
+          caption: 'Try at no cost. 1 WhatsApp number, great for testing.',
+          quota: '1 WhatsApp number',
+          features: [
+            '50 orders/month',
+            'Invoice generation',
+            'Payment proof upload',
+            '10 OCR/month',
+          ],
+          missing: ['Invoice branding', 'Unlimited OCR', 'Multiple members'],
+        },
+        {
+          code: 'pro',
+          name: 'Pro',
+          price: '$9',
+          caption: 'For active sellers who need unlimited orders and invoices.',
+          quota: '1 WhatsApp number',
+          features: [
+            'Unlimited orders',
+            'Branded invoices',
+            '300 OCR/month',
+            '3 team members',
+            'Sales data export',
+          ],
+          featured: true,
+        },
+        {
+          code: 'team',
+          name: 'Team',
+          price: '$19',
+          caption: 'For sales teams or stores with multiple numbers.',
+          quota: '3 WhatsApp numbers',
+          features: [
+            'Unlimited orders',
+            'Branded invoices',
+            'Unlimited OCR',
+            '10 team members',
+            'Monthly financial reports',
+            'Extra OCR add-ons available',
+          ],
+        },
+      ],
+    },
+    faq: {
+      heading: 'Common questions',
+      sub: "If you don't find your answer, reach out directly.",
+      items: [
+        {
+          q: 'Is the free plan really free?',
+          a: 'Yes, completely free with no credit card. Great for testing the system before upgrading.',
+        },
+        {
+          q: 'How does automatic payment verification work?',
+          a: 'The customer sends a payment proof image (bank transfer or screenshot). The system uses AI to extract the amount, date, and reference number, then matches it to the invoice. If matched, the order closes automatically or is flagged for review.',
+        },
+        {
+          q: 'Does it work with any WhatsApp number?',
+          a: 'Yes, it works with any WhatsApp number via a simple QR code scan link. No official WhatsApp Business API required.',
+        },
+        {
+          q: 'Is my data and customer data safe?',
+          a: 'Your data stays in your account only. We do not share or sell it. You can export or delete your data at any time.',
+        },
+        {
+          q: 'Can I cancel anytime?',
+          a: 'Yes. No contracts. Cancel from the dashboard at any time — you keep access until the end of your billing period.',
         },
         {
           q: 'Can I sign up directly from here?',
-          a: 'Yes. Click "Start Free" and you\'ll be taken straight to the console registration page — no sales call needed.',
-        },
-        {
-          q: 'Is this an official WhatsApp API?',
-          a: 'Not yet. WATether is a gateway layer — queue, webhooks, device management, and dashboard are all ready. The WhatsApp session engine can be integrated based on your team\'s needs.',
+          a: 'Yes. Click "Start Free" and you\'ll go straight to the registration page — no sales call needed.',
         },
       ],
     },
-
-    // Closing
+    testimonials: {
+      heading: 'Stories from sellers using Talab',
+      sub: 'From clothing stores to sales teams — sellers who replaced chaos with a system.',
+      items: [
+        {
+          name: 'Perfume store, Riyadh',
+          quote: "Before Talab I'd forget many orders. Now every order is logged and I send the invoice in one click. It saves me an hour every day.",
+        },
+        {
+          name: "Women's clothing seller, Dubai",
+          quote: 'My customers send payment proof and the system verifies it automatically. I no longer manually check transfers.',
+        },
+        {
+          name: 'Food products store, Kuwait',
+          quote: 'The professional invoice changed my customers\' impression. They say it feels like a real store. And they\'re right.',
+        },
+      ],
+    },
     closing: {
       eyebrow: 'Ready to start?',
-      headline: 'Sign up free, open the console, and send your first message today.',
-      subtext: 'No credit card. No sales call. Try it yourself right now.',
+      headline: 'Sign up free, connect your number, and log your first order today.',
+      sub: 'No credit card. No sales call. No contracts.',
       ctaPrimary: 'Start Free',
       ctaSecondary: 'See pricing',
     },
-
-    // Console auth
-    auth: {
-      eyebrow: 'WATether Console',
-      headline: 'Manage WhatsApp numbers, send messages, and automate your business notifications.',
-      subtext: 'Broadcast, auto reply, webhooks, and message logs — all in one dashboard.',
-      metric1Label: 'WA Numbers',
-      metric1Value: 'Per workspace',
-      metric2Label: 'Features',
-      metric2Value: 'Broadcast · Auto Reply · Webhook',
-      metric3Label: 'Plan',
-      metric3Value: 'Free to start',
-      registerTitle: 'Start for free',
-      registerDesc: 'Create an account, connect your first WhatsApp number, and start sending messages in minutes.',
-      loginTitle: 'Sign in to console',
-      loginDesc: 'Continue managing your devices and workspaces.',
-      nameLabel: 'Name',
-      namePlaceholder: 'Full name',
-      emailLabel: 'Email',
-      emailPlaceholder: 'you@email.com',
-      passLabel: 'Password',
-      passPlaceholder: 'Min. 8 characters',
-      submitRegister: 'Create Free Account',
-      submitLogin: 'Sign In',
-      loading: 'Processing...',
-      switchToRegister: "Don't have an account? Sign up free",
-      switchToLogin: 'Already have an account? Sign in',
+    footer: {
+      rights: 'All rights reserved',
+      terms: 'Terms of Service',
+      privacy: 'Privacy Policy',
+      refund: 'Refund Policy',
+      faq: 'FAQ',
+      support: 'Email Support',
+      blog: 'Blog',
     },
   },
 } as const;
 
-export type Translations = typeof translations.id;
+export type Translations = typeof translations.ar;
 
 export function t(lang: Lang): Translations {
   return translations[lang] as unknown as Translations;

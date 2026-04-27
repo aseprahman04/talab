@@ -2,8 +2,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Refund Policy — WATether',
-  description: 'Refund policy for WATether subscriptions.',
+  title: 'Refund Policy — Talab',
+  description: 'Refund policy for Talab subscriptions.',
 };
 
 export default function RefundPolicyPage() {
@@ -23,10 +23,10 @@ export default function RefundPolicyPage() {
 
         <section>
           <h2>2. Refund Policy</h2>
-          <p>WATether offers a <strong>7-day</strong> refund policy for all new paid plan subscriptions. Conditions apply:</p>
+          <p>Talab offers a <strong>7-day</strong> refund policy for all new paid plan subscriptions. Conditions apply:</p>
           <ul>
             <li>Request submitted within 7 calendar days of the first payment date</li>
-            <li>Request sent via email to <a href="mailto:support@watether.com">support@watether.com</a></li>
+            <li>Request sent via email to <a href="mailto:support@talab.app">support@talab.app</a></li>
             <li>No prior refund has been requested for the same account</li>
           </ul>
         </section>
@@ -62,9 +62,9 @@ export default function RefundPolicyPage() {
 
         <section>
           <h2>7. How to Request a Refund</h2>
-          <p>Send an email to <a href="mailto:support@watether.com">support@watether.com</a> with the subject <strong>&quot;Refund Request — [account email]&quot;</strong> and include:</p>
+          <p>Send an email to <a href="mailto:support@talab.app">support@talab.app</a> with the subject <strong>&quot;Refund Request — [account email]&quot;</strong> and include:</p>
           <ul>
-            <li>WATether account email</li>
+            <li>Talab account email</li>
             <li>LemonSqueezy order number</li>
             <li>Reason for the refund request</li>
           </ul>

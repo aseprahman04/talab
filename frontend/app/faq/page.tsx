@@ -2,8 +2,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'FAQ — WATether',
-  description: 'Frequently asked questions about WATether.',
+  title: 'FAQ — Talab',
+  description: 'Frequently asked questions about Talab.',
 };
 
 const faqs = [
@@ -11,15 +11,15 @@ const faqs = [
     category: 'General',
     items: [
       {
-        q: 'What is WATether?',
-        a: 'WATether is a WhatsApp gateway platform for businesses. You can connect WhatsApp numbers, send messages via API, create broadcasts, set up auto-replies, and monitor all activity from a single dashboard.',
+        q: 'What is Talab?',
+        a: 'Talab is a WhatsApp gateway platform for businesses. You can connect WhatsApp numbers, send messages via API, create broadcasts, set up auto-replies, and monitor all activity from a single dashboard.',
       },
       {
-        q: 'Is WATether an official WhatsApp product?',
-        a: 'No. WATether is a third-party solution that runs on top of WhatsApp Web. Using numbers through third-party tools may result in restrictions by WhatsApp. For an enterprise solution with guarantees, consider the official WhatsApp Business API.',
+        q: 'Is Talab an official WhatsApp product?',
+        a: 'No. Talab is a third-party solution that runs on top of WhatsApp Web. Using numbers through third-party tools may result in restrictions by WhatsApp. For an enterprise solution with guarantees, consider the official WhatsApp Business API.',
       },
       {
-        q: 'Who is WATether for?',
+        q: 'Who is Talab for?',
         a: 'CS teams, sales, and mid-size business operations that need WhatsApp notification automation, broadcast to contact lists, webhooks to internal systems, and multi-device management from one console.',
       },
     ],
@@ -58,7 +58,7 @@ const faqs = [
       },
       {
         q: 'Is there an API for integrating with my system?',
-        a: 'Yes. WATether provides a full REST API. Documentation is available in the API Docs menu in the console after logging in. You can generate API tokens per device.',
+        a: 'Yes. Talab provides a full REST API. Documentation is available in the API Docs menu in the console after logging in. You can generate API tokens per device.',
       },
       {
         q: 'What is a webhook and how do I use it?',
@@ -75,7 +75,7 @@ const faqs = [
     items: [
       {
         q: 'How do I contact support?',
-        a: 'Send an email to support@watether.com. We respond within 1 business day.',
+        a: 'Send an email to support@talab.app. We respond within 1 business day.',
       },
       {
         q: 'Is there a refund policy?',
@@ -91,7 +91,7 @@ export default function FaqPage() {
       <header className="legal-header">
         <Link href="/" className="back-link">← Back to home</Link>
         <h1>Frequently Asked Questions</h1>
-        <p className="legal-meta">Can&apos;t find your answer? Contact <a href="mailto:support@watether.com">support@watether.com</a></p>
+        <p className="legal-meta">Can&apos;t find your answer? Contact <a href="mailto:support@talab.app">support@talab.app</a></p>
       </header>
 
       <main className="legal-body">

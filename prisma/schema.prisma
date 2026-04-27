@@ -99,6 +99,33 @@ enum RepeatType {
   MONTHLY
 }
 
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  AWAITING_PAYMENT
+  PAID
+  DONE
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PROOF_UPLOADED
+  AUTO_MATCHED
+  NEEDS_REVIEW
+  PAID
+  REJECTED
+}
+
+enum PaymentProofStatus {
+  PENDING
+  MATCHED
+  MISMATCH
+  LOW_CONFIDENCE
+  APPROVED
+  REJECTED
+}
+
 model User {
   id              String            @id @default(uuid())
   email           String            @unique
@@ -136,6 +163,8 @@ model Workspace {
   scheduledMessages ScheduledMessage[]
   subscription      Subscription?
   auditLogs         AuditLog[]
+  orders            Order[]
+  invoices          Invoice[]
 }
 
 model WorkspaceMember {
@@ -451,4 +480,67 @@ model DemoRequest {
 
   @@index([email, createdAt])
   @@index([status, createdAt])
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  workspaceId  String
+  contactName  String
+  contactPhone String
+  status       OrderStatus @default(PENDING)
+  totalAmount  Decimal     @db.Decimal(12, 2) @default(0)
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id])
+  items        OrderItem[]
+  invoice      Invoice?
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, status])
+}
+
+model OrderItem {
+  id      String  @id @default(uuid())
+  orderId String
+  name    String
+  price   Decimal @db.Decimal(12, 2)
+  qty     Int     @default(1)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id           String        @id @default(uuid())
+  orderId      String        @unique
+  workspaceId  String
+  invoiceNo    String        @unique
+  totalAmount  Decimal       @db.Decimal(12, 2)
+  vatRate      Float         @default(0)
+  vatAmount    Decimal       @db.Decimal(12, 2) @default(0)
+  status       InvoiceStatus @default(UNPAID)
+  logoUrl      String?
+  pdfUrl       String?
+  issuedAt     DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  order        Order         @relation(fields: [orderId], references: [id])
+  paymentProofs PaymentProof[]
+
+  @@index([workspaceId, issuedAt])
+}
+
+model PaymentProof {
+  id          String             @id @default(uuid())
+  invoiceId   String
+  imageUrl    String
+  ocrAmount   Decimal?           @db.Decimal(12, 2)
+  ocrDate     String?
+  ocrRef      String?
+  matchScore  Float?
+  status      PaymentProofStatus @default(PENDING)
+  reviewedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  invoice     Invoice            @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
 }

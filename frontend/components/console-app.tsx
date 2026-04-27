@@ -4,6 +4,9 @@ import QRCode from 'qrcode';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Dispatch, FormEvent, SetStateAction, startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import Logo from './logo';
+import ThemeToggle from './theme-toggle';
+import { TalabOverview, OrdersPanel, InvoicesPanel, PaymentsPanel } from './talab-panels';
 import { io, Socket } from 'socket.io-client';
 import {
   apiBaseUrl,
@@ -23,22 +26,19 @@ import {
 } from '../lib/api';
 
 type AuthMode = 'login' | 'register';
-type ActiveSection = 'overview' | 'devices' | 'messages' | 'webhooks' | 'broadcasts' | 'auto-replies' | 'scheduled-messages' | 'leads' | 'api-docs' | 'billing';
+type ActiveSection = 'overview' | 'orders' | 'invoices' | 'payments' | 'inbox' | 'devices' | 'billing';
 type SessionState = AuthTokens & { email?: string; name?: string };
 
-const sessionStorageKey = 'watether.console.session';
-const workspaceStorageKey = 'watether.console.workspace';
+const sessionStorageKey = 'talab.console.session';
+const workspaceStorageKey = 'talab.console.workspace';
 
-const navItems: Array<{ key: ActiveSection; label: string; href: string }> = [
-  { key: 'overview', label: 'Overview', href: '/console' },
+const navItems: Array<{ key: ActiveSection; label: string; href: string; badge?: string }> = [
+  { key: 'overview', label: 'Dashboard', href: '/console' },
+  { key: 'orders', label: '📦 Orders', href: '/orders' },
+  { key: 'invoices', label: '🧾 Invoices', href: '/invoices' },
+  { key: 'payments', label: '💳 Payments', href: '/payments' },
+  { key: 'inbox', label: 'Inbox', href: '/messages' },
   { key: 'devices', label: 'Devices', href: '/devices' },
-  { key: 'messages', label: 'Messages', href: '/messages' },
-  { key: 'webhooks', label: 'Webhooks', href: '/webhooks' },
-  { key: 'broadcasts', label: 'Broadcasts', href: '/broadcasts' },
-  { key: 'auto-replies', label: 'Auto Replies', href: '/auto-replies' },
-  { key: 'scheduled-messages', label: 'Scheduled', href: '/scheduled-messages' },
-  { key: 'leads', label: 'Leads', href: '/leads' },
-  { key: 'api-docs', label: 'API Docs', href: '/api-docs' },
   { key: 'billing', label: 'Billing', href: '/billing' },
 ];
 
@@ -584,8 +584,11 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
     <main className="console-shell">
       <aside className="workspace-rail glass-panel">
         <div className="rail-header">
-          <span className="eyebrow">Active console</span>
-          <h2>{session.email || 'Signed in'}</h2>
+          <div className="rail-brand">
+            <Logo variant="long" height={32} />
+            <ThemeToggle className="theme-toggle-btn" />
+          </div>
+          <span className="eyebrow" style={{ marginTop: '12px', display: 'block' }}>{session.email || 'Signed in'}</span>
           <p>Select a workspace, navigate per route, and monitor real-time events.</p>
         </div>
 
@@ -641,15 +644,12 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
         {feedback ? <Feedback tone={feedback.tone} text={feedback.text} /> : null}
         {generatedToken ? <section className="token-strip glass-panel"><div><span className="eyebrow">New token</span><strong>{generatedToken.deviceName}</strong></div><code>{generatedToken.token}</code></section> : null}
 
-        {activeSection === 'overview' ? <OverviewGrid devices={devices} messages={filteredMessages} webhooks={webhooks} autoReplies={autoReplies} /> : null}
+        {activeSection === 'overview' ? <TalabOverview devices={devices} selectedWorkspaceId={selectedWorkspaceId} session={session} /> : null}
+        {activeSection === 'orders' ? <OrdersPanel selectedWorkspaceId={selectedWorkspaceId} session={session} pushFeedback={pushFeedback} /> : null}
+        {activeSection === 'invoices' ? <InvoicesPanel selectedWorkspaceId={selectedWorkspaceId} session={session} pushFeedback={pushFeedback} /> : null}
+        {activeSection === 'payments' ? <PaymentsPanel selectedWorkspaceId={selectedWorkspaceId} session={session} pushFeedback={pushFeedback} /> : null}
+        {activeSection === 'inbox' ? <MessagesPanel devices={devices} messageForm={messageForm} setMessageForm={setMessageForm} selectedWorkspaceId={selectedWorkspaceId} messageSearch={messageSearch} setMessageSearch={setMessageSearch} messages={filteredMessages} onSubmit={handleMessageSend} onRetry={handleMessageRetry} isLoading={isLoading} /> : null}
         {activeSection === 'devices' ? <DevicesPanel deviceForm={deviceForm} setDeviceForm={setDeviceForm} selectedWorkspaceId={selectedWorkspaceId} devices={devices} onCreate={handleDeviceCreate} onAction={handleDeviceAction} onCreateToken={handleTokenCreate} activeQrCode={activeQrCode} /> : null}
-        {activeSection === 'messages' ? <MessagesPanel devices={devices} messageForm={messageForm} setMessageForm={setMessageForm} selectedWorkspaceId={selectedWorkspaceId} messageSearch={messageSearch} setMessageSearch={setMessageSearch} messages={filteredMessages} onSubmit={handleMessageSend} onRetry={handleMessageRetry} isLoading={isLoading} /> : null}
-        {activeSection === 'webhooks' ? <WebhooksPanel selectedWorkspaceId={selectedWorkspaceId} webhookForm={webhookForm} setWebhookForm={setWebhookForm} webhooks={webhooks} webhookLogs={webhookLogs} onSubmit={handleWebhookCreate} onTest={handleWebhookTest} onLoadLogs={handleWebhookLogsLoad} /> : null}
-        {activeSection === 'broadcasts' ? <BroadcastsPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} broadcastForm={broadcastForm} setBroadcastForm={setBroadcastForm} recentBroadcasts={recentBroadcasts} contactLists={contactLists} onSubmit={handleBroadcastCreate} onStart={handleBroadcastStart} /> : null}
-        {activeSection === 'auto-replies' ? <AutoRepliesPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} autoReplyForm={autoReplyForm} setAutoReplyForm={setAutoReplyForm} autoReplies={autoReplies} isRefreshing={isRefreshing} onSubmit={handleAutoReplyCreate} /> : null}
-        {activeSection === 'scheduled-messages' ? <ScheduledMessagesPanel devices={devices} selectedWorkspaceId={selectedWorkspaceId} form={scheduledMessageForm} setForm={setScheduledMessageForm} scheduledMessages={scheduledMessages} isLoading={isLoading} onSubmit={handleScheduledMessageCreate} onToggle={handleScheduledMessageToggle} onDelete={handleScheduledMessageDelete} /> : null}
-        {activeSection === 'leads' ? <LeadsPanel selectedWorkspaceId={selectedWorkspaceId} contacts={contacts} contactLists={contactLists} session={session} onRefresh={() => refreshWorkspaceData(selectedWorkspaceId, session.accessToken)} pushFeedback={pushFeedback} /> : null}
-        {activeSection === 'api-docs' ? <ApiDocsPanel accessToken={session.accessToken} /> : null}
         {activeSection === 'billing' ? <BillingPanel subscription={subscription} plans={plans} isLoading={isLoading} onUpgrade={handleUpgrade} onRefresh={refreshSubscription} /> : null}
       </section>
     </main>
@@ -658,9 +658,9 @@ export function ConsoleApp({ activeSection }: { activeSection: ActiveSection }) 
 
 function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, feedback, onSubmit }: { authMode: AuthMode; setAuthMode: (value: AuthMode) => void; authForm: { name: string; email: string; password: string }; setAuthForm: Dispatch<SetStateAction<{ name: string; email: string; password: string }>>; isLoading: boolean; feedback: { tone: 'success' | 'error' | 'info'; text: string } | null; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; }) {
   const t = {
-    eyebrow: 'WATether Console',
-    headline: 'Manage WhatsApp numbers, send messages, and automate business notifications.',
-    sub: 'Broadcast, auto reply, webhooks, and message logs — all in one dashboard.',
+    eyebrow: 'Talab Console',
+    headline: 'Capture orders from WhatsApp, generate invoices, and verify payments.',
+    sub: 'Orders, invoices, payment proofs, and OCR matching — all in one dashboard.',
     trialTitle: 'Start for free',
     trialDesc: 'Create an account, connect your first WhatsApp number, and start sending messages in minutes.',
     loginTitle: 'Sign in to console',
@@ -684,8 +684,9 @@ function AuthScreen({ authMode, setAuthMode, authForm, setAuthForm, isLoading, f
     <main className="landing-shell">
       <section className="hero-card glass-panel">
         <div className="hero-copy">
-          <div style={{ marginBottom: '8px' }}>
-            <span className="eyebrow">{t.eyebrow}</span>
+          <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Logo variant="long" height={36} />
+            <ThemeToggle className="theme-toggle-btn" />
           </div>
           <h1>{t.headline}</h1>
           <p>{t.sub}</p>
@@ -731,7 +732,7 @@ function OverviewGrid({ devices, messages, webhooks, autoReplies }: { devices: D
 
 function DevicesPanel({ deviceForm, setDeviceForm, selectedWorkspaceId, devices, onCreate, onAction, onCreateToken, activeQrCode }: { deviceForm: { name: string }; setDeviceForm: Dispatch<SetStateAction<{ name: string }>>; selectedWorkspaceId: string; devices: Device[]; onCreate: (event: FormEvent<HTMLFormElement>) => Promise<void>; onAction: (deviceId: string, action: 'pair' | 'reconnect') => Promise<void>; onCreateToken: (device: Device) => Promise<void>; activeQrCode: { deviceId: string; dataUrl: string } | null; }) {
   const [agreed, setAgreed] = useState(false);
-  return <section className="panel glass-panel"><SectionHeading title="Devices" subtitle="Add a device, connect WhatsApp via QR, and generate API tokens." /><div className="disclaimer-band" style={{marginBottom:'16px'}}><strong>Important before adding a device</strong><p style={{marginTop:'4px',marginBottom:0}}>WATether is a gateway platform and not an official product of Meta or WhatsApp Inc. Using WhatsApp numbers through third-party tools may result in restrictions, blocks, or permanent bans by WhatsApp. All risks of bans, feature restrictions, or number deactivation are entirely the user&apos;s responsibility and outside of WATether&apos;s liability.</p><label style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'10px',cursor:'pointer',fontSize:'13px'}}><input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />I understand the risks and accept full responsibility for using this number.</label></div><form className="stack-form compact" onSubmit={onCreate}><label className="field-block"><span>Device name</span><input value={deviceForm.name} onChange={(event) => setDeviceForm({ name: event.target.value })} placeholder="CS Main 01" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId || !agreed} type="submit">Add Device</button></form><div className="list-stack">{devices.length ? devices.map((device) => <article className="card-row" key={device.id}><div><strong>{device.name}</strong><p>{device.phoneNumber || 'Number not connected'}</p><small>{device.status} · Health {device.healthScore}</small></div><div className="action-row"><button className="mini-button" onClick={() => onAction(device.id, 'pair')} type="button">Pair WhatsApp</button><button className="mini-button" onClick={() => onAction(device.id, 'reconnect')} type="button">Reconnect</button><button className="mini-button accent" onClick={() => onCreateToken(device)} type="button">Token</button></div>{activeQrCode?.deviceId === device.id ? <div className="qr-wrap" style={{marginTop:'12px',textAlign:'center'}}><p style={{marginBottom:'8px',fontSize:'13px',color:'var(--text-muted)'}}>Scan this QR code with WhatsApp on your phone. It will refresh automatically.</p><img src={activeQrCode.dataUrl} alt="WhatsApp QR Code" style={{width:'240px',height:'240px',borderRadius:'8px',border:'1px solid var(--border)'}} /></div> : null}</article>) : <p className="empty-copy">No devices for this workspace yet.</p>}</div></section>;
+  return <section className="panel glass-panel"><SectionHeading title="Devices" subtitle="Add a device, connect WhatsApp via QR, and generate API tokens." /><div className="disclaimer-band" style={{marginBottom:'16px'}}><strong>Important before adding a device</strong><p style={{marginTop:'4px',marginBottom:0}}>Talab is not an official product of Meta or WhatsApp Inc. Using WhatsApp numbers through third-party tools may result in restrictions, blocks, or permanent bans by WhatsApp. All risks of bans, feature restrictions, or number deactivation are entirely the user&apos;s responsibility and outside of Talab&apos;s liability.</p><label style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'10px',cursor:'pointer',fontSize:'13px'}}><input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />I understand the risks and accept full responsibility for using this number.</label></div><form className="stack-form compact" onSubmit={onCreate}><label className="field-block"><span>Device name</span><input value={deviceForm.name} onChange={(event) => setDeviceForm({ name: event.target.value })} placeholder="CS Main 01" required /></label><button className="button-secondary" disabled={!selectedWorkspaceId || !agreed} type="submit">Add Device</button></form><div className="list-stack">{devices.length ? devices.map((device) => <article className="card-row" key={device.id}><div><strong>{device.name}</strong><p>{device.phoneNumber || 'Number not connected'}</p><small>{device.status} · Health {device.healthScore}</small></div><div className="action-row"><button className="mini-button" onClick={() => onAction(device.id, 'pair')} type="button">Pair WhatsApp</button><button className="mini-button" onClick={() => onAction(device.id, 'reconnect')} type="button">Reconnect</button><button className="mini-button accent" onClick={() => onCreateToken(device)} type="button">Token</button></div>{activeQrCode?.deviceId === device.id ? <div className="qr-wrap" style={{marginTop:'12px',textAlign:'center'}}><p style={{marginBottom:'8px',fontSize:'13px',color:'var(--text-muted)'}}>Scan this QR code with WhatsApp on your phone. It will refresh automatically.</p><img src={activeQrCode.dataUrl} alt="WhatsApp QR Code" style={{width:'240px',height:'240px',borderRadius:'8px',border:'1px solid var(--border)'}} /></div> : null}</article>) : <p className="empty-copy">No devices for this workspace yet.</p>}</div></section>;
 }
 
 function MessagesPanel({ devices, messageForm, setMessageForm, selectedWorkspaceId, messageSearch, setMessageSearch, messages, onSubmit, onRetry, isLoading }: { devices: Device[]; messageForm: { deviceId: string; target: string; type: string; message: string; mediaUrl: string }; setMessageForm: Dispatch<SetStateAction<{ deviceId: string; target: string; type: string; message: string; mediaUrl: string }>>; selectedWorkspaceId: string; messageSearch: string; setMessageSearch: Dispatch<SetStateAction<string>>; messages: Message[]; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; onRetry: (messageId: string) => Promise<void>; isLoading: boolean; }) {
@@ -747,7 +748,7 @@ function BroadcastsPanel({ devices, selectedWorkspaceId, broadcastForm, setBroad
 }
 
 function AutoRepliesPanel({ devices, selectedWorkspaceId, autoReplyForm, setAutoReplyForm, autoReplies, isRefreshing, onSubmit }: { devices: Device[]; selectedWorkspaceId: string; autoReplyForm: { deviceId: string; name: string; matchType: string; keyword: string; response: string; webhookUrl: string; useWebhook: boolean; priority: string }; setAutoReplyForm: Dispatch<SetStateAction<{ deviceId: string; name: string; matchType: string; keyword: string; response: string; webhookUrl: string; useWebhook: boolean; priority: string }>>; autoReplies: AutoReplyRule[]; isRefreshing: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>; }) {
-  return <section className="panel glass-panel"><SectionHeading title="Auto Reply" subtitle="Keyword rules per device — static reply or call your system API." /><form className="form-grid" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={autoReplyForm.deviceId} onChange={(event) => setAutoReplyForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Select device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Rule name</span><input value={autoReplyForm.name} onChange={(event) => setAutoReplyForm((current) => ({ ...current, name: event.target.value }))} placeholder="Check Order" required /></label><label className="field-block"><span>Match type</span><select value={autoReplyForm.matchType} onChange={(event) => setAutoReplyForm((current) => ({ ...current, matchType: event.target.value }))}><option value="contains">contains</option><option value="exact">exact</option></select></label><label className="field-block"><span>Priority</span><input value={autoReplyForm.priority} onChange={(event) => setAutoReplyForm((current) => ({ ...current, priority: event.target.value }))} type="number" min="0" max="100" required /></label><label className="field-block span-2"><span>Keyword</span><input value={autoReplyForm.keyword} onChange={(event) => setAutoReplyForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="order" required /></label><label className="field-block span-2" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="checkbox" checked={autoReplyForm.useWebhook} onChange={(event) => setAutoReplyForm((current) => ({ ...current, useWebhook: event.target.checked }))} style={{ width: 'auto', margin: 0 }} /><span>Use Webhook URL (integrate with your system)</span></label>{autoReplyForm.useWebhook ? <label className="field-block span-2"><span>Webhook URL</span><input type="url" value={autoReplyForm.webhookUrl} onChange={(event) => setAutoReplyForm((current) => ({ ...current, webhookUrl: event.target.value }))} placeholder="https://yourapp.com/api/wa/handler" required={autoReplyForm.useWebhook} /><span className="helper-copy" style={{ marginTop: '4px', display: 'block' }}>WATether will POST &#123; sender, keyword, message &#125; to this URL. The endpoint must return &#123; &quot;reply&quot;: &quot;...&quot; &#125;.</span></label> : <label className="field-block span-2"><span>Response</span><textarea rows={4} value={autoReplyForm.response} onChange={(event) => setAutoReplyForm((current) => ({ ...current, response: event.target.value }))} placeholder="Hi, please send your order number." required={!autoReplyForm.useWebhook} /></label>}<div className="span-2 button-row"><button className="button-primary" disabled={!selectedWorkspaceId} type="submit">Add Rule</button><span className="helper-copy">{isRefreshing ? 'Refreshing workspace...' : 'Workspace data synced.'}</span></div></form><div className="table-wrap compact-table"><table><thead><tr><th>Name</th><th>Device</th><th>Keyword</th><th>Response</th><th>Priority</th><th>Status</th></tr></thead><tbody>{autoReplies.length ? autoReplies.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{devices.find((device) => device.id === rule.deviceId)?.name || rule.deviceId}</td><td><code>{rule.keyword}</code></td><td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rule.webhookUrl ? <span className="status-chip status-info" title={rule.webhookUrl}>Webhook</span> : rule.response}</td><td>{rule.priority}</td><td><span className={`status-chip ${rule.isEnabled ? 'status-success' : 'status-danger'}`}>{rule.isEnabled ? 'ENABLED' : 'DISABLED'}</span></td></tr>) : <tr><td colSpan={6} className="empty-table">No auto-reply rules yet.</td></tr>}</tbody></table></div></section>;
+  return <section className="panel glass-panel"><SectionHeading title="Auto Reply" subtitle="Keyword rules per device — static reply or call your system API." /><form className="form-grid" onSubmit={onSubmit}><label className="field-block"><span>Device</span><select value={autoReplyForm.deviceId} onChange={(event) => setAutoReplyForm((current) => ({ ...current, deviceId: event.target.value }))} required><option value="">Select device</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label className="field-block"><span>Rule name</span><input value={autoReplyForm.name} onChange={(event) => setAutoReplyForm((current) => ({ ...current, name: event.target.value }))} placeholder="Check Order" required /></label><label className="field-block"><span>Match type</span><select value={autoReplyForm.matchType} onChange={(event) => setAutoReplyForm((current) => ({ ...current, matchType: event.target.value }))}><option value="contains">contains</option><option value="exact">exact</option></select></label><label className="field-block"><span>Priority</span><input value={autoReplyForm.priority} onChange={(event) => setAutoReplyForm((current) => ({ ...current, priority: event.target.value }))} type="number" min="0" max="100" required /></label><label className="field-block span-2"><span>Keyword</span><input value={autoReplyForm.keyword} onChange={(event) => setAutoReplyForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="order" required /></label><label className="field-block span-2" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="checkbox" checked={autoReplyForm.useWebhook} onChange={(event) => setAutoReplyForm((current) => ({ ...current, useWebhook: event.target.checked }))} style={{ width: 'auto', margin: 0 }} /><span>Use Webhook URL (integrate with your system)</span></label>{autoReplyForm.useWebhook ? <label className="field-block span-2"><span>Webhook URL</span><input type="url" value={autoReplyForm.webhookUrl} onChange={(event) => setAutoReplyForm((current) => ({ ...current, webhookUrl: event.target.value }))} placeholder="https://yourapp.com/api/wa/handler" required={autoReplyForm.useWebhook} /><span className="helper-copy" style={{ marginTop: '4px', display: 'block' }}>Talab will POST &#123; sender, keyword, message &#125; to this URL. The endpoint must return &#123; &quot;reply&quot;: &quot;...&quot; &#125;.</span></label> : <label className="field-block span-2"><span>Response</span><textarea rows={4} value={autoReplyForm.response} onChange={(event) => setAutoReplyForm((current) => ({ ...current, response: event.target.value }))} placeholder="Hi, please send your order number." required={!autoReplyForm.useWebhook} /></label>}<div className="span-2 button-row"><button className="button-primary" disabled={!selectedWorkspaceId} type="submit">Add Rule</button><span className="helper-copy">{isRefreshing ? 'Refreshing workspace...' : 'Workspace data synced.'}</span></div></form><div className="table-wrap compact-table"><table><thead><tr><th>Name</th><th>Device</th><th>Keyword</th><th>Response</th><th>Priority</th><th>Status</th></tr></thead><tbody>{autoReplies.length ? autoReplies.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{devices.find((device) => device.id === rule.deviceId)?.name || rule.deviceId}</td><td><code>{rule.keyword}</code></td><td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rule.webhookUrl ? <span className="status-chip status-info" title={rule.webhookUrl}>Webhook</span> : rule.response}</td><td>{rule.priority}</td><td><span className={`status-chip ${rule.isEnabled ? 'status-success' : 'status-danger'}`}>{rule.isEnabled ? 'ENABLED' : 'DISABLED'}</span></td></tr>) : <tr><td colSpan={6} className="empty-table">No auto-reply rules yet.</td></tr>}</tbody></table></div></section>;
 }
 
 function LeadsPanel({ selectedWorkspaceId, contacts, contactLists, session, onRefresh, pushFeedback }: { selectedWorkspaceId: string; contacts: Contact[]; contactLists: ContactList[]; session: { accessToken: string }; onRefresh: () => void; pushFeedback: (tone: 'success' | 'error' | 'info', text: string) => void; }) {
@@ -1160,7 +1161,7 @@ function ApiDocsPanel({ accessToken }: { accessToken: string }) {
       </div>
       <iframe
         src={docsUrl}
-        title="WATether API Docs"
+        title="Talab API Docs"
         className="docs-frame"
         allow="clipboard-write"
       />
